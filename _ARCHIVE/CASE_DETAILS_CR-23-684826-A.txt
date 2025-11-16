@@ -1,0 +1,78 @@
+================================================================================
+CASE DETAILS: CR-23-684826-A
+================================================================================
+
+CASE SUMMARY
+--------------------------------------------------------------------------------
+Number: 15554123
+Status: DEFN LVJAIL
+Judge Name: JEFFREY P SAFFOLD
+Next Event: HEARING SET FOR 11/12/2025 AT 09:00 AM IN ROOM 17D JUSTICE CENTER
+Arrested Date: N/A
+Arresting Agency: RICHMOND HEIGHTS
+Arresting Agency Report: N/A
+Court of Appeals Case: N/A
+Name: GIORGIY SHEPOV
+Date of Birth: 07/22/1980
+Race: WHITE
+Sex: MALE
+Other Cases: CR-25-706402-A
+Co-Defendants: N/A
+embedded_table_0 {'format': 'csv', 'data': 'Type,Statute,Charge Description,Disposition\r\nINDICT,2903.11.A(1),FELONIOUS ASSAULT,DISMISS P/T\r\nINDICT,2903.14.A,NEGLIGENT ASSAULT,PLD GLTY- N/C LIO-AMEND @ P/T\r\nINDICT,2921.31.A,OBSTRUCTING OFFICIAL BUSINESS,PLD GLTY- N/C - IND @ P/T\r\nINDICT,2923.15.A,USING WEAPONS WHILE INTOXICATED,PLD GLTY- N/C - IND @ P/T'}
+INDICT 2923.15.A
+embedded_table_1 {'format': 'csv', 'data': 'Event Date,Event Description\r\n11/02/2023,PRETRIAL HELD\r\n10/11/2023,PRETRIAL HELD\r\n10/02/2023,PRETRIAL HELD\r\n09/20/2023,PRETRIAL HELD\r\n09/13/2023,INDICTED ORIGINAL\r\n09/05/2023,ARRESTED'}
+11/02/2023 PRETRIAL HELD
+10/11/2023 PRETRIAL HELD
+10/02/2023 PRETRIAL HELD
+09/20/2023 PRETRIAL HELD
+09/13/2023 INDICTED ORIGINAL
+09/05/2023 ARRESTED
+embedded_table_2 {'format': 'csv', 'data': 'Bond Number,Amount,Type,Date Set,Date Posted,Bondsman/Surety Co.\r\n793030,"$100,000.00",CASH/SURETY/PROP.,09/18/2023,\xa0,\xa0\r\n795550,"$10,000.00",CASH/SUR/PROP/10%,11/20/2023,11/20/2023,CASH / VICTOR EPSTEIN'}
+793030 $100,000.00
+795550 $10,000.00
+
+CHARGES
+--------------------------------------------------------------------------------
+
+DOCKET (Case Actions/Events)
+--------------------------------------------------------------------------------
+
+COSTS & PAYMENTS
+--------------------------------------------------------------------------------
+
+DEFENDANT INFORMATION
+--------------------------------------------------------------------------------
+Name:: GIORGIY SHEPOV
+Defendant ID:: 15554123
+Def Status:: DEFN LVJAIL
+Marital Status:: N/A
+Birth City:: N/A
+Birth State:: N/A
+Citizenship:: USA
+Address:: 5160 STEVENSON STREET
+Line 2:: N/A
+City, State, Zip:: RICHMOND HEIGHTS, OH 44143-0000
+No alias information available.: No alias information available.
+Race:: WHITE
+Height:: N/A
+Sex:: MALE
+Weight:: N/A
+Age:: 45
+Eyes:: N/A
+DOB:: 07/22/1980
+Hair:: N/A
+
+ATTORNEYS
+--------------------------------------------------------------------------------
+Attorney 1:
+  name: : MARY CATHERINE CORRIGAN
+  contact: : 700 W. ST. CLAIR AVE.
+STE. 110
+CLEVELAND, OH 44113-0000
+216-770-6050
+Attorney 2:
+  name: : BRITT NEWMAN
+  contact: : 700 W. ST. CLAIR AVE.
+STE. 110
+CLEVELAND, OH 44113-0000
+216-770-6050

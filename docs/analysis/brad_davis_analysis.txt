@@ -1,0 +1,91 @@
+BRAD B DAVIS - METADATA FORENSIC ANALYSIS
+Case: CR-23-684826-A
+Document: 01-24-2024_JE_14.pdf (Sentencing Entry)
+Date: January 24, 2024
+
+═══════════════════════════════════════════════════════════════
+
+UNIQUE CHARACTERISTICS:
+
+1. ONLY document out of 27 PDFs with personal author name
+2. Title field contains template placeholder: «journal_bar_code»
+3. Creator: "Brad B Davis" (not ABBYY FineReader Engine 12)
+4. Author: "Brad B Davis"
+5. Document type: JOURNAL ENTRY (official court sentencing record)
+
+═══════════════════════════════════════════════════════════════
+
+TIMELINE:
+
+10:55:38 AM - Hearing concludes (CPMRC timestamp)
+01:51:56 PM - Clerk stamps "RECEIVED FOR FILING"
+01:52:30 PM - PDF created (metadata timestamp)
+01:52:35 PM - PDF modified (5-second gap)
+
+═══════════════════════════════════════════════════════════════
+
+COMPARISON WITH OTHER DOCUMENTS:
+
+All other 26 PDFs:
+- Creator: ABBYY FineReader Engine 12
+- Author: (not set)
+- Title: (not set)
+- Consistent pattern
+
+This document (01-24-2024_JE_14.pdf):
+- Creator: Brad B Davis
+- Author: Brad B Davis  
+- Title: «journal_bar_code»
+- UNIQUE pattern
+
+═══════════════════════════════════════════════════════════════
+
+QUESTIONS TO INVESTIGATE:
+
+1. Who is Brad B Davis?
+   - Court employee?
+   - Clerk's office staff?
+   - IT/scanning department?
+   - Judge's staff/bailiff?
+   - External contractor?
+
+2. Why does only THIS document have his name?
+   - Did he create/scan/process this specific entry?
+   - Why not the other 26 documents?
+   - Was this processed differently?
+
+3. Why template placeholder in Title field?
+   - «journal_bar_code» suggests pre-filled template
+   - Should contain case number instead
+   - Indicates manual/custom processing?
+
+4. Is this standard procedure?
+   - Check other cases from same judge
+   - Check other cases from same timeframe
+   - Check other sentencing entries
+
+═══════════════════════════════════════════════════════════════
+
+SIGNIFICANCE:
+
+This is your SENTENCING ENTRY - the most critical document:
+- Establishes guilty plea
+- Sets probation terms
+- Creates legal obligations
+- Foundation for all subsequent violations
+
+If this document was processed differently or by unauthorized
+personnel, it could affect validity of the entire sentence.
+
+═══════════════════════════════════════════════════════════════
+
+RECOMMENDED ACTIONS:
+
+1. Request certified copy from court
+2. Subpoena Brad B Davis employment records
+3. Request court's PDF creation procedures
+4. Compare with other defendants' sentencing entries
+5. Check if Judge Saffold's other cases show same pattern
+6. FOIA request for document processing logs
+
+═══════════════════════════════════════════════════════════════

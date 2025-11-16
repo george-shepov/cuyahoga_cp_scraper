@@ -1,0 +1,753 @@
+
+====================================================================================================
+JUDGE CASE ANALYSIS - CUYAHOGA COUNTY CRIMINAL COURT
+Generated: 2025-11-09 18:59:35
+====================================================================================================
+
+JUDGE STATISTICS & OUTCOMES
+----------------------------------------------------------------------------------------------------
+
+
+Judge: ARRAIGNMENT ROOM
+Total Cases: 410
+Defendants: 302
+
+Outcomes:
+  • PENDING: 410 (100.0%)
+
+Charge Types:
+  • DRUG POSSESSION: 80
+  • STRANGULATION: 37
+  • FELONIOUS ASSAULT: 36
+  • THEFT; AGGRAVATED THEFT: 33
+  • HAVING WEAPONS WHILE UNDER DISABILITY: 32
+
+Cases: CR-23-684843-A, CR-23-684851-A, CR-23-684870-A, CR-23-684871-A, CR-23-684872-A, CR-23-684891-A, CR-23-684915-A, CR-23-684940-A, CR-23-684941-A, CR-23-684950-A
+  ... and 400 more
+
+================================================================================
+
+Judge: UNKNOWN
+Total Cases: 74
+Defendants: 1
+
+Outcomes:
+  • PENDING: 74 (100.0%)
+
+Charge Types:
+
+Cases: CR-23-684831-A, CR-23-684845-A, CR-23-684864-A, CR-23-684882-A, CR-23-684892-A, CR-23-684894-A, CR-23-684897-A, CR-23-684898-A, CR-23-684907-A, CR-23-684921-A
+  ... and 64 more
+
+================================================================================
+
+Judge: JOHN P O'DONNELL
+Total Cases: 19
+Defendants: 14
+
+Outcomes:
+  • PENDING: 19 (100.0%)
+
+Charge Types:
+  • FELONIOUS ASSAULT: 7
+  • HAVING WEAPONS WHILE UNDER DISABILITY: 4
+  • MURDER: 4
+  • AGGRAVATED ROBBERY: 4
+  • ROBBERY: 4
+
+Cases: CR-23-684861-A, CR-23-684900-A, CR-23-685003-A, CR-23-685036-A, CR-23-685063-A, CR-23-685080-A, CR-25-706405-A, CR-25-706415-A, CR-25-706419-A, CR-25-706436-A
+  ... and 9 more
+
+================================================================================
+
+Judge: JENNIFER O'DONNELL
+Total Cases: 15
+Defendants: 10
+
+Outcomes:
+  • PENDING: 15 (100.0%)
+
+Charge Types:
+  • GROSS SEXUAL IMPOSITION: 2
+  • DOMESTIC VIOLENCE: 1
+  • IMPORTUNING: 1
+
+Cases: CR-23-684857-A, CR-23-684886-A, CR-23-684912-A, CR-23-684923-A, CR-23-684928-A, CR-23-684953-A, CR-23-684963-A, CR-23-684987-A, CR-23-685002-A, CR-23-685037-A
+  ... and 5 more
+
+================================================================================
+
+Judge: BRIAN MOONEY
+Total Cases: 14
+Defendants: 11
+
+Outcomes:
+  • PENDING: 14 (100.0%)
+
+Charge Types:
+  • FELONIOUS ASSAULT: 4
+  • DRUG POSSESSION: 3
+  • "ATTEMPTED: 2
+  • HAVING WEAPONS WHILE UNDER DISABILITY: 2
+  • RECEIVING STOLEN PROPERTY: 1
+
+Cases: CR-23-684833-A, CR-23-684834-A, CR-23-684889-A, CR-23-684956-A, CR-23-684973-A, CR-23-684994-A, CR-23-685032-A, CR-23-685053-A, CR-23-685089-A, CR-23-685113-A
+  ... and 4 more
+
+================================================================================
+
+Judge: JOAN SYNENBERG
+Total Cases: 14
+Defendants: 10
+
+Outcomes:
+  • PENDING: 14 (100.0%)
+
+Charge Types:
+  • FELONIOUS ASSAULT: 2
+  • DOMESTIC VIOLENCE: 2
+  • STRANGULATION: 2
+  • DRUG POSSESSION: 2
+  • RECEIVING STOLEN PROPERTY: 1
+
+Cases: CR-23-684839-A, CR-23-684840-A, CR-23-684876-A, CR-23-684960-A, CR-23-684964-A, CR-23-685006-A, CR-23-685072-A, CR-25-706416-A, CR-25-706456-A, CR-25-706558-A
+  ... and 4 more
+
+================================================================================
+
+Judge: N/A
+Total Cases: 13
+Defendants: 11
+
+Outcomes:
+  • PENDING: 13 (100.0%)
+
+Charge Types:
+  • OBSTRUCTING JUSTICE: 1
+  • DRUG POSSESSION: 1
+
+Cases: CR-23-684853-A, CR-23-684946-A, CR-23-684962-A, CR-23-684967-A, CR-23-684978-A, CR-23-684980-A, CR-23-685041-A, CR-23-685074-A, CR-23-685079-A, CR-23-685081-A
+  ... and 3 more
+
+================================================================================
+
+Judge: KEVIN J KELLEY
+Total Cases: 13
+Defendants: 10
+
+Outcomes:
+  • PENDING: 13 (100.0%)
+
+Charge Types:
+  • FELONIOUS ASSAULT: 1
+
+Cases: CR-23-684836-A, CR-23-684862-A, CR-23-684885-A, CR-23-684903-A, CR-23-684935-A, CR-23-684991-A, CR-23-685024-A, CR-23-685059-A, CR-23-685082-A, CR-23-685112-A
+  ... and 3 more
+
+================================================================================
+
+Judge: SHANNON M GALLAGHER
+Total Cases: 13
+Defendants: 8
+
+Outcomes:
+  • PENDING: 13 (100.0%)
+
+Charge Types:
+  • FELONIOUS ASSAULT: 4
+  • AGGRAVATED MENACING: 3
+  • STRANGULATION: 2
+  • AGGRAVATED ARSON: 2
+  • ARSON: 2
+
+Cases: CR-23-684827-A, CR-23-684842-A, CR-23-684887-A, CR-23-684902-A, CR-23-684944-A, CR-23-684965-A, CR-23-685007-A, CR-23-685114-A, CR-25-706451-A, CR-25-706575-A
+  ... and 3 more
+
+================================================================================
+
+Judge: CASSANDRA COLLIER-WILLIAMS
+Total Cases: 13
+Defendants: 11
+
+Outcomes:
+  • PENDING: 13 (100.0%)
+
+Charge Types:
+  • ROBBERY: 3
+  • RECEIVING STOLEN PROPERTY: 3
+  • FELONIOUS ASSAULT: 2
+  • STRANGULATION: 2
+  • DRIVING WHILE UNDER THE INFLUENCE OF ALCOHOL OR DRUGS: 2
+
+Cases: CR-23-684879-A, CR-23-684914-A, CR-23-684957-A, CR-23-685016-A, CR-23-685101-A, CR-23-685117-A, CR-23-685119-A, CR-24-695919-A, CR-25-706540-A, CR-25-706581-A
+  ... and 3 more
+
+================================================================================
+
+Judge: KELLY ANN GALLAGHER
+Total Cases: 13
+Defendants: 9
+
+Outcomes:
+  • PENDING: 13 (100.0%)
+
+Charge Types:
+  • RAPE: 2
+  • BURGLARY: 2
+  • DOMESTIC VIOLENCE: 1
+  • OBSTRUCTING OFFICIAL BUSINESS: 1
+  • CRIMINAL DAMAGING: 1
+
+Cases: CR-23-684858-A, CR-23-684877-A, CR-23-684922-A, CR-23-684927-A, CR-23-684981-A, CR-23-685001-A, CR-23-685015-A, CR-23-685088-A, CR-23-685104-A, CR-25-706460-A
+  ... and 3 more
+
+================================================================================
+
+Judge: MICHAEL P SHAUGHNESSY
+Total Cases: 13
+Defendants: 12
+
+Outcomes:
+  • PENDING: 13 (100.0%)
+
+Charge Types:
+  • STRANGULATION: 2
+  • DISRUPTING PUBLIC SERVICE: 2
+  • DOMESTIC VIOLENCE: 1
+  • DOMESTIC VIOLENCE (PC): 1
+  • RETALIATION: 1
+
+Cases: CR-23-684828-A, CR-23-684838-A, CR-23-684984-A, CR-23-685021-A, CR-23-685034-A, CR-23-685049-A, CR-23-685069-A, CR-23-685105-A, CR-23-685122-A, CR-25-706521-A
+  ... and 3 more
+
+================================================================================
+
+Judge: JEFFREY P SAFFOLD
+Total Cases: 12
+Defendants: 9
+
+Outcomes:
+  • PENDING: 12 (100.0%)
+
+Charge Types:
+  • DRUG POSSESSION: 1
+  • ENDANGERING CHILDREN: 1
+
+Cases: CR-23-684829-A, CR-23-684880-A, CR-23-684913-A, CR-23-684916-A, CR-23-684938-A, CR-23-684948-A, CR-23-684996-A, CR-23-685027-A, CR-23-685062-A, CR-23-685090-A
+  ... and 2 more
+
+================================================================================
+
+Judge: PETER J CORRIGAN
+Total Cases: 12
+Defendants: 9
+
+Outcomes:
+  • PENDING: 12 (100.0%)
+
+Charge Types:
+  • FELONIOUS ASSAULT: 3
+  • BURGLARY: 2
+  • RSP - MV: 1
+  • HAVING WEAPONS WHILE UNDER DISABILITY: 1
+  • DOMESTIC VIOLENCE: 1
+
+Cases: CR-23-684909-A, CR-23-684920-A, CR-23-684968-A, CR-23-685045-A, CR-23-685050-A, CR-24-695908-A, CR-25-706429-A, CR-25-706500-A, CR-25-706526-A, CR-25-706607-A
+  ... and 2 more
+
+================================================================================
+
+Judge: DEBORAH M TURNER
+Total Cases: 12
+Defendants: 6
+
+Outcomes:
+  • PENDING: 12 (100.0%)
+
+Charge Types:
+  • THEFT; AGGRAVATED THEFT: 4
+  • BURGLARY: 3
+  • BREAKING AND ENTERING: 2
+  • GRAND THEFT: 2
+  • IDENTITY FRAUD: 2
+
+Cases: CR-23-684830-A, CR-23-684854-A, CR-23-684970-A, CR-23-685019-A, CR-23-685025-A, CR-23-685046-A, CR-23-685085-A, CR-24-695916-A, CR-25-706428-A, CR-25-706713-A
+  ... and 2 more
+
+================================================================================
+
+Judge: LAUREN C MOORE
+Total Cases: 12
+Defendants: 8
+
+Outcomes:
+  • PENDING: 12 (100.0%)
+
+Charge Types:
+  • "FAILURE TO COMPLY WITH ORDER: 4
+  • ROBBERY: 4
+  • FELONIOUS ASSAULT: 3
+  • OBSTRUCTING OFFICIAL BUSINESS: 2
+  • RESISTING ARREST: 2
+
+Cases: CR-23-684918-A, CR-23-684998-A, CR-23-685030-A, CR-23-685057-A, CR-25-706455-A, CR-25-706476-A, CR-25-706507-A, CR-25-706578-A, CR-25-706737-A, CR-25-706741-A
+  ... and 2 more
+
+================================================================================
+
+Judge: STEVEN E GALL
+Total Cases: 11
+Defendants: 10
+
+Outcomes:
+  • PENDING: 11 (100.0%)
+
+Charge Types:
+  • OBSTRUCTING OFFICIAL BUSINESS: 2
+  • ASSAULT (PEACE OFFICER): 1
+  • TRAFFICKING OFFENSE: 1
+  • DRUG POSSESSION: 1
+  • POSSESSING CRIMINAL TOOLS: 1
+
+Cases: CR-23-684848-A, CR-23-684860-A, CR-23-684883-A, CR-23-684905-A, CR-23-684954-A, CR-23-685042-A, CR-23-685070-A, CR-23-685077-A, CR-24-695917-A, CR-25-706573-A
+  ... and 1 more
+
+================================================================================
+
+Judge: TIMOTHY MCCORMICK
+Total Cases: 11
+Defendants: 10
+
+Outcomes:
+  • PENDING: 11 (100.0%)
+
+Charge Types:
+  • FELONIOUS ASSAULT: 2
+  • ATTEMPTED AGGRAVATED ARSON: 1
+  • "ATTEMPTED: 1
+  • DOMESTIC VIOLENCE(PC): 1
+  • HAVING WEAPONS WHILE UNDER DISABILITY: 1
+
+Cases: CR-23-684890-A, CR-23-684934-A, CR-23-685000-A, CR-23-685084-A, CR-23-685093-A, CR-23-685118-A, CR-24-695912-A, CR-25-706574-A, CR-25-706744-A, CR-25-706794-A
+  ... and 1 more
+
+================================================================================
+
+Judge: EMILY HAGAN
+Total Cases: 11
+Defendants: 9
+
+Outcomes:
+  • PENDING: 11 (100.0%)
+
+Charge Types:
+  • FELONIOUS ASSAULT: 2
+  • HAVING WEAPONS WHILE UNDER DISABILITY: 1
+
+Cases: CR-23-684868-A, CR-23-684881-A, CR-23-684904-A, CR-23-684993-A, CR-23-685039-A, CR-23-685058-A, CR-23-685091-A, CR-25-706423-A, CR-25-706433-A, CR-25-706709-A
+  ... and 1 more
+
+================================================================================
+
+Judge: WILLIAM F. B. VODREY
+Total Cases: 11
+Defendants: 8
+
+Outcomes:
+  • PENDING: 11 (100.0%)
+
+Charge Types:
+  • HAVING WEAPONS WHILE UNDER DISABILITY: 2
+  • DRUG POSSESSION: 1
+  • STRANGULATION: 1
+  • ASSAULT: 1
+  • AGGRAVATED MENACING: 1
+
+Cases: CR-23-684837-A, CR-23-684844-A, CR-23-684942-A, CR-23-684945-A, CR-23-685056-A, CR-23-685115-A, CR-24-695906-A, CR-25-706417-A, CR-25-706457-A, CR-25-706531-A
+  ... and 1 more
+
+================================================================================
+
+Judge: JOHN D SUTULA
+Total Cases: 10
+Defendants: 10
+
+Outcomes:
+  • PENDING: 10 (100.0%)
+
+Charge Types:
+
+Cases: CR-23-684899-A, CR-23-684917-A, CR-23-684926-A, CR-23-684929-A, CR-23-684933-A, CR-23-684986-A, CR-23-684997-A, CR-23-685020-A, CR-23-685051-A, CR-23-685106-A
+
+================================================================================
+
+Judge: NANCY A FUERST
+Total Cases: 10
+Defendants: 7
+
+Outcomes:
+  • PENDING: 10 (100.0%)
+
+Charge Types:
+  • HAVING WEAPONS WHILE UNDER DISABILITY: 2
+  • IMPROPERLY HANDLING FIREARMS IN A MOTOR VEHICLE: 2
+  • IDENTITY FRAUD: 2
+  • "FAILURE TO COMPLY WITH ORDER: 1
+  • RECEIVING STOLEN PROPERTY: 1
+
+Cases: CR-23-684856-A, CR-23-684884-A, CR-23-684906-A, CR-23-684989-A, CR-23-685022-A, CR-23-685054-A, CR-23-685092-A, CR-25-706471-A, CR-25-706502-A, CR-25-706732-A
+
+================================================================================
+
+Judge: MAUREEN CLANCY
+Total Cases: 9
+Defendants: 7
+
+Outcomes:
+  • PENDING: 9 (100.0%)
+
+Charge Types:
+  • HAVING WEAPONS WHILE UNDER DISABILITY: 3
+  • DOMESTIC VIOLENCE: 3
+  • FELONIOUS ASSAULT: 3
+  • "FAILURE TO COMPLY WITH ORDER: 2
+  • IMPROPERLY HANDLING FIREARMS IN A MOTOR VEHICLE: 2
+
+Cases: CR-23-684855-A, CR-23-684865-A, CR-23-684985-A, CR-23-685052-A, CR-23-685121-A, CR-25-706475-A, CR-25-706501-A, CR-25-706517-A, CR-25-706527-A
+
+================================================================================
+
+Judge: JOHN J RUSSO
+Total Cases: 9
+Defendants: 8
+
+Outcomes:
+  • PENDING: 9 (100.0%)
+
+Charge Types:
+  • STRANGULATION: 2
+  • AGGRAVATED BURGLARY: 1
+  • ASSAULT: 1
+  • CRIMINAL DAMAGING: 1
+  • ASSAULT (PEACE OFFICER): 1
+
+Cases: CR-23-684835-A, CR-23-684841-A, CR-23-684869-A, CR-23-684888-A, CR-23-684901-A, CR-23-685107-A, CR-24-695914-A, CR-25-706716-A, CR-25-706960-A
+
+================================================================================
+
+Judge: ANDREW J. SANTOLI
+Total Cases: 8
+Defendants: 7
+
+Outcomes:
+  • PENDING: 8 (100.0%)
+
+Charge Types:
+  • ROBBERY: 2
+  • TRAFFICKING OFFENSE: 1
+  • DRUG POSSESSION: 1
+  • POSSESSING CRIMINAL TOOLS: 1
+  • GRAND THEFT - MV: 1
+
+Cases: CR-23-684951-A, CR-23-684959-A, CR-23-685029-A, CR-23-685116-A, CR-25-706582-A, CR-25-706795-A, CR-25-706890-A, CR-25-706891-A
+
+================================================================================
+
+Judge: ASHLEY KILBANE
+Total Cases: 8
+Defendants: 5
+
+Outcomes:
+  • PENDING: 8 (100.0%)
+
+Charge Types:
+  • CARRYING CONCEALED WEAPONS: 1
+  • IMPERSONATION OF CERTAIN OFFICERS: 1
+
+Cases: CR-23-684849-A, CR-23-684975-A, CR-23-685009-A, CR-23-685047-A, CR-23-685095-A, CR-23-685097-A, CR-25-706418-A, CR-25-706515-A
+
+================================================================================
+
+Judge: HOLLIE L GALLAGHER
+Total Cases: 8
+Defendants: 6
+
+Outcomes:
+  • PENDING: 8 (100.0%)
+
+Charge Types:
+  • STRANGULATION: 2
+  • CARRYING CONCEALED WEAPONS: 2
+  • IMPROPERLY HANDLING FIREARMS IN A MOTOR VEHICLE: 2
+  • DOMESTIC VIOLENCE(PC): 1
+  • FELONIOUS ASSAULT (PEACE OFFICER): 1
+
+Cases: CR-23-684874-A, CR-23-684936-A, CR-23-684971-A, CR-23-685005-A, CR-23-685044-A, CR-25-706496-A, CR-25-706705-A, CR-25-706792-A
+
+================================================================================
+
+Judge: WILLIAM T MCGINTY
+Total Cases: 7
+Defendants: 6
+
+Outcomes:
+  • PENDING: 7 (100.0%)
+
+Charge Types:
+
+Cases: CR-23-684852-A, CR-23-684866-A, CR-23-684982-A, CR-23-685012-A, CR-23-685061-A, CR-23-685076-A, CR-23-685120-A
+
+================================================================================
+
+Judge: SHERRIE MIDAY
+Total Cases: 7
+Defendants: 7
+
+Outcomes:
+  • PENDING: 7 (100.0%)
+
+Charge Types:
+  • GROSS SEXUAL IMPOSITION: 6
+  • RAPE: 1
+  • DISSEMINATING MATTER HARMFUL TO JUVENILES: 1
+
+Cases: CR-23-684931-A, CR-23-684943-A, CR-23-685043-A, CR-23-685096-A, CR-23-685103-A, CR-25-706463-A, CR-25-706886-A
+
+================================================================================
+
+Judge: MOLLIE ANN MURPHY
+Total Cases: 7
+Defendants: 6
+
+Outcomes:
+  • PENDING: 7 (100.0%)
+
+Charge Types:
+  • FELONIOUS ASSAULT: 2
+  • DRUG POSSESSION: 1
+  • CARRYING CONCEALED WEAPONS: 1
+  • IMPROPERLY HANDLING FIREARMS IN A MOTOR VEHICLE: 1
+  • TAMPERING WITH EVIDENCE: 1
+
+Cases: CR-23-685040-A, CR-23-685100-A, CR-24-695911-A, CR-24-695921-A, CR-25-706534-A, CR-25-706626-A, CR-25-707059-A
+
+================================================================================
+
+Judge: DANIEL GAUL
+Total Cases: 6
+Defendants: 6
+
+Outcomes:
+  • PENDING: 6 (100.0%)
+
+Charge Types:
+
+Cases: CR-23-684910-A, CR-23-684919-A, CR-23-684939-A, CR-23-684972-A, CR-23-684979-A, CR-23-685031-A
+
+================================================================================
+
+Judge: TIMOTHY W. CLARY
+Total Cases: 6
+Defendants: 6
+
+Outcomes:
+  • PENDING: 6 (100.0%)
+
+Charge Types:
+
+Cases: CR-23-684832-A, CR-23-684863-A, CR-23-684867-A, CR-23-684924-A, CR-23-684930-A, CR-23-684966-A
+
+================================================================================
+
+Judge: DAVID T MATIA
+Total Cases: 6
+Defendants: 6
+
+Outcomes:
+  • PENDING: 6 (100.0%)
+
+Charge Types:
+  • RECEIVING STOLEN PROPERTY: 1
+  • FALSIFICATION: 1
+
+Cases: CR-23-684847-A, CR-23-684873-A, CR-23-684878-A, CR-23-684958-A, CR-24-695913-A, CR-25-706606-A
+
+================================================================================
+
+Judge: RICHARD A BELL
+Total Cases: 6
+Defendants: 5
+
+Outcomes:
+  • PENDING: 6 (100.0%)
+
+Charge Types:
+
+Cases: CR-23-684895-A, CR-23-684952-A, CR-23-684961-A, CR-23-684977-A, CR-23-685086-A, CR-24-695922-A
+
+================================================================================
+
+Judge: JOHN J SPELLACY
+Total Cases: 6
+Defendants: 6
+
+Outcomes:
+  • PENDING: 6 (100.0%)
+
+Charge Types:
+  • RAPE: 4
+  • GROSS SEXUAL IMPOSITION: 4
+  • "FAILURE TO COMPLY WITH ORDER: 2
+  • ASSAULT: 2
+  • ROBBERY: 2
+
+Cases: CR-24-695920-A, CR-25-706435-A, CR-25-706479-A, CR-25-706592-A, CR-25-706847-A, CR-25-706942-A
+
+================================================================================
+
+Judge: SHIRLEY STRICKLAND SAFFOLD
+Total Cases: 5
+Defendants: 5
+
+Outcomes:
+  • PENDING: 5 (100.0%)
+
+Charge Types:
+
+Cases: CR-23-684859-A, CR-23-684893-A, CR-23-684908-A, CR-23-684925-A, CR-23-685099-A
+
+================================================================================
+
+Judge: KATHLEEN ANN SUTULA
+Total Cases: 5
+Defendants: 3
+
+Outcomes:
+  • PENDING: 5 (100.0%)
+
+Charge Types:
+
+Cases: CR-23-684949-A, CR-23-684995-A, CR-23-685014-A, CR-23-685023-A, CR-23-685048-A
+
+================================================================================
+
+Judge: NANCY MARGARET RUSSO
+Total Cases: 4
+Defendants: 2
+
+Outcomes:
+  • PENDING: 4 (100.0%)
+
+Charge Types:
+  • BURGLARY: 1
+  • DRUG POSSESSION: 1
+
+Cases: CR-23-684911-A, CR-23-685004-A, CR-25-706560-A, CR-25-706752-A
+
+================================================================================
+
+Judge: ANTONIO S NICHOLSON
+Total Cases: 3
+Defendants: 3
+
+Outcomes:
+  • PENDING: 3 (100.0%)
+
+Charge Types:
+  • STRANGULATION: 4
+  • AGGRAVATED MENACING: 2
+  • FELONIOUS ASSAULT: 1
+  • DOMESTIC VIOLENCE: 1
+  • AGGRAVATED BURGLARY: 1
+
+Cases: CR-23-684846-A, CR-25-706420-A, CR-25-706621-A
+
+================================================================================
+
+Judge: DEENA R CALABRESE
+Total Cases: 3
+Defendants: 3
+
+Outcomes:
+  • PENDING: 3 (100.0%)
+
+Charge Types:
+
+Cases: CR-23-684875-A, CR-23-684947-A, CR-23-685017-A
+
+================================================================================
+
+Judge: KIRA KRIVOSH
+Total Cases: 3
+Defendants: 3
+
+Outcomes:
+  • PENDING: 3 (100.0%)
+
+Charge Types:
+  • STRANGULATION: 2
+  • AGGRAVATED BURGLARY: 1
+  • DOMESTIC VIOLENCE (PC): 1
+  • DISRUPTING PUBLIC SERVICE: 1
+  • DOMESTIC VIOLENCE: 1
+
+Cases: CR-23-685094-A, CR-25-706442-A, CR-25-706659-A
+
+================================================================================
+
+Judge: JOY KENNEDY
+Total Cases: 2
+Defendants: 2
+
+Outcomes:
+  • PENDING: 2 (100.0%)
+
+Charge Types:
+  • DRUG POSSESSION: 2
+  • FELONIOUS ASSAULT: 1
+  • DOMESTIC VIOLENCE: 1
+  • ENDANGERING CHILDREN: 1
+  • ASSAULT: 1
+
+Cases: CR-24-695918-A, CR-25-706929-A
+
+================================================================================
+
+Judge: CARL J MAZZONE
+Total Cases: 2
+Defendants: 2
+
+Outcomes:
+  • PENDING: 2 (100.0%)
+
+Charge Types:
+
+Cases: CR-25-706446-A, CR-25-706985-A
+
+================================================================================
+
+Judge: BRENDAN J SHEEHAN
+Total Cases: 1
+Defendants: 1
+
+Outcomes:
+  • PENDING: 1 (100.0%)
+
+Charge Types:
+
+Cases: CR-23-684937-A
+
+================================================================================
+
+Judge: DIVERSION PROGRAM
+Total Cases: 1
+Defendants: 1
+
+Outcomes:
+  • PENDING: 1 (100.0%)
+
+Charge Types:
+
+Cases: CR-23-684999-A
+
+================================================================================

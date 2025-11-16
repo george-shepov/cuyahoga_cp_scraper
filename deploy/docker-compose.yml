@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  scraper-node:
+    build: .
+    container_name: cuyahoga_scraper
+    volumes:
+      - ./out:/app/out
+      - ./browser_data:/app/browser_data
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    # For production you may want to run under a dedicated user and reduce capabilities

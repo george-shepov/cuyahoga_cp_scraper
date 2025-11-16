@@ -1,0 +1,96 @@
+EXTRACTING FULL CASE DETAILS
+================================================================================
+
+📋 Processing CR-23-684826-A...
+   ✓ Saved to CASE_DETAILS_CR-23-684826-A.txt
+================================================================================
+CASE DETAILS: CR-23-684826-A
+================================================================================
+
+CASE SUMMARY
+--------------------------------------------------------------------------------
+
+CHARGES
+--------------------------------------------------------------------------------
+
+DOCKET (Case Actions/Events)
+--------------------------------------------------------------------------------
+
+COSTS & PAYMENTS
+--------------------------------------------------------------------------------
+
+DEFENDANT INFORMATION
+--------------------------------------------------------------------------------
+
+ATTORNEYS
+--------------------------------------------------------------------------------
+
+
+📋 Processing CR-25-706402-A...
+   ✓ Saved to CASE_DETAILS_CR-25-706402-A.txt
+================================================================================
+CASE DETAILS: CR-25-706402-A
+================================================================================
+
+CASE SUMMARY
+--------------------------------------------------------------------------------
+Number: 15554123
+Status: UNKNOWN
+Judge Name: ARRAIGNMENT ROOM
+Next Event: ARRAIGNMENT SET FOR 11/17/2025 AT 08:30 AM IN ROOM CP ARRAIGNMENT ROOM JC 12FL
+Arrested Date: N/A
+Arresting Agency: RICHMOND HEIGHTS
+Arresting Agency Report: 2025001169
+Court of Appeals Case: N/A
+Name: GIORGIY SHEPOV
+Date of Birth: 07/22/1980
+Race: WHITE
+Sex: MALE
+Other Cases: CR-23-684826-A
+Co-Defendants: N/A
+table_23_csv Type,Statute,Charge Description,Disposition
+INDICT,2925.11.A,DRUG POSSESSION, 
+INDICT,2925.11.A,DRUG POSSESSION
+INDICT 2925.11.A
+table_28_csv Event Date,Event Description
+10/16/2025,INDICTED ORIGINAL
+08/19/2025,ARRESTED
+10/16/2025 INDICTED ORIGINAL
+08/19/2025 ARRESTED
+No bonds currently exist for this case No bonds currently exist for this case
+
+CHARGES
+--------------------------------------------------------------------------------
+
+DOCKET (Case Actions/Events)
+--------------------------------------------------------------------------------
+
+COSTS & PAYMENTS
+--------------------------------------------------------------------------------
+
+DEFENDANT INFORMATION
+--------------------------------------------------------------------------------
+Name:: GIORGIY SHEPOV
+Defendant ID:: 15554123
+Def Status:: UNKNOWN
+Marital Status:: N/A
+Birth City:: N/A
+Birth State:: N/A
+Citizenship:: USA
+Address:: 5160 STEVENSON STREET
+Line 2:: N/A
+City, State, Zip:: RICHMOND HEIGHTS, OH 44143-0000
+No alias information available.: No alias information available.
+Race:: WHITE
+Height:: N/A
+Sex:: MALE
+Weight:: N/A
+Age:: 45
+Eyes:: N/A
+DOB:: 07/22/1980
+Hair:: N/A
+
+ATTORNEYS
+--------------------------------------------------------------------------------
+
+

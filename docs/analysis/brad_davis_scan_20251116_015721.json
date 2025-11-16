@@ -1,0 +1,2242 @@
+{
+  "scan_date": "2025-11-16T01:57:21.895380",
+  "total_pdfs": 27,
+  "total_cases": 1,
+  "brad_davis_documents": [
+    {
+      "case_id": "CR-23-684826-A",
+      "filename": "01-24-2024_JE_14.pdf",
+      "path": "out/2023/pdfs/CR-23-684826-A/01-24-2024_JE_14.pdf",
+      "author": "Brad B Davis",
+      "creator": "Brad B Davis",
+      "title": "\u00abjournal_bar_code\u00bb"
+    }
+  ],
+  "other_anomalies": [
+    {
+      "case_id": "CR-23-684826-A",
+      "filename": "01-24-2024_JE_14.pdf",
+      "author": "Brad B Davis",
+      "creator": "Brad B Davis",
+      "title": "\u00abjournal_bar_code\u00bb"
+    }
+  ],
+  "saffold_cases": [
+    {
+      "case_id": "CR-23-682270-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682270_20251110_164450.json"
+    },
+    {
+      "case_id": "CR-23-684461-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684461_20251111_102539.json"
+    },
+    {
+      "case_id": "CR-23-681921-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681921_20251110_162355.json"
+    },
+    {
+      "case_id": "CR-23-681770-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681770_20251110_160942.json"
+    },
+    {
+      "case_id": "CR-23-686211-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686211_20251111_125256.json"
+    },
+    {
+      "case_id": "CR-23-679636-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679636_20251110_200250.json"
+    },
+    {
+      "case_id": "CR-23-684908-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684908_20251109_210451.json"
+    },
+    {
+      "case_id": "CR-23-684938-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684938_20251109_211105.json"
+    },
+    {
+      "case_id": "CR-23-682586-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682586_20251111_073919.json"
+    },
+    {
+      "case_id": "CR-23-684880-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684880_20251111_110310.json"
+    },
+    {
+      "case_id": "CR-23-684088-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684088_20251111_095335.json"
+    },
+    {
+      "case_id": "CR-23-678961-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678961_20251110_190051.json"
+    },
+    {
+      "case_id": "CR-23-680988-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680988_20251111_052419.json"
+    },
+    {
+      "case_id": "CR-23-684345-B",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684345_20251111_101518.json"
+    },
+    {
+      "case_id": "CR-23-681925-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681925_20251110_162358.json"
+    },
+    {
+      "case_id": "CR-23-687738-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687738_20251111_150656.json"
+    },
+    {
+      "case_id": "CR-23-680967-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680967_20251110_151923.json"
+    },
+    {
+      "case_id": "CR-23-682578-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682578_20251111_073853.json"
+    },
+    {
+      "case_id": "CR-23-678077-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-678077_20251110_174553.json"
+    },
+    {
+      "case_id": "CR-23-682579-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682579_20251111_073853.json"
+    },
+    {
+      "case_id": "CR-23-680469-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680469_20251111_044116.json"
+    },
+    {
+      "case_id": "CR-23-677768-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-677768_20251110_171255.json"
+    },
+    {
+      "case_id": "CR-23-686396-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686396_20251111_131446.json"
+    },
+    {
+      "case_id": "CR-23-681843-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681843_20251110_161735.json"
+    },
+    {
+      "case_id": "CR-23-680351-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680351_20251111_040557.json"
+    },
+    {
+      "case_id": "CR-23-677861-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-677861_20251110_172209.json"
+    },
+    {
+      "case_id": "CR-23-686993-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686993_20251111_140336.json"
+    },
+    {
+      "case_id": "CR-23-681961-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681961_20251111_065022.json"
+    },
+    {
+      "case_id": "CR-23-683136-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-683136_20251111_082638.json"
+    },
+    {
+      "case_id": "CR-23-678987-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678987_20251110_190225.json"
+    },
+    {
+      "case_id": "CR-23-684360-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684360_20251111_101844.json"
+    },
+    {
+      "case_id": "CR-23-681196-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681196_20251112_164058.json"
+    },
+    {
+      "case_id": "CR-23-685699-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-685699_20251111_121333.json"
+    },
+    {
+      "case_id": "CR-23-679099-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679099_20251110_191211.json"
+    },
+    {
+      "case_id": "CR-23-686410-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686410_20251111_131536.json"
+    },
+    {
+      "case_id": "CR-23-681662-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681662_20251110_160227.json"
+    },
+    {
+      "case_id": "CR-23-679327-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-679327_20251110_193108.json"
+    },
+    {
+      "case_id": "CR-23-685674-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-685674_20251111_120952.json"
+    },
+    {
+      "case_id": "CR-23-684707-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684707_20251111_104707.json"
+    },
+    {
+      "case_id": "CR-23-681728-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681728_20251110_160727.json"
+    },
+    {
+      "case_id": "CR-23-684179-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684179_20251111_100345.json"
+    },
+    {
+      "case_id": "CR-23-685332-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685332_20251111_114357.json"
+    },
+    {
+      "case_id": "CR-23-679771-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679771_20251110_201450.json"
+    },
+    {
+      "case_id": "CR-23-677511-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-677511_20251110_123025.json"
+    },
+    {
+      "case_id": "CR-23-682783-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682783_20251111_075210.json"
+    },
+    {
+      "case_id": "CR-23-678655-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678655_20251110_183540.json"
+    },
+    {
+      "case_id": "CR-23-677639-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-677639_20251110_121816.json"
+    },
+    {
+      "case_id": "CR-23-681893-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681893_20251111_064211.json"
+    },
+    {
+      "case_id": "CR-23-681961-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681961_20251110_162616.json"
+    },
+    {
+      "case_id": "CR-23-687113-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-687113_20251111_141612.json"
+    },
+    {
+      "case_id": "CR-23-687898-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687898_20251111_151744.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251114_075304.json"
+    },
+    {
+      "case_id": "CR-23-680597-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680597_20251112_163519.json"
+    },
+    {
+      "case_id": "CR-23-679661-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-679661_20251110_200444.json"
+    },
+    {
+      "case_id": "CR-23-680529-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680529_20251110_144848.json"
+    },
+    {
+      "case_id": "CR-23-685876-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-685876_20251111_122421.json"
+    },
+    {
+      "case_id": "CR-23-677703-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-677703_20251110_124204.json"
+    },
+    {
+      "case_id": "CR-23-677511-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-677511_20251110_101255.json"
+    },
+    {
+      "case_id": "CR-23-679661-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-679661_20251110_135734.json"
+    },
+    {
+      "case_id": "CR-23-679964-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679964_20251110_203439.json"
+    },
+    {
+      "case_id": "CR-23-681767-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681767_20251111_063155.json"
+    },
+    {
+      "case_id": "CR-23-679242-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679242_20251110_132855.json"
+    },
+    {
+      "case_id": "CR-23-680246-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680246_20251110_143252.json"
+    },
+    {
+      "case_id": "CR-23-684218-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684218_20251111_100614.json"
+    },
+    {
+      "case_id": "CR-23-685532-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685532_20251112_172251.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251115_122043.json"
+    },
+    {
+      "case_id": "CR-23-682830-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682830_20251111_075744.json"
+    },
+    {
+      "case_id": "CR-23-678005-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-678005_20251110_173449.json"
+    },
+    {
+      "case_id": "CR-23-677620-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-677620_20251110_170213.json"
+    },
+    {
+      "case_id": "CR-23-680487-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680487_20251110_144512.json"
+    },
+    {
+      "case_id": "CR-23-680493-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680493_20251111_044340.json"
+    },
+    {
+      "case_id": "CR-23-681767-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681767_20251110_160940.json"
+    },
+    {
+      "case_id": "CR-23-682335-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682335_20251111_072226.json"
+    },
+    {
+      "case_id": "CR-23-684076-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684076_20251111_095310.json"
+    },
+    {
+      "case_id": "CR-23-687761-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-687761_20251111_150853.json"
+    },
+    {
+      "case_id": "CR-23-679256-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679256_20251110_192348.json"
+    },
+    {
+      "case_id": "CR-23-687726-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-687726_20251111_150530.json"
+    },
+    {
+      "case_id": "CR-23-686553-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-686553_20251111_132806.json"
+    },
+    {
+      "case_id": "CR-23-679771-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679771_20251110_140758.json"
+    },
+    {
+      "case_id": "CR-23-677968-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-677968_20251110_173154.json"
+    },
+    {
+      "case_id": "CR-23-683698-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-683698_20251111_091557.json"
+    },
+    {
+      "case_id": "CR-23-680811-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680811_20251111_051023.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251115_120823.json"
+    },
+    {
+      "case_id": "CR-23-678893-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678893_20251110_185601.json"
+    },
+    {
+      "case_id": "CR-23-680962-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680962_20251110_151920.json"
+    },
+    {
+      "case_id": "CR-23-680542-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680542_20251110_145149.json"
+    },
+    {
+      "case_id": "CR-23-687054-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687054_20251111_141229.json"
+    },
+    {
+      "case_id": "CR-23-685099-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-685099_20251109_214223.json"
+    },
+    {
+      "case_id": "CR-23-684816-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684816_20251110_011754.json"
+    },
+    {
+      "case_id": "CR-23-684916-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684916_20251111_110628.json"
+    },
+    {
+      "case_id": "CR-23-682664-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682664_20251111_074322.json"
+    },
+    {
+      "case_id": "CR-23-679191-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679191_20251110_191918.json"
+    },
+    {
+      "case_id": "CR-23-682116-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682116_20251111_070109.json"
+    },
+    {
+      "case_id": "CR-23-685413-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685413_20251111_114746.json"
+    },
+    {
+      "case_id": "CR-23-687789-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687789_20251111_150954.json"
+    },
+    {
+      "case_id": "CR-23-680502-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680502_20251110_144812.json"
+    },
+    {
+      "case_id": "CR-23-678204-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678204_20251110_175454.json"
+    },
+    {
+      "case_id": "CR-23-683954-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-683954_20251111_093841.json"
+    },
+    {
+      "case_id": "CR-23-678494-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678494_20251110_130707.json"
+    },
+    {
+      "case_id": "CR-23-681695-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681695_20251111_062603.json"
+    },
+    {
+      "case_id": "CR-23-684087-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684087_20251111_095335.json"
+    },
+    {
+      "case_id": "CR-23-685486-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685486_20251111_115330.json"
+    },
+    {
+      "case_id": "CR-23-678213-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-678213_20251110_175519.json"
+    },
+    {
+      "case_id": "CR-23-687075-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-687075_20251111_141359.json"
+    },
+    {
+      "case_id": "CR-23-678108-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-678108_20251110_174758.json"
+    },
+    {
+      "case_id": "CR-23-681439-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681439_20251111_060422.json"
+    },
+    {
+      "case_id": "CR-23-679695-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679695_20251110_200844.json"
+    },
+    {
+      "case_id": "CR-23-681809-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681809_20251110_161556.json"
+    },
+    {
+      "case_id": "CR-23-682944-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682944_20251111_080900.json"
+    },
+    {
+      "case_id": "CR-23-684716-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684716_20251111_104732.json"
+    },
+    {
+      "case_id": "CR-23-684829-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684829_20251110_011959.json"
+    },
+    {
+      "case_id": "CR-23-684285-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684285_20251111_100945.json"
+    },
+    {
+      "case_id": "CR-23-686627-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-686627_20251111_133553.json"
+    },
+    {
+      "case_id": "CR-23-684164-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684164_20251112_170940.json"
+    },
+    {
+      "case_id": "CR-23-681210-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681210_20251111_054213.json"
+    },
+    {
+      "case_id": "CR-23-684913-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684913_20251111_110604.json"
+    },
+    {
+      "case_id": "CR-23-682264-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682264_20251111_071640.json"
+    },
+    {
+      "case_id": "CR-23-681893-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681893_20251110_162121.json"
+    },
+    {
+      "case_id": "CR-23-681564-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681564_20251110_155726.json"
+    },
+    {
+      "case_id": "CR-23-687838-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687838_20251111_151341.json"
+    },
+    {
+      "case_id": "CR-23-686579-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686579_20251111_133027.json"
+    },
+    {
+      "case_id": "CR-23-684095-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684095_20251111_095400.json"
+    },
+    {
+      "case_id": "CR-23-682416-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682416_20251111_072950.json"
+    },
+    {
+      "case_id": "CR-23-683714-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-683714_20251111_091719.json"
+    },
+    {
+      "case_id": "CR-23-678044-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678044_20251110_174157.json"
+    },
+    {
+      "case_id": "CR-23-684925-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684925_20251109_210821.json"
+    },
+    {
+      "case_id": "CR-23-683558-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-683558_20251111_090708.json"
+    },
+    {
+      "case_id": "CR-23-678818-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678818_20251110_185024.json"
+    },
+    {
+      "case_id": "CR-23-687409-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687409_20251111_144033.json"
+    },
+    {
+      "case_id": "CR-23-686805-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686805_20251111_134818.json"
+    },
+    {
+      "case_id": "CR-23-687122-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687122_20251111_141713.json"
+    },
+    {
+      "case_id": "CR-23-686202-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686202_20251111_125232.json"
+    },
+    {
+      "case_id": "CR-23-685963-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685963_20251111_123332.json"
+    },
+    {
+      "case_id": "CR-23-682237-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682237_20251111_071255.json"
+    },
+    {
+      "case_id": "CR-23-680789-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680789_20251111_050819.json"
+    },
+    {
+      "case_id": "CR-23-680939-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680939_20251112_163845.json"
+    },
+    {
+      "case_id": "CR-23-681269-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681269_20251111_054805.json"
+    },
+    {
+      "case_id": "CR-23-685968-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-685968_20251111_123333.json"
+    },
+    {
+      "case_id": "CR-23-684859-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684859_20251109_205421.json"
+    },
+    {
+      "case_id": "CR-23-681240-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681240_20251110_153711.json"
+    },
+    {
+      "case_id": "CR-23-687342-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687342_20251111_143518.json"
+    },
+    {
+      "case_id": "CR-23-678574-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678574_20251110_182824.json"
+    },
+    {
+      "case_id": "CR-23-682039-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682039_20251111_065525.json"
+    },
+    {
+      "case_id": "CR-23-682987-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682987_20251111_081201.json"
+    },
+    {
+      "case_id": "CR-23-677511-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-677511_20251110_165353.json"
+    },
+    {
+      "case_id": "CR-23-680962-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680962_20251111_052223.json"
+    },
+    {
+      "case_id": "CR-23-677511-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-677511_20251110_122217.json"
+    },
+    {
+      "case_id": "CR-23-680486-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680486_20251110_144511.json"
+    },
+    {
+      "case_id": "CR-23-677995-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-677995_20251110_173327.json"
+    },
+    {
+      "case_id": "CR-23-684893-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684893_20251109_210131.json"
+    },
+    {
+      "case_id": "CR-23-678866-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678866_20251110_185401.json"
+    },
+    {
+      "case_id": "CR-23-682139-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682139_20251111_070248.json"
+    },
+    {
+      "case_id": "CR-23-682475-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682475_20251111_073315.json"
+    },
+    {
+      "case_id": "CR-23-685452-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685452_20251111_115059.json"
+    },
+    {
+      "case_id": "CR-23-685302-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-685302_20251111_114120.json"
+    },
+    {
+      "case_id": "CR-23-687005-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-687005_20251111_140703.json"
+    },
+    {
+      "case_id": "CR-23-677962-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-677962_20251110_173052.json"
+    },
+    {
+      "case_id": "CR-23-682036-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682036_20251111_065524.json"
+    },
+    {
+      "case_id": "CR-23-679502-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679502_20251110_194543.json"
+    },
+    {
+      "case_id": "CR-23-684916-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684916_20251109_210624.json"
+    },
+    {
+      "case_id": "CR-23-678546-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678546_20251110_182550.json"
+    },
+    {
+      "case_id": "CR-23-684859-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684859_20251111_110201.json"
+    },
+    {
+      "case_id": "CR-23-677647-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-677647_20251110_170406.json"
+    },
+    {
+      "case_id": "CR-23-681408-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681408_20251110_154817.json"
+    },
+    {
+      "case_id": "CR-23-680789-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680789_20251110_150552.json"
+    },
+    {
+      "case_id": "CR-23-683532-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-683532_20251111_090536.json"
+    },
+    {
+      "case_id": "CR-23-681082-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681082_20251111_053149.json"
+    },
+    {
+      "case_id": "CR-23-686696-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-686696_20251111_134038.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251115_125347.json"
+    },
+    {
+      "case_id": "CR-23-682343-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682343_20251111_072259.json"
+    },
+    {
+      "case_id": "CR-23-682791-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682791_20251111_075512.json"
+    },
+    {
+      "case_id": "CR-23-684908-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684908_20251111_110603.json"
+    },
+    {
+      "case_id": "CR-23-682973-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682973_20251111_081115.json"
+    },
+    {
+      "case_id": "CR-23-683611-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-683611_20251111_091038.json"
+    },
+    {
+      "case_id": "CR-23-685090-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685090_20251109_214046.json"
+    },
+    {
+      "case_id": "CR-23-679843-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679843_20251110_141324.json"
+    },
+    {
+      "case_id": "CR-23-681240-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681240_20251111_054400.json"
+    },
+    {
+      "case_id": "CR-23-686558-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686558_20251111_132827.json"
+    },
+    {
+      "case_id": "CR-23-677993-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-677993_20251110_173326.json"
+    },
+    {
+      "case_id": "CR-23-681843-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681843_20251111_063917.json"
+    },
+    {
+      "case_id": "CR-23-682212-B",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682212_20251111_071041.json"
+    },
+    {
+      "case_id": "CR-23-680487-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680487_20251111_044237.json"
+    },
+    {
+      "case_id": "CR-23-683336-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-683336_20251111_084636.json"
+    },
+    {
+      "case_id": "CR-23-678380-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-678380_20251110_180858.json"
+    },
+    {
+      "case_id": "CR-23-681236-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681236_20251111_054359.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251115_120747.json"
+    },
+    {
+      "case_id": "CR-23-685317-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-685317_20251111_114247.json"
+    },
+    {
+      "case_id": "CR-23-681966-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681966_20251110_162619.json"
+    },
+    {
+      "case_id": "CR-23-681428-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681428_20251111_060358.json"
+    },
+    {
+      "case_id": "CR-23-681182-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681182_20251111_054038.json"
+    },
+    {
+      "case_id": "CR-23-683721-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-683721_20251111_091720.json"
+    },
+    {
+      "case_id": "CR-23-682776-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682776_20251111_075136.json"
+    },
+    {
+      "case_id": "CR-23-680244-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680244_20251111_010549.json"
+    },
+    {
+      "case_id": "CR-23-681292-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681292_20251111_054922.json"
+    },
+    {
+      "case_id": "CR-23-682340-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682340_20251111_072258.json"
+    },
+    {
+      "case_id": "CR-23-681685-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681685_20251110_160535.json"
+    },
+    {
+      "case_id": "CR-23-677706-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-677706_20251110_124205.json"
+    },
+    {
+      "case_id": "CR-23-678927-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-678927_20251110_185813.json"
+    },
+    {
+      "case_id": "CR-23-686969-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-686969_20251111_135849.json"
+    },
+    {
+      "case_id": "CR-23-681637-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681637_20251111_061840.json"
+    },
+    {
+      "case_id": "CR-23-681347-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681347_20251111_055450.json"
+    },
+    {
+      "case_id": "CR-23-681751-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681751_20251110_160850.json"
+    },
+    {
+      "case_id": "CR-23-680244-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680244_20251110_143251.json"
+    },
+    {
+      "case_id": "CR-23-680536-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680536_20251112_163449.json"
+    },
+    {
+      "case_id": "CR-23-678706-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678706_20251110_183839.json"
+    },
+    {
+      "case_id": "CR-23-684542-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684542_20251111_103017.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_053842.json"
+    },
+    {
+      "case_id": "CR-23-681907-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681907_20251111_064531.json"
+    },
+    {
+      "case_id": "CR-23-687050-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687050_20251111_141229.json"
+    },
+    {
+      "case_id": "CR-23-684948-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684948_20251111_111037.json"
+    },
+    {
+      "case_id": "CR-23-680241-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680241_20251111_010549.json"
+    },
+    {
+      "case_id": "CR-23-687425-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687425_20251111_144154.json"
+    },
+    {
+      "case_id": "CR-23-677748-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-677748_20251114_070408.json"
+    },
+    {
+      "case_id": "CR-23-681814-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681814_20251110_161558.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_054025.json"
+    },
+    {
+      "case_id": "CR-23-684399-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684399_20251111_102110.json"
+    },
+    {
+      "case_id": "CR-23-686428-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686428_20251111_131856.json"
+    },
+    {
+      "case_id": "CR-23-686748-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-686748_20251111_134449.json"
+    },
+    {
+      "case_id": "CR-23-679166-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-679166_20251110_132450.json"
+    },
+    {
+      "case_id": "CR-23-686366-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-686366_20251111_131039.json"
+    },
+    {
+      "case_id": "CR-23-679242-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679242_20251110_192209.json"
+    },
+    {
+      "case_id": "CR-23-679843-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679843_20251110_202155.json"
+    },
+    {
+      "case_id": "CR-23-680405-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680405_20251111_043443.json"
+    },
+    {
+      "case_id": "CR-23-684755-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684755_20251111_105228.json"
+    },
+    {
+      "case_id": "CR-23-687062-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687062_20251111_141248.json"
+    },
+    {
+      "case_id": "CR-23-684829-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684829_20251109_204815.json"
+    },
+    {
+      "case_id": "CR-23-681148-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681148_20251111_053839.json"
+    },
+    {
+      "case_id": "CR-23-680546-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680546_20251110_145151.json"
+    },
+    {
+      "case_id": "CR-23-679849-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679849_20251110_202221.json"
+    },
+    {
+      "case_id": "CR-23-680508-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680508_20251111_044419.json"
+    },
+    {
+      "case_id": "CR-23-686603-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686603_20251111_133413.json"
+    },
+    {
+      "case_id": "CR-23-681429-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681429_20251111_060358.json"
+    },
+    {
+      "case_id": "CR-23-681600-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681600_20251111_061615.json"
+    },
+    {
+      "case_id": "CR-23-681236-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681236_20251110_153410.json"
+    },
+    {
+      "case_id": "CR-23-686329-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686329_20251111_130527.json"
+    },
+    {
+      "case_id": "CR-23-680529-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680529_20251111_044542.json"
+    },
+    {
+      "case_id": "CR-23-684238-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684238_20251111_100715.json"
+    },
+    {
+      "case_id": "CR-23-677820-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-677820_20251110_171848.json"
+    },
+    {
+      "case_id": "CR-23-684708-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684708_20251111_104707.json"
+    },
+    {
+      "case_id": "CR-23-681662-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681662_20251111_062225.json"
+    },
+    {
+      "case_id": "CR-23-677703-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-677703_20251110_170732.json"
+    },
+    {
+      "case_id": "CR-23-679697-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679697_20251110_200844.json"
+    },
+    {
+      "case_id": "CR-23-679776-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679776_20251110_201509.json"
+    },
+    {
+      "case_id": "CR-23-682845-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682845_20251111_075918.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_053214.json"
+    },
+    {
+      "case_id": "CR-23-680788-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680788_20251111_050819.json"
+    },
+    {
+      "case_id": "CR-23-678926-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678926_20251110_185813.json"
+    },
+    {
+      "case_id": "CR-23-680969-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680969_20251111_052224.json"
+    },
+    {
+      "case_id": "CR-23-686103-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686103_20251111_124630.json"
+    },
+    {
+      "case_id": "CR-23-686994-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686994_20251111_140400.json"
+    },
+    {
+      "case_id": "CR-23-679024-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-679024_20251110_190501.json"
+    },
+    {
+      "case_id": "CR-23-685959-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-685959_20251111_123313.json"
+    },
+    {
+      "case_id": "CR-23-687658-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687658_20251111_145909.json"
+    },
+    {
+      "case_id": "CR-23-680548-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680548_20251110_145152.json"
+    },
+    {
+      "case_id": "CR-23-680486-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680486_20251111_044237.json"
+    },
+    {
+      "case_id": "CR-23-681223-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681223_20251111_054238.json"
+    },
+    {
+      "case_id": "CR-23-677511-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-677511_20251110_100753.json"
+    },
+    {
+      "case_id": "CR-23-687843-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-687843_20251111_151400.json"
+    },
+    {
+      "case_id": "CR-23-681814-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681814_20251111_063645.json"
+    },
+    {
+      "case_id": "CR-23-683403-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-683403_20251111_085353.json"
+    },
+    {
+      "case_id": "CR-23-684948-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684948_20251109_211300.json"
+    },
+    {
+      "case_id": "CR-23-681131-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681131_20251111_053513.json"
+    },
+    {
+      "case_id": "CR-23-679253-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-679253_20251110_192348.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_053712.json"
+    },
+    {
+      "case_id": "CR-23-680570-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680570_20251111_045101.json"
+    },
+    {
+      "case_id": "CR-23-687279-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-687279_20251111_143009.json"
+    },
+    {
+      "case_id": "CR-23-686594-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-686594_20251111_133353.json"
+    },
+    {
+      "case_id": "CR-23-682813-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682813_20251111_075631.json"
+    },
+    {
+      "case_id": "CR-23-679161-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679161_20251110_132448.json"
+    },
+    {
+      "case_id": "CR-23-679849-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679849_20251110_141327.json"
+    },
+    {
+      "case_id": "CR-23-682101-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682101_20251112_164946.json"
+    },
+    {
+      "case_id": "CR-23-678191-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-678191_20251110_175347.json"
+    },
+    {
+      "case_id": "CR-23-681685-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681685_20251111_062536.json"
+    },
+    {
+      "case_id": "CR-23-679776-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679776_20251110_140802.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251115_121405.json"
+    },
+    {
+      "case_id": "CR-23-681284-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681284_20251110_154045.json"
+    },
+    {
+      "case_id": "CR-23-682021-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682021_20251111_065353.json"
+    },
+    {
+      "case_id": "CR-23-684551-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684551_20251111_103036.json"
+    },
+    {
+      "case_id": "CR-23-685973-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685973_20251111_123356.json"
+    },
+    {
+      "case_id": "CR-23-682158-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682158_20251110_164152.json"
+    },
+    {
+      "case_id": "CR-23-682417-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682417_20251111_072951.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_054502.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251111_105917.json"
+    },
+    {
+      "case_id": "CR-23-686969-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-686969_20251111_140152.json"
+    },
+    {
+      "case_id": "CR-23-684667-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684667_20251111_104412.json"
+    },
+    {
+      "case_id": "CR-23-677934-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-677934_20251110_172921.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251115_121024.json"
+    },
+    {
+      "case_id": "CR-23-678208-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-678208_20251110_175455.json"
+    },
+    {
+      "case_id": "CR-23-677595-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-677595_20251110_170021.json"
+    },
+    {
+      "case_id": "CR-23-685196-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685196_20251111_113316.json"
+    },
+    {
+      "case_id": "CR-23-683405-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-683405_20251111_085353.json"
+    },
+    {
+      "case_id": "CR-23-679691-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679691_20251110_140046.json"
+    },
+    {
+      "case_id": "CR-23-687743-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687743_20251111_150657.json"
+    },
+    {
+      "case_id": "CR-23-681600-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681600_20251110_155918.json"
+    },
+    {
+      "case_id": "CR-23-682064-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682064_20251111_065711.json"
+    },
+    {
+      "case_id": "CR-23-685299-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-685299_20251111_114119.json"
+    },
+    {
+      "case_id": "CR-23-684022-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684022_20251111_094456.json"
+    },
+    {
+      "case_id": "CR-23-684172-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684172_20251111_100257.json"
+    },
+    {
+      "case_id": "CR-23-682594-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682594_20251111_073949.json"
+    },
+    {
+      "case_id": "CR-23-681734-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681734_20251110_160730.json"
+    },
+    {
+      "case_id": "CR-23-685027-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685027_20251109_212844.json"
+    },
+    {
+      "case_id": "CR-23-685639-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685639_20251111_120623.json"
+    },
+    {
+      "case_id": "CR-23-685027-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685027_20251111_111800.json"
+    },
+    {
+      "case_id": "CR-23-678705-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-678705_20251110_183839.json"
+    },
+    {
+      "case_id": "CR-23-685384-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-685384_20251111_114606.json"
+    },
+    {
+      "case_id": "CR-23-681182-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681182_20251110_153203.json"
+    },
+    {
+      "case_id": "CR-23-685710-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685710_20251111_121355.json"
+    },
+    {
+      "case_id": "CR-23-678601-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-678601_20251110_183204.json"
+    },
+    {
+      "case_id": "CR-23-687475-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687475_20251111_144544.json"
+    },
+    {
+      "case_id": "CR-23-687502-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687502_20251111_144719.json"
+    },
+    {
+      "case_id": "CR-23-687765-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-687765_20251112_174418.json"
+    },
+    {
+      "case_id": "CR-23-685062-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685062_20251109_213543.json"
+    },
+    {
+      "case_id": "CR-23-681823-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681823_20251111_063711.json"
+    },
+    {
+      "case_id": "CR-23-680537-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680537_20251111_044603.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_021410.json"
+    },
+    {
+      "case_id": "CR-23-684913-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684913_20251109_210550.json"
+    },
+    {
+      "case_id": "CR-23-678583-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-678583_20251110_182844.json"
+    },
+    {
+      "case_id": "CR-23-682139-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682139_20251110_163848.json"
+    },
+    {
+      "case_id": "CR-23-680923-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680923_20251110_151813.json"
+    },
+    {
+      "case_id": "CR-23-687902-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687902_20251111_151745.json"
+    },
+    {
+      "case_id": "CR-23-681408-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681408_20251111_060013.json"
+    },
+    {
+      "case_id": "CR-23-681163-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681163_20251110_153107.json"
+    },
+    {
+      "case_id": "CR-23-679691-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679691_20251110_200823.json"
+    },
+    {
+      "case_id": "CR-23-687420-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-687420_20251111_144104.json"
+    },
+    {
+      "case_id": "CR-23-680414-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680414_20251111_043502.json"
+    },
+    {
+      "case_id": "CR-23-681564-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681564_20251111_061134.json"
+    },
+    {
+      "case_id": "CR-23-679113-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679113_20251112_162010.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_053318.json"
+    },
+    {
+      "case_id": "CR-23-683392-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-683392_20251111_085035.json"
+    },
+    {
+      "case_id": "CR-23-683857-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-683857_20251111_093205.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_052755.json"
+    },
+    {
+      "case_id": "CR-23-686084-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686084_20251111_124456.json"
+    },
+    {
+      "case_id": "CR-23-679141-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679141_20251110_132139.json"
+    },
+    {
+      "case_id": "CR-23-684880-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684880_20251109_205836.json"
+    },
+    {
+      "case_id": "CR-23-681347-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681347_20251110_154319.json"
+    },
+    {
+      "case_id": "CR-23-685099-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-685099_20251111_112608.json"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_053913.json"
+    },
+    {
+      "case_id": "CR-23-681675-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681675_20251111_062513.json"
+    },
+    {
+      "case_id": "CR-23-682088-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682088_20251111_065911.json"
+    },
+    {
+      "case_id": "CR-23-681268-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681268_20251111_054805.json"
+    },
+    {
+      "case_id": "CR-23-687019-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687019_20251111_140752.json"
+    },
+    {
+      "case_id": "CR-23-679949-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679949_20251110_203400.json"
+    },
+    {
+      "case_id": "CR-23-680246-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680246_20251111_012321.json"
+    },
+    {
+      "case_id": "CR-23-680542-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680542_20251111_044903.json"
+    },
+    {
+      "case_id": "CR-23-681809-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681809_20251111_063626.json"
+    },
+    {
+      "case_id": "CR-23-678555-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678555_20251110_182611.json"
+    },
+    {
+      "case_id": "CR-23-680508-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680508_20251110_144815.json"
+    },
+    {
+      "case_id": "CR-23-681770-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-681770_20251111_063212.json"
+    },
+    {
+      "case_id": "CR-23-686473-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-686473_20251111_132109.json"
+    },
+    {
+      "case_id": "CR-23-681466-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681466_20251111_060617.json"
+    },
+    {
+      "case_id": "CR-23-682146-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682146_20251111_070350.json"
+    },
+    {
+      "case_id": "CR-23-679166-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-679166_20251110_191657.json"
+    },
+    {
+      "case_id": "CR-23-682270-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682270_20251111_071704.json"
+    },
+    {
+      "case_id": "CR-23-681082-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681082_20251110_152749.json"
+    },
+    {
+      "case_id": "CR-23-687732-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-687732_20251111_150631.json"
+    },
+    {
+      "case_id": "CR-23-677547-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-677547_20251110_123245.json"
+    },
+    {
+      "case_id": "CR-23-681615-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681615_20251111_061655.json"
+    },
+    {
+      "case_id": "CR-23-678035-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678035_20251110_173838.json"
+    },
+    {
+      "case_id": "CR-23-682477-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682477_20251111_073315.json"
+    },
+    {
+      "case_id": "CR-23-681292-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681292_20251110_154049.json"
+    },
+    {
+      "case_id": "CR-23-682064-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682064_20251110_163438.json"
+    },
+    {
+      "case_id": "CR-23-686952-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-686952_20251111_135721.json"
+    },
+    {
+      "case_id": "CR-23-686861-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686861_20251111_135139.json"
+    },
+    {
+      "case_id": "CR-23-684049-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684049_20251111_094853.json"
+    },
+    {
+      "case_id": "CR-23-683971-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-683971_20251111_094208.json"
+    },
+    {
+      "case_id": "CR-23-679161-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679161_20251110_191638.json"
+    },
+    {
+      "case_id": "CR-23-678105-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678105_20251110_174658.json"
+    },
+    {
+      "case_id": "CR-23-686081-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-686081_20251111_124432.json"
+    },
+    {
+      "case_id": "CR-23-680502-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680502_20251111_044359.json"
+    },
+    {
+      "case_id": "CR-23-680923-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680923_20251111_052007.json"
+    },
+    {
+      "case_id": "CR-23-684996-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684996_20251109_212230.json"
+    },
+    {
+      "case_id": "CR-23-682361-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682361_20251111_072619.json"
+    },
+    {
+      "case_id": "CR-23-683337-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-683337_20251111_084636.json"
+    },
+    {
+      "case_id": "CR-23-677996-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-677996_20251110_173427.json"
+    },
+    {
+      "case_id": "CR-23-684679-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684679_20251111_104438.json"
+    },
+    {
+      "case_id": "CR-23-684925-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684925_20251111_110655.json"
+    },
+    {
+      "case_id": "CR-23-680072-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680072_20251110_142227.json"
+    },
+    {
+      "case_id": "CR-23-684299-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684299_20251111_101310.json"
+    },
+    {
+      "case_id": "CR-23-677816-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-677816_20251110_171829.json"
+    },
+    {
+      "case_id": "CR-23-680201-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680201_20251110_142917.json"
+    },
+    {
+      "case_id": "CR-23-678600-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-678600_20251110_183204.json"
+    },
+    {
+      "case_id": "CR-23-683457-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-683457_20251111_085848.json"
+    },
+    {
+      "case_id": "CR-23-685254-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-685254_20251111_113734.json"
+    },
+    {
+      "case_id": "CR-23-683279-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-683279_20251111_084251.json"
+    },
+    {
+      "case_id": "CR-23-684636-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684636_20251111_104000.json"
+    },
+    {
+      "case_id": "CR-23-684829-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684829_20251111_105918.json"
+    },
+    {
+      "case_id": "CR-23-686692-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686692_20251111_134037.json"
+    },
+    {
+      "case_id": "CR-23-680555-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680555_20251111_044951.json"
+    },
+    {
+      "case_id": "CR-23-681435-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681435_20251111_060421.json"
+    },
+    {
+      "case_id": "CR-23-681907-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681907_20251110_162241.json"
+    },
+    {
+      "case_id": "CR-23-680967-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680967_20251111_052224.json"
+    },
+    {
+      "case_id": "CR-23-679586-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-679586_20251110_135129.json"
+    },
+    {
+      "case_id": "CR-23-681925-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-681925_20251111_064615.json"
+    },
+    {
+      "case_id": "CR-23-682146-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682146_20251110_164145.json"
+    },
+    {
+      "case_id": "CR-23-686612-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686612_20251111_133439.json"
+    },
+    {
+      "case_id": "CR-23-679452-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679452_20251110_194026.json"
+    },
+    {
+      "case_id": "CR-23-685769-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-685769_20251111_121707.json"
+    },
+    {
+      "case_id": "CR-23-682921-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682921_20251111_080800.json"
+    },
+    {
+      "case_id": "CR-23-682787-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682787_20251111_075511.json"
+    },
+    {
+      "case_id": "CR-23-686077-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686077_20251111_124431.json"
+    },
+    {
+      "case_id": "CR-23-684125-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684125_20251111_095802.json"
+    },
+    {
+      "case_id": "CR-23-684312-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-684312_20251111_101332.json"
+    },
+    {
+      "case_id": "CR-23-680546-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-680546_20251111_044924.json"
+    },
+    {
+      "case_id": "CR-23-678034-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-678034_20251110_173837.json"
+    },
+    {
+      "case_id": "CR-23-682138-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682138_20251111_070248.json"
+    },
+    {
+      "case_id": "CR-23-682794-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-682794_20251111_075537.json"
+    },
+    {
+      "case_id": "CR-23-687955-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687955_20251111_152315.json"
+    },
+    {
+      "case_id": "CR-23-680787-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680787_20251111_050819.json"
+    },
+    {
+      "case_id": "CR-23-685251-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-685251_20251111_113734.json"
+    },
+    {
+      "case_id": "CR-23-682283-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-682283_20251110_164751.json"
+    },
+    {
+      "case_id": "CR-23-686913-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-686913_20251111_135518.json"
+    },
+    {
+      "case_id": "CR-23-683610-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-683610_20251111_091038.json"
+    },
+    {
+      "case_id": "CR-23-678129-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-678129_20251112_161010.json"
+    },
+    {
+      "case_id": "CR-23-680811-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-680811_20251110_150623.json"
+    },
+    {
+      "case_id": "CR-23-679141-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-679141_20251110_191525.json"
+    },
+    {
+      "case_id": "CR-23-686408-A",
+      "judge": "SHIRLEY STRICKLAND SAFFOLD",
+      "json_file": "out/2023/2023-686408_20251111_131512.json"
+    },
+    {
+      "case_id": "CR-23-687330-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-687330_20251111_143428.json"
+    }
+  ],
+  "saffold_with_pdfs": [
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251114_075304.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251115_122043.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251115_120823.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251115_125347.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251115_120747.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_053842.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_054025.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_053214.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_053712.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251115_121405.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_054502.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251111_105917.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251115_121024.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_021410.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_053318.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_052755.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    },
+    {
+      "case_id": "CR-23-684826-A",
+      "judge": "JEFFREY P SAFFOLD",
+      "json_file": "out/2023/2023-684826_20251116_053913.json",
+      "pdf_count": 27,
+      "pdf_dir": "out/2023/pdfs/CR-23-684826-A"
+    }
+  ],
+  "creator_stats": {
+    "ABBYY FineReader Engine 12": 26,
+    "Brad B Davis": 1
+  },
+  "author_stats": {
+    "Brad B Davis": 1
+  },
+  "title_stats": {
+    "\u00abjournal_bar_code\u00bb": 1
+  }
+}

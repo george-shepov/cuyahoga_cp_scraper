@@ -1,0 +1,246 @@
+================================================================================
+OCTOBER 2025 CUYAHOGA COUNTY CASES - COMPREHENSIVE ANALYSIS
+================================================================================
+
+Total Cases Found: 447
+
+
+CHARGES (Top 15):
+------------------------------------------------------------
+  TRAFFICKING OFFENSE:    3 (  0.7%)
+  VANDALISM:    2 (  0.4%)
+  BURGLARY:    2 (  0.4%)
+  "FAILURE TO COMPLY WITH ORDER:    2 (  0.4%)
+  FELONIOUS ASSAULT:    2 (  0.4%)
+  GROSS SEXUAL IMPOSITION:    1 (  0.2%)
+  THEFT; AGGRAVATED THEFT:    1 (  0.2%)
+  "ATTEMPTED:    1 (  0.2%)
+  HAVING WEAPONS WHILE UNDER DISABILITY:    1 (  0.2%)
+  AGGRAVATED ARSON:    1 (  0.2%)
+  DRUG POSSESSION:    1 (  0.2%)
+  IMPROPERLY HANDLING FIREARMS IN A MOTOR VEHICLE:    1 (  0.2%)
+  RSP - MV:    1 (  0.2%)
+  DRIVING WHILE UNDER THE INFLUENCE OF ALCOHOL OR DRUGS:    1 (  0.2%)
+
+
+ASSIGNED JUDGES (Top 15):
+------------------------------------------------------------
+  ARRAIGNMENT ROOM:  323 ( 72.3%)
+  JOHN P O'DONNELL:   10 (  2.2%)
+  LAUREN C MOORE:    9 (  2.0%)
+  PETER J CORRIGAN:    8 (  1.8%)
+  JOAN SYNENBERG:    7 (  1.6%)
+  MICHAEL P SHAUGHNESSY:    6 (  1.3%)
+  BRIAN MOONEY:    5 (  1.1%)
+  DEBORAH M TURNER:    5 (  1.1%)
+  KEVIN J KELLEY:    5 (  1.1%)
+  JOHN J SPELLACY:    5 (  1.1%)
+  CASSANDRA COLLIER-WILLIAMS:    5 (  1.1%)
+  JENNIFER O'DONNELL:    4 (  0.9%)
+  NANCY A FUERST:    4 (  0.9%)
+  WILLIAM F. B. VODREY:    4 (  0.9%)
+  SHANNON M GALLAGHER:    4 (  0.9%)
+
+
+CASE STATUS:
+------------------------------------------------------------
+  UNKNOWN:  183 ( 40.9%)
+  DEFN JAIL:  110 ( 24.6%)
+  DEFN BAIL:   69 ( 15.4%)
+  DEFN LVJAIL:   67 ( 15.0%)
+  DEFN CAPIAS:   17 (  3.8%)
+  DEFN CLINIC:    1 (  0.2%)
+
+
+ARRESTING AGENCIES (Top 10):
+------------------------------------------------------------
+  CLEVELAND POLICE:  148 ( 33.1%)
+  SHERIFF:   40 (  8.9%)
+  C.M.H.A.:   20 (  4.5%)
+  EUCLID:   18 (  4.0%)
+  OHIO STATE PATROL:   13 (  2.9%)
+  LAKEWOOD:   13 (  2.9%)
+  STRONGSVILLE:   12 (  2.7%)
+  CLEVELAND HTS.:   11 (  2.5%)
+  PARMA:   10 (  2.2%)
+  NORTH OLMSTED:    9 (  2.0%)
+
+
+RACES:
+------------------------------------------------------------
+  BLACK:  303 ( 67.8%)
+  WHITE:  113 ( 25.3%)
+  N/A:   13 (  2.9%)
+  OTHER:   10 (  2.2%)
+  HISPANIC:    5 (  1.1%)
+  ASIAN:    3 (  0.7%)
+
+
+GENDER:
+------------------------------------------------------------
+  MALE:  371 ( 83.0%)
+  FEMALE:   75 ( 16.8%)
+  NOT SPECIFIED:    1 (  0.2%)
+
+
+TOP DEFENDANTS (Top 10):
+------------------------------------------------------------
+  DAWAN COGBURN: 5
+  WHITNEY D LUTCH: 3
+  JOSEPH KIRK: 3
+  WILLIE LAROY VICKERS: 3
+  WILLIAM L VINCENT: 2
+  BRANDON C HALL: 2
+  FREDRICK MARTIN: 2
+  DEVENY M HOLIFIELD: 2
+  KENNETH ALLAN PINKNEY: 2
+  FRANCISCO SANCHEZ: 2
+
+
+SAMPLE CASES (First 20):
+--------------------------------------------------------------------------------
+ 1. CR-23-684889-A - 2023-684889
+    Defendant: WILLIAM L VINCENT
+    Judge: BRIAN MOONEY
+    Status: DEFN LVJAIL
+    Agency: CLEVELAND POLICE
+    Race/Sex: BLACK/MALE
+
+ 2. CR-23-684909-A - 2023-684909
+    Defendant: BUDHI RAJ RAI
+    Judge: PETER J CORRIGAN
+    Status: DEFN LVJAIL
+    Agency: CLEVELAND POLICE
+    Race/Sex: ASIAN/MALE
+
+ 3. CR-23-684920-A - 2023-684920
+    Defendant: ROBBEONNA LITTLEJOHN
+    Judge: PETER J CORRIGAN
+    Status: DEFN CLINIC
+    Agency: FAIRVIEW PARK
+    Race/Sex: BLACK/FEMALE
+
+ 4. CR-23-684948-A - 2023-684948
+    Defendant: DOMEYONO BAILEY
+    Judge: JEFFREY P SAFFOLD
+    Status: DEFN LVJAIL
+    Agency: INDEPENDENCE
+    Race/Sex: BLACK/MALE
+
+ 5. CR-23-684956-A - 2023-684956
+    Defendant: WILLIAM L VINCENT
+    Judge: BRIAN MOONEY
+    Status: DEFN LVJAIL
+    Agency: CLEVELAND POLICE
+    Race/Sex: BLACK/MALE
+
+ 6. CR-23-684984-A - 2023-684984
+    Defendant: SARAH A STRUNK
+    Judge: MICHAEL P SHAUGHNESSY
+    Status: DEFN JAIL
+    Agency: CLEVELAND POLICE
+    Race/Sex: WHITE/FEMALE
+
+ 7. CR-23-684996-A - 2023-684996
+    Defendant: GREGORY JOHNSON
+    Judge: JEFFREY P SAFFOLD
+    Status: DEFN BAIL
+    Agency: OHIO DEPT PUBLIC SAFETY
+    Race/Sex: BLACK/MALE
+
+ 8. CR-23-684998-A - 2023-684998
+    Defendant: ARIA FRAZIER
+    Judge: LAUREN C MOORE
+    Status: DEFN BAIL
+    Agency: FAIRVIEW PARK
+    Race/Sex: BLACK/FEMALE
+
+ 9. CR-23-685002-A - 2023-685002
+    Defendant: MONICA SLEDGE
+    Judge: JENNIFER O'DONNELL
+    Status: DEFN JAIL
+    Agency: EAST CLEVELAND POLICE
+    Race/Sex: BLACK/FEMALE
+
+10. CR-23-685085-A - 2023-685085
+    Defendant: JOHNNY BURRELL
+    Judge: DEBORAH M TURNER
+    Status: DEFN JAIL
+    Agency: STATE OF OHIO
+    Race/Sex: BLACK/MALE
+
+11. CR-23-685122-A - 2023-685122
+    Defendant: WILLIAM FAIR
+    Judge: MICHAEL P SHAUGHNESSY
+    Status: DEFN JAIL
+    Agency: C.M.H.A.
+    Race/Sex: BLACK/MALE
+
+12. CR-25-706395-A - 2025-706395
+    Defendant: STEPHANIE LYNN PLACEK
+    Judge: ARRAIGNMENT ROOM
+    Status: UNKNOWN
+    Agency: BROOK PARK
+    Race/Sex: WHITE/FEMALE
+
+13. CR-25-706396-A - 2025-706396
+    Defendant: JASON VICARIO
+    Judge: JENNIFER O'DONNELL
+    Status: DEFN JAIL
+    Agency: OHIO STATE PATROL
+    Race/Sex: WHITE/MALE
+
+14. CR-25-706397-A - 2025-706397
+    Defendant: GODFREY VERDADE
+    Judge: NANCY A FUERST
+    Status: DEFN BAIL
+    Agency: ROCKY RIVER
+    Race/Sex: BLACK/MALE
+
+15. CR-25-706398-A - 2025-706398
+    Defendant: PRINCE ANTONIO CONVERSE
+    Judge: ARRAIGNMENT ROOM
+    Status: DEFN BAIL
+    Agency: WESTLAKE
+    Race/Sex: BLACK/MALE
+
+16. CR-25-706401-A - 2025-706401
+    Defendant: BRANDON C HALL
+    Judge: ARRAIGNMENT ROOM
+    Status: DEFN CAPIAS
+    Agency: RICHMOND HEIGHTS
+    Race/Sex: BLACK/MALE
+
+17. CR-25-706401-A - 2025-706401
+    Defendant: BRANDON C HALL
+    Judge: ARRAIGNMENT ROOM
+    Status: DEFN CAPIAS
+    Agency: RICHMOND HEIGHTS
+    Race/Sex: BLACK/MALE
+
+18. CR-25-706403-A - 2025-706403
+    Defendant: WHITNEY D LUTCH
+    Judge: KEVIN J KELLEY
+    Status: DEFN LVJAIL
+    Agency: PARMA
+    Race/Sex: WHITE/FEMALE
+
+19. CR-25-706403-A - 2025-706403
+    Defendant: WHITNEY D LUTCH
+    Judge: KEVIN J KELLEY
+    Status: DEFN LVJAIL
+    Agency: PARMA
+    Race/Sex: WHITE/FEMALE
+
+20. CR-25-706403-A - 2025-706403
+    Defendant: WHITNEY D LUTCH
+    Judge: KEVIN J KELLEY
+    Status: DEFN LVJAIL
+    Agency: PARMA
+    Race/Sex: WHITE/FEMALE
+
+
+================================================================================
+Analysis Complete - 447 cases processed
+================================================================================
+

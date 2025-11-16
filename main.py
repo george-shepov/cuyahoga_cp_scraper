@@ -1,26 +1,33 @@
 
-import asyncio, json, os, re, time, argparse
+import asyncio, json, os, re, time, argparse, csv, io, fcntl
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-import aiohttp
-import aiofiles
 
 from pydantic import BaseModel, field_validator
 from rich.console import Console
 from rich.table import Table
-from rich.progress import Progress
+from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn, SpinnerColumn
+from rich.panel import Panel
+from rich.markdown import Markdown
 from tenacity import retry, stop_after_attempt, wait_fixed
 
-from playwright.async_api import async_playwright, Page, TimeoutError as PWTimeout
+from playwright.async_api import async_playwright, Page, Playwright, TimeoutError as PWTimeout
 
-# Try to import statistics and dashboard modules
+# Try to import statistics and dashboard modules (optional)
+generate_yearly_report = None
+CaseDataAnalyzer = None
+generate_html_dashboard = None
+
 try:
     from statistics import generate_yearly_report, CaseDataAnalyzer
-    from dashboard import generate_html_dashboard
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     generate_yearly_report = None
     CaseDataAnalyzer = None
+
+try:
+    from dashboard import generate_html_dashboard
+except (ImportError, ModuleNotFoundError):
     generate_html_dashboard = None
 
 BASE_URL = os.getenv("BASE_URL", "https://cpdocket.cp.cuyahogacounty.gov")
@@ -30,14 +37,18 @@ DEFAULT_DELAY = max(300, int(os.getenv("DELAY_MS", "800")))  # 0.3–0.8s polite
 
 console = Console()
 
+# Watchdog / stagnation controls (seconds and max consecutive no-save events)
+STAGNATION_TIMEOUT = int(os.getenv("STAGNATION_TIMEOUT", "300"))  # 5 minutes
+STAGNATION_MAX_NO_SAVE = int(os.getenv("STAGNATION_MAX_NO_SAVE", "50"))
+
 class Cfg(BaseModel):
-    headless: bool = False if os.getenv("HEADLESS", "false").lower() == "false" else True
+    headless: bool = False  # Set to False to see browser in action (can measure load times)
     case_category: str = os.getenv("CASE_CATEGORY", "CRIMINAL")
     year: int = int(os.getenv("YEAR", "2025"))
     start_number: int = int(os.getenv("START_NUMBER", "706402"))
     direction: str = os.getenv("DIRECTION", "both")  # up|down|both
     limit: int = int(os.getenv("LIMIT", "100"))
-    delay_ms: int = int(os.getenv("DELAY_MS", "1250"))
+    delay_ms: int = int(os.getenv("DELAY_MS", "300"))  # Start fast: 300ms
     output_dir: str = os.getenv("OUTPUT_DIR", "./out")
     resume: bool = False
     download_pdfs: bool = False if os.getenv("DOWNLOAD_PDFS", "false").lower() == "false" else True
@@ -50,42 +61,243 @@ class Cfg(BaseModel):
             raise ValueError("direction must be up|down|both")
         return v
 
+
+def parse_embedded_table_to_csv(cell_text: str) -> str:
+    """Convert tab-separated table data in a cell to CSV format.
+    Input: "Header1\tHeader2\tHeader3\nRow1Col1\tRow1Col2\tRow1Col3\nRow2Col1\tRow2Col2\tRow2Col3"
+    Output: CSV string with proper escaping
+    """
+    import csv
+    import io
+    
+    if not cell_text or '\t' not in cell_text or '\n' not in cell_text:
+        return cell_text
+    
+    try:
+        lines = cell_text.strip().split('\n')
+        rows = [line.split('\t') for line in lines]
+        
+        # Write to CSV in memory
+        output = io.StringIO()
+        writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+        writer.writerows(rows)
+        return output.getvalue().strip()
+    except Exception:
+        # If parsing fails, return original
+        return cell_text
+
+
+def _stats_file_for_out_dir(year_dir: Path) -> Path:
+    """Return the global stats.json path for the given year directory.
+    year_dir is expected to be like ./out/2025; this returns ./out/stats.json
+    """
+    return year_dir.parent / "stats.json"
+
+
+def increment_year_counter(year_dir: Path, year: int):
+    """Atomically increment the counter for `year` in out/stats.json.
+
+    Uses an exclusive flock and fsync to reduce race conditions when multiple
+    scraper workers run concurrently. If anything fails we silently continue
+    (we don't want counting to crash the scraper), but we try to be robust.
+    """
+    stats_path = _stats_file_for_out_dir(year_dir)
+    # Ensure parent exists
+    stats_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        # Open for read/write and create if missing
+        with open(stats_path, "a+", encoding="utf-8") as f:
+            # Acquire exclusive lock
+            try:
+                fcntl.flock(f, fcntl.LOCK_EX)
+            except Exception:
+                pass
+
+            # Read existing content
+            f.seek(0)
+            try:
+                content = f.read()
+                data = json.loads(content) if content.strip() else {}
+            except Exception:
+                data = {}
+
+            key = str(year)
+            # If stats file had no entry for this year, seed it from existing
+            # number of json files we already have for the year directory so
+            # counters remain consistent with filesystem state.
+            if key not in data:
+                try:
+                    existing = len(list(year_dir.glob("*.json")))
+                except Exception:
+                    existing = 0
+                data[key] = int(existing)
+
+            # Now increment for the newly saved file
+            data[key] = int(data.get(key, 0)) + 1
+
+            # Write back
+            f.seek(0)
+            f.truncate()
+            f.write(json.dumps(data, indent=2))
+            f.flush()
+            try:
+                os.fsync(f.fileno())
+            except Exception:
+                pass
+
+            # Release lock
+            try:
+                fcntl.flock(f, fcntl.LOCK_UN)
+            except Exception:
+                pass
+    except Exception:
+        # Don't let stats updating break scraping
+        return
+
+
 async def kv_from_table(page: Page, table_selector: str) -> Dict[str, Any]:
+    """Extract key-value data from table with context destruction recovery.
+    Embedded tab-separated tables are converted to CSV format and stored in parent dict."""
     data = {}
-    rows = page.locator(f"{table_selector} tr")
-    count = await rows.count()
-    for i in range(count):
-        cells = rows.nth(i).locator("td")
-        if await cells.count() >= 2:
-            k_text = await cells.nth(0).inner_text()
-            v_text = await cells.nth(1).inner_text()
-            k = k_text.strip()
-            v = v_text.strip()
-            if k:
-                data[k] = v
+    try:
+        # Get row count safely - this is where context destruction happens
+        try:
+            rows = page.locator(f"{table_selector} tr")
+            count = await rows.count()
+        except Exception:
+            # Context destroyed during count - return empty dict gracefully
+            return data
+        
+        table_counter = 0
+        for i in range(count):
+            try:
+                # Re-fetch fresh row reference each time
+                rows_fresh = page.locator(f"{table_selector} tr")
+                try:
+                    fresh_count = await rows_fresh.count()
+                except Exception:
+                    # Context destroyed mid-iteration
+                    break
+                
+                if i >= fresh_count:
+                    break
+                
+                row = rows_fresh.nth(i)
+                cells = row.locator("td")
+                cell_count = await cells.count()
+                
+                if cell_count >= 2:
+                    try:
+                        k_text = await cells.nth(0).inner_text()
+                        v_text = await cells.nth(1).inner_text()
+                        k = k_text.strip()
+                        v = v_text.strip()
+                        
+                        # Check if this is an embedded table (tab-separated data)
+                        if (k and '\t' in k and '\n' in k):
+                            # Key is an embedded table - convert to CSV
+                            csv_data = parse_embedded_table_to_csv(k)
+                            data[f"embedded_table_{table_counter}"] = {
+                                "format": "csv",
+                                "data": csv_data
+                            }
+                            table_counter += 1
+                        elif (v and '\t' in v and '\n' in v):
+                            # Value is an embedded table - convert to CSV
+                            csv_data = parse_embedded_table_to_csv(v)
+                            data[f"embedded_table_{table_counter}"] = {
+                                "format": "csv",
+                                "data": csv_data
+                            }
+                            table_counter += 1
+                        elif k:
+                            # Normal key-value pair
+                            data[k] = v
+                    except Exception:
+                        # Cell extraction failed - continue
+                        pass
+            except Exception:
+                # Row extraction failed - try to continue
+                if len(data) == 0:
+                    continue
+                break
+    except Exception as e:
+        # Top-level exception - just return what we got
+        pass
+    
     return data
 async def grid_from_table(page: Page, table_selector: str) -> List[Dict[str, Any]]:
+    """
+    Extract table data with context destruction recovery.
+    """
     out = []
     headers = []
-    thead = page.locator(f"{table_selector} thead tr th")
-    if await thead.count() == 0:
-        thead = page.locator(f"{table_selector} tr").first.locator("th")
-    for i in range(await thead.count()):
-        header_text = await thead.nth(i).inner_text()
-        headers.append(header_text.strip() or f"col{i+1}")
-    rows = page.locator(f"{table_selector} tbody tr")
-    if await rows.count() == 0:
-        rows = page.locator(f"{table_selector} tr").locator("xpath=./following-sibling::tr")
-    for r in range(await rows.count()):
-        row = rows.nth(r)
-        cols = row.locator("td")
-        rec = {}
-        for c in range(await cols.count()):
-            key = headers[c] if c < len(headers) else f"col{c+1}"
-            cell_text = await cols.nth(c).inner_text()
-            rec[key] = cell_text.strip()
-        if rec:
-            out.append(rec)
+    
+    try:
+        # Extract headers - with safe count
+        try:
+            thead = page.locator(f"{table_selector} thead tr th")
+            thead_count = await thead.count()
+            if thead_count == 0:
+                thead = page.locator(f"{table_selector} tr").first.locator("th")
+                thead_count = await thead.count()
+        except Exception:
+            # Context destroyed or table not found
+            return out
+        
+        for i in range(thead_count):
+            try:
+                header_text = await thead.nth(i).inner_text()
+                headers.append(header_text.strip() or f"col{i+1}")
+            except Exception:
+                break
+        
+        # Extract rows - with safe count
+        try:
+            rows = page.locator(f"{table_selector} tbody tr")
+            row_count = await rows.count()
+            if row_count == 0:
+                rows = page.locator(f"{table_selector} tr:not(:first-child)")
+                row_count = await rows.count()
+        except Exception:
+            # Context destroyed - return partial results
+            return out
+        
+        for r in range(row_count):
+            try:
+                # Re-fetch fresh row reference each time
+                rows_fresh = page.locator(f"{table_selector} tbody tr")
+                if await rows_fresh.count() == 0:
+                    rows_fresh = page.locator(f"{table_selector} tr:not(:first-child)")
+                
+                if r >= await rows_fresh.count():
+                    break
+                
+                row = rows_fresh.nth(r)
+                cols = row.locator("td")
+                rec = {}
+                
+                for c in range(await cols.count()):
+                    key = headers[c] if c < len(headers) else f"col{c+1}"
+                    try:
+                        cell_text = await cols.nth(c).inner_text()
+                        rec[key] = cell_text.strip()
+                    except Exception:
+                        rec[key] = ""
+                
+                if rec:
+                    out.append(rec)
+            except Exception:
+                # If row extraction fails, try to continue or exit gracefully
+                if len(out) == 0:
+                    raise
+                break
+    
+    except Exception as e:
+        if len(out) == 0:
+            raise Exception(f"Table extraction failed: {e}")
+    
     return out
 
 
@@ -95,7 +307,7 @@ async def check_current_page(page: Page) -> str:
     url = page.url
     html = await page.content()
     
-    console.print(f"[blue]Current URL: {url}[/blue]")
+    console.print(f"[blue]Current URL: {url}[/blue] - main.py:310")
     
     if "TOS.aspx" in url or "Site Terms of Service" in html or "Clerk of Courts Site Terms" in html:
         return "tos"
@@ -118,10 +330,10 @@ async def ensure_past_tos(page: Page):
         page_type = await check_current_page(page)
         
         if page_type != "tos":
-            console.print(f"[green]Successfully past TOS, on page type: {page_type}[/green]")
+            console.print(f"[green]Successfully past TOS, on page type: {page_type}[/green] - main.py:333")
             return
             
-        console.print(f"[magenta]On TOS page (attempt {attempt + 1}/{max_attempts}) - accepting terms…[/magenta]")
+        console.print(f"[magenta]On TOS page (attempt {attempt + 1}/{max_attempts})  accepting terms…[/magenta] - main.py:336")
         html = await page.content()
         
         selectors = [
@@ -138,19 +350,19 @@ async def ensure_past_tos(page: Page):
             loc = page.locator(sel)
             if await loc.count() > 0:
                 try:
-                    console.print(f"[green]Found TOS button: {sel}[/green]")
+                    console.print(f"[green]Found TOS button: {sel}[/green] - main.py:353")
                     # Wait for navigation to complete after clicking
                     async with page.expect_navigation(timeout=15000):
                         await loc.first.click()
                     clicked = True
-                    console.print("[green]TOS button clicked and navigation completed[/green]")
+                    console.print("[green]TOS button clicked and navigation completed[/green] - main.py:358")
                     break
                 except Exception as e:
-                    console.print(f"[yellow]Failed to click {sel}: {e}[/yellow]")
+                    console.print(f"[yellow]Failed to click {sel}: {e}[/yellow] - main.py:361")
                     continue
         
         if not clicked:
-            console.print("[red]Could not find an Accept/Continue control on TOS page.[/red]")
+            console.print("[red]Could not find an Accept/Continue control on TOS page.[/red] - main.py:365")
             (Path("out") / "debug_tos.html").write_text(html, encoding="utf-8")
             raise RuntimeError("Stuck on TOS page; manual intervention required.")
         
@@ -169,115 +381,106 @@ async def navigate_to_search(page: Page):
     max_attempts = 5
     
     for attempt in range(max_attempts):
-        console.print(f"[yellow]Navigating to Search.aspx (attempt {attempt + 1}/{max_attempts})…[/yellow]")
+        console.print(f"[yellow]Navigating to Search.aspx (attempt {attempt + 1}/{max_attempts})…[/yellow] - main.py:384")
         
         try:
-            await page.goto(f"{BASE_URL}/Search.aspx", wait_until="domcontentloaded", timeout=30000)
+            await page.goto(f"{BASE_URL}/Search.aspx", wait_until="networkidle", timeout=30000)
         except Exception as e:
-            console.print(f"[red]Failed to navigate: {e}[/red]")
+            console.print(f"[red]Failed to navigate: {e}[/red] - main.py:389")
             continue
         
         # Check what page we landed on
         page_type = await check_current_page(page)
         
         if page_type == "tos":
-            console.print("[magenta]Landed on TOS page - handling…[/magenta]")
+            console.print("[magenta]Landed on TOS page  handling…[/magenta] - main.py:396")
             await ensure_past_tos(page)
             # After TOS, try to go to search again
-            await page.goto(f"{BASE_URL}/Search.aspx", wait_until="domcontentloaded", timeout=30000)
+            try:
+                await page.goto(f"{BASE_URL}/Search.aspx", wait_until="networkidle", timeout=30000)
+            except:
+                pass
             page_type = await check_current_page(page)
         
         if page_type in ["search", "search_initial"]:
-            console.print("[green]Successfully reached Search.aspx[/green]")
-            break
+            console.print("[green]Successfully reached Search.aspx[/green] - main.py:406")
+            
+            # Now ensure we're on the criminal search form
+            console.print("[yellow]Selecting: CRIMINAL SEARCH BY CASE…[/yellow] - main.py:409")
+            
+            # Retry loop for criminal search selection - handle TOS redirects
+            for select_attempt in range(3):
+                # Find the radio button
+                rb = page.locator("#SheetContentPlaceHolder_rbCrCase")
+                rb_count = await rb.count()
+                console.print(f"[blue]Found {rb_count} criminal search radio buttons[/blue] - main.py:416")
+                
+                if rb_count == 0:
+                    console.print("[red]No criminal search radio button found![/red] - main.py:419")
+                    raise RuntimeError("Criminal search radio button not found on page.")
+                
+                try:
+                    console.print("[green]Clicking criminal search radio button[/green] - main.py:423")
+                    
+                    # Click the label to trigger postback
+                    label = page.locator("label[for='SheetContentPlaceHolder_rbCrCase']")
+                    await label.click()
+                    
+                    console.print("[blue]Waiting for UpdatePanel postback...[/blue] - main.py:429")
+                    await page.wait_for_load_state("networkidle", timeout=20000)
+                    
+                except Exception as e:
+                    console.print(f"[yellow]Label click failed: {e}[/yellow] - main.py:433")
+                    # Try JavaScript fallback
+                    await page.evaluate("""
+                        () => {
+                          const rb = document.querySelector('#SheetContentPlaceHolder_rbCrCase');
+                          if (rb && window.__doPostBack) { 
+                            rb.checked = true; 
+                            __doPostBack('ctl00$SheetContentPlaceHolder$rbCrCase','');
+                          }
+                        }
+                    """)
+                    await page.wait_for_load_state("networkidle", timeout=20000)
+                
+                # Check for form widgets
+                widgets_found = False
+                for widget_attempt in range(10):
+                    # Check if redirected to TOS
+                    if await check_current_page(page) == "tos":
+                        console.print("[magenta]Redirected to TOS, handling and retrying...[/magenta]")
+                        await ensure_past_tos(page)
+                        await page.goto(f"{BASE_URL}/Search.aspx", wait_until="networkidle", timeout=20000)
+                        break  # Go back to radio button retry
+                    
+                    year_select = page.locator("select[name*='ddlCaseYear']")
+                    case_input = page.locator("input[name*='txtCaseNum']")
+                    
+                    if await year_select.count() > 0 and await case_input.count() > 0:
+                        console.print("[green]✓ Form widgets found![/green]")
+                        widgets_found = True
+                        break
+                    
+                    await page.wait_for_load_state("networkidle", timeout=3000)
+                    await page.wait_for_timeout(300)
+                
+                if widgets_found:
+                    console.print("[green]Search form ready[/green]")
+                    return  # Success!
+                elif select_attempt < 2:
+                    console.print("[yellow]Widgets not found, retrying radio button selection...[/yellow]")
+                    continue
+                else:
+                    raise RuntimeError("Search widgets not visible after 3 attempts")
+            
+            break  # Successfully navigated
         else:
-            console.print(f"[red]Not on search page, got page type: {page_type}[/red]")
+            console.print(f"[red]Not on search page, got page type: {page_type}[/red] - main.py:339")
             if attempt == max_attempts - 1:
                 raise RuntimeError(f"Cannot reach Search.aspx after {max_attempts} attempts. Final page type: {page_type}")
             continue
-
-    # Now ensure we're on the criminal search form
-    console.print("[yellow]Selecting: CRIMINAL SEARCH BY CASE…[/yellow]")
     
-    # Always try to select criminal search - check if the radio button exists
-    rb = page.locator("#SheetContentPlaceHolder_rbCrCase")
-    rb_count = await rb.count()
-    console.print(f"[blue]Found {rb_count} criminal search radio buttons[/blue]")
-    
-    if rb_count > 0:
-        # Try to click/select the criminal radio button
-        try:
-            console.print("[green]Clicking criminal search radio button[/green]")
-            # Use the JavaScript click handler that's on the element
-            await page.evaluate("""
-                () => {
-                  const rb = document.querySelector('#SheetContentPlaceHolder_rbCrCase');
-                  if (rb) { 
-                    rb.checked = true; 
-                    rb.click(); // This should trigger the postback
-                  }
-                }
-            """)
-            
-            # Wait for the postback to complete
-            await page.wait_for_load_state("networkidle", timeout=10000)
-            console.print("[green]Criminal search radio button activated[/green]")
-            
-        except Exception as e:
-            console.print(f"[yellow]Failed to click radio button: {e}[/yellow]")
-            # Fallback: try direct postback
-            await page.evaluate("""
-                () => {
-                  const rb = document.querySelector('#SheetContentPlaceHolder_rbCrCase');
-                  if (rb && window.__doPostBack) { 
-                    rb.checked = true; 
-                    __doPostBack('ctl00$SheetContentPlaceHolder$rbCrCase','');
-                  }
-                }
-            """)
-            await page.wait_for_load_state("networkidle", timeout=10000)
-
-        # Wait for UpdatePanel to expose widgets (retry a few times)
-        widgets_ok = False
-        for attempt in range(5):
-            try:
-                console.print(f"[blue]Checking for form widgets (attempt {attempt + 1})...[/blue]")
-                year_select = page.locator("select[name*='ddlCaseYear']")
-                case_input = page.locator("input[name*='txtCaseNum']")
-                
-                year_count = await year_select.count()
-                case_count = await case_input.count()
-                
-                console.print(f"[blue]Year select: {year_count}, Case input: {case_count}[/blue]")
-                
-                if year_count > 0 and case_count > 0:
-                    widgets_ok = True
-                    break
-                else:
-                    await page.wait_for_load_state("networkidle", timeout=3000)
-                    # Check if we got redirected back to TOS
-                    if await check_current_page(page) == "tos":
-                        console.print("[magenta]Redirected back to TOS during form setup![/magenta]")
-                        await ensure_past_tos(page)
-                        return  # Start over
-                        
-            except Exception as e:
-                console.print(f"[yellow]Widget check failed: {e}[/yellow]")
-                await page.wait_for_load_state("networkidle", timeout=3000)
-
-        if not widgets_ok:
-            current_html = await page.content()
-            (Path("out")/"debug_search_no_widgets.html").write_text(current_html, encoding="utf-8")
-            console.print("[red]Search widgets not visible after selecting 'CRIMINAL SEARCH BY CASE'.[/red]")
-            console.print("[blue]Saved current page state to debug_search_no_widgets.html[/blue]")
-            raise RuntimeError("Search widgets not visible after selecting 'CRIMINAL SEARCH BY CASE'.")
-    else:
-        console.print("[red]No criminal search radio button found![/red]")
-        current_html = await page.content()
-        (Path("out")/"debug_no_radio.html").write_text(current_html, encoding="utf-8")
-        raise RuntimeError("Criminal search radio button not found on page.")
-
-    console.print("[green]Search form ready[/green]")
+    # Duplicate code removed - now handled in navigate_to_search above
 
 
 async def search_case(page: Page, year: int, number: int) -> Optional[str]:
@@ -484,7 +687,12 @@ async def open_tab(page: Page, tab_name: str):
     link = page.get_by_role("link", name=re.compile(tab_name, re.I))
     if await link.count() > 0:
         await link.first.click()
-        await page.wait_for_load_state("load")
+        # Wait longer for complex pages (especially with multiple defendants)
+        try:
+            await page.wait_for_load_state("networkidle", timeout=20000)
+        except:
+            # If networkidle times out, at least wait for load state
+            await page.wait_for_load_state("load", timeout=15000)
     else:
         url = page.url
         if "q=" in url:
@@ -498,122 +706,407 @@ async def open_tab(page: Page, tab_name: str):
             }
             key = tab_name.lower()
             if key in mapping:
-                await page.goto(f"{BASE_URL}/{mapping[key]}?q={token}", wait_until="load")
+                await page.goto(f"{BASE_URL}/{mapping[key]}?q={token}", wait_until="networkidle", timeout=20000)
 
     # Confirm the table appears; if not, log loudly and continue
     try:
-        await page.wait_for_selector("table", timeout=12000)
+        await page.wait_for_selector("table", timeout=15000)
     except:
-        console.print(f"[red]'{tab_name}' tab did not render a table — saving debug.[/red]")
+        console.print(f"[yellow]'{tab_name}' tab did not render a table in time — continuing anyway[/yellow]")
         (Path("out")/f"debug_no_table_{tab_name.lower()}.html").write_text(await page.content(), encoding="utf-8")
 
 # Removed save_html function - HTML content now stored in JSON structure
+
+def parse_co_defendants(summary_fields: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Parse co-defendants from summary co-defendants field"""
+    co_def_text = summary_fields.get("Co-Defendants:", "N/A")
+    if co_def_text == "N/A" or not co_def_text or co_def_text.strip() == "":
+        return []
+    
+    # Parse linked case numbers
+    # Format: <a href='...'>CR-25-123456-A</a>, <a href='...'>CR-25-123457-A</a>
+    case_numbers = re.findall(r'(CR-\d{2}-\d{6}-[A-Z])', str(co_def_text))
+    
+    # Also try to extract names if present
+    co_defendants = []
+    for case_num in case_numbers:
+        co_defendants.append({
+            "case_number": case_num,
+            "relationship": "Co-defendant"
+        })
+    
+    return co_defendants
+
+def parse_charge_disposition(charges_data: Any) -> List[Dict[str, Any]]:
+    """Parse charges and extract disposition information"""
+    charges = []
+    
+    # Handle embedded table format
+    if isinstance(charges_data, dict) and "embedded_table" in str(charges_data):
+        for key, value in charges_data.items():
+            if "embedded_table" in key and isinstance(value, dict):
+                if value.get("format") == "csv" and "data" in value:
+                    import csv
+                    from io import StringIO
+                    reader = csv.DictReader(StringIO(value["data"]))
+                    for row in reader:
+                        charge = {
+                            "type": (row.get("Type") or "").strip(),
+                            "statute": (row.get("Statute") or "").strip(),
+                            "charge_description": (row.get("Charge Description") or "").strip(),
+                            "disposition": (row.get("Disposition") or "").strip() or None,
+                            "disposition_date": None,
+                            "plea": None,
+                            "verdict": None,
+                            "sentence": None
+                        }
+                        if charge["type"] or charge["statute"]:
+                            charges.append(charge)
+    
+    return charges
+
+def parse_bond_information(summary_fields: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Parse bond information from summary embedded tables"""
+    bonds = []
+    
+    # Look for embedded tables - iterate all embedded_table_N keys
+    for key, value in summary_fields.items():
+        if "embedded_table" in key and isinstance(value, dict) and value.get("format") == "csv":
+            import csv
+            from io import StringIO
+            # Check if this table has bond columns
+            if "Bond Number" in value.get("data", "") or "Amount" in value.get("data", ""):
+                reader = csv.DictReader(StringIO(value["data"]))
+                for row in reader:
+                    bond = {
+                        "bond_number": (row.get("Bond Number") or row.get("Number") or "").strip(),
+                        "amount": (row.get("Amount") or "").strip(),
+                        "type": (row.get("Type") or "").strip(),
+                        "date_set": (row.get("Date Set") or "").strip() or None,
+                        "date_posted": (row.get("Date Posted") or "").strip() or None,
+                        "posted_by": (row.get("Bondsman/Surety Co.") or row.get("Posted By") or "").strip() or None
+                    }
+                    if bond["bond_number"] or bond["amount"]:
+                        bonds.append(bond)
+    
+    return bonds
+
+def parse_case_actions(summary_fields: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Parse case actions/events timeline from summary embedded tables"""
+    actions = []
+    
+    # Look for embedded tables - iterate all embedded_table_N keys
+    for key, value in summary_fields.items():
+        if "embedded_table" in key and isinstance(value, dict) and value.get("format") == "csv":
+            import csv
+            from io import StringIO
+            # Check if this table has event columns
+            if "Event Date" in value.get("data", "") or "Event Description" in value.get("data", ""):
+                reader = csv.DictReader(StringIO(value["data"]))
+                for row in reader:
+                    action = {
+                        "date": (row.get("Event Date") or row.get("Date") or "").strip() or None,
+                        "event": (row.get("Event Description") or row.get("Event") or row.get("Action") or "").strip()
+                    }
+                    if action["date"] and action["event"]:
+                        actions.append(action)
+    
+    return actions
+
+def extract_prosecutor_from_docket(docket_entries: List[Dict[str, Any]]) -> Optional[str]:
+    """Extract prosecutor name from docket entry text"""
+    # Look for patterns like "PROSECUTING ATTORNEY(S) [NAME]", "PROSECUTOR(S) [NAME]", "PROSECUTOR [NAME]"
+    for entry in docket_entries:
+        # Combine all column values to search, prioritizing description field
+        description = entry.get("description", "")
+        if not description:
+            # Fallback to combining all values
+            description = " ".join(str(v) for v in entry.values() if v)
+        
+        # Pattern: PROSECUTING ATTORNEY(S) [NAME] or PROSECUTOR(S) [NAME]
+        matches = re.findall(r'PROSECUT(?:ING ATTORNEY|OR)\(S\)?\s+([A-Z]+(?:\s+[A-Z]+)+)', description, re.IGNORECASE)
+        if matches:
+            # Return the first match, cleaned up
+            name = matches[0].strip()
+            # Remove common trailing words
+            name = re.sub(r'\s+(PRESENT|IN\s+COURT|ADDRESSES|THE).*$', '', name, flags=re.IGNORECASE).strip()
+            # Filter out if too short or contains obviously wrong patterns
+            if name and len(name) > 5:
+                return name
+    
+    return None
+
 async def extract_summary(page: Page) -> Dict[str, Any]:
+    """Extract the summary section with co-defendants, charges, bonds, and case actions"""
     html = await page.content()
     case_id = None
     m = re.search(r"(CR-\d{2}-\d{6}-[A-Z])", html)
     if m:
         case_id = m.group(1)
     data = {"case_id": case_id}
-    kv = await kv_from_table(page, "table")
-    if kv:
-        data["fields"] = kv
+    try:
+        kv = await kv_from_table(page, "table")
+        if kv:
+            data["fields"] = kv
+            
+            # Parse co-defendants
+            data["co_defendants"] = parse_co_defendants(kv)
+            data["is_multi_defendant_case"] = len(data["co_defendants"]) > 0
+            
+            # Parse charges with dispositions
+            charges = parse_charge_disposition(kv)
+            if charges:
+                data["charges"] = charges
+            
+            # Parse bond information
+            bonds = parse_bond_information(kv)
+            if bonds:
+                data["bonds"] = bonds
+            
+            # Parse case actions timeline
+            actions = parse_case_actions(kv)
+            if actions:
+                data["case_actions"] = actions
+            
+            # Extract current judge
+            current_judge = kv.get("Judge Name:", None)
+            if current_judge:
+                data["current_judge"] = current_judge
+                
+    except Exception as e:
+        console.print(f"[yellow]⚠ Partial summary extraction due to context issue: {str(e)[:100]}[/yellow]")
     return data
 
 async def extract_docket(page: Page) -> List[Dict[str, Any]]:
-    return await grid_from_table(page, "table")
+    """Extract docket table entries using the same approach as extract_docket_with_pdfs"""
+    try:
+        docket_entries = []
+        
+        # Look for the docket table using the specific selectors
+        table = page.locator("table.gridview, table#SheetContentPlaceHolder_caseDocket_gvDocketInformation")
+        
+        if await table.count() == 0:
+            # Fallback to generic grid extraction
+            return await grid_from_table(page, "table")
+        
+        # Get all rows except header (first row is header)
+        rows = table.locator("tr").nth(1).locator("~ tr")  # Skip header row
+        
+        row_count = 0
+        try:
+            row_count = await rows.count()
+        except Exception:
+            pass
+        
+        if row_count == 0:
+            # Try alternate selector
+            return await grid_from_table(page, "table")
+        
+        for i in range(row_count):
+            try:
+                row = rows.nth(i)
+                cells = row.locator("td")
+                cell_count = await cells.count()
+                
+                if cell_count < 2:
+                    # Skip rows with too few columns
+                    continue
+                
+                # Extract columns with proper names based on docket format
+                # Format: Date | Date | Who | What (DocType) | What (Message) | Additional
+                entry = {}
+                column_names = ["proceeding_date", "filing_date", "party", "document_type", "description", "additional"]
+                for j in range(cell_count):
+                    try:
+                        cell_text = (await cells.nth(j).inner_text()).strip()
+                        col_name = column_names[j] if j < len(column_names) else f"col{j+1}"
+                        entry[col_name] = cell_text
+                    except Exception:
+                        col_name = column_names[j] if j < len(column_names) else f"col{j+1}"
+                        entry[col_name] = ""
+                
+                # Add all non-empty rows (filtering can happen in consumers)
+                docket_entries.append(entry)
+            except Exception:
+                # If a single row fails, continue with next
+                continue
+        
+        return docket_entries
+    except Exception as e:
+        console.print(f"[yellow]⚠ Docket extraction error: {str(e)[:100]}[/yellow]")
+        return []
 
 async def extract_docket_with_pdfs(page: Page) -> List[Dict[str, Any]]:
     """Extract docket entries and include PDF download links"""
     docket_entries = []
     
-    # Look for the docket table
-    table = page.locator("table.gridview, table#SheetContentPlaceHolder_caseDocket_gvDocketInformation")
-    
-    if await table.count() == 0:
-        console.print("[yellow]No docket table found[/yellow]")
-        return await grid_from_table(page, "table")
-    
-    # Get all rows except header
-    rows = table.locator("tr").nth(1).locator("~ tr")  # Skip header row
-    
-    for i in range(await rows.count()):
-        row = rows.nth(i)
-        cells = row.locator("td")
+    try:
+        # Wait for page to stabilize and ensure we're on the right content
+        await asyncio.sleep(1.0)
+        await page.wait_for_load_state("domcontentloaded", timeout=10000)
         
-        if await cells.count() >= 6:  # Expected columns
-            entry = {
-                "proceeding_date": (await cells.nth(0).inner_text()).strip(),
-                "filing_date": (await cells.nth(1).inner_text()).strip(),
-                "docket_party": (await cells.nth(2).inner_text()).strip(),
-                "docket_type": (await cells.nth(3).inner_text()).strip(),
-                "docket_description": (await cells.nth(4).inner_text()).strip(),
-                "pdf_link": None,
-                "pdf_filename": None
-            }
-            
-            # Check for PDF link in the last column
-            image_cell = cells.nth(5)
-            pdf_link = image_cell.locator("a[href*='DisplayImageList.aspx']")
-            
-            if await pdf_link.count() > 0:
-                href = await pdf_link.get_attribute("href")
-                if href:
-                    entry["pdf_link"] = href
-                    # Create a filename from the date and type
-                    safe_date = entry["filing_date"].replace("/", "-")
-                    safe_type = re.sub(r'[^\w\-]', '_', entry["docket_type"])
-                    entry["pdf_filename"] = f"{safe_date}_{safe_type}_{i+1}.pdf"
-            
-            docket_entries.append(entry)
-    
-    return docket_entries
+        # Look for the docket table
+        table = page.locator("table.gridview, table#SheetContentPlaceHolder_caseDocket_gvDocketInformation")
+        
+        # Wait for table to be present - increased timeout for large dockets
+        try:
+            await table.first.wait_for(state="visible", timeout=10000)
+        except:
+            console.print("[yellow]Docket table not visible, trying alternate extraction[/yellow]")
+            return await grid_from_table(page, "table")
+        
+        if await table.count() == 0:
+            console.print("[yellow]No docket table found[/yellow]")
+            return await grid_from_table(page, "table")
+        
+        # Get all rows except header
+        rows = table.locator("tr").nth(1).locator("~ tr")  # Skip header row
+        row_count = await rows.count()
+        
+        for i in range(row_count):
+            try:
+                row = rows.nth(i)
+                cells = row.locator("td")
+                cell_count = await cells.count()
+                
+                if cell_count >= 6:  # Expected columns
+                    entry = {
+                        "proceeding_date": (await cells.nth(0).inner_text()).strip(),
+                        "filing_date": (await cells.nth(1).inner_text()).strip(),
+                        "docket_party": (await cells.nth(2).inner_text()).strip(),
+                        "docket_type": (await cells.nth(3).inner_text()).strip(),
+                        "docket_description": (await cells.nth(4).inner_text()).strip(),
+                        "pdf_link": None,
+                        "pdf_filename": None
+                    }
+                    
+                    # Check for PDF link in the last column
+                    image_cell = cells.nth(5)
+                    pdf_link = image_cell.locator("a[href*='DisplayImageList.aspx']")
+                    
+                    if await pdf_link.count() > 0:
+                        href = await pdf_link.get_attribute("href")
+                        if href:
+                            entry["pdf_link"] = href
+                            # Create a filename from the date and type
+                            safe_date = entry["filing_date"].replace("/", "-")
+                            safe_type = re.sub(r'[^\w\-]', '_', entry["docket_type"])
+                            entry["pdf_filename"] = f"{safe_date}_{safe_type}_{i+1}.pdf"
+                    
+                    docket_entries.append(entry)
+            except Exception as row_err:
+                console.print(f"[yellow]⚠ Error extracting docket row {i}: {str(row_err)[:80]}[/yellow]")
+                continue
+        
+        return docket_entries
+        
+    except Exception as e:
+        console.print(f"[yellow]⚠ Docket extraction with PDFs failed, using fallback: {str(e)[:100]}[/yellow]")
+        # Fallback to regular grid extraction
+        try:
+            return await grid_from_table(page, "table")
+        except:
+            return []
 
 async def download_pdf_with_playwright(page: Page, pdf_link: str, output_path: Path, filename: str) -> bool:
-    """Download a PDF file using the authenticated Playwright browser session"""
+    """Download a PDF file using the authenticated Playwright browser session
+    
+    Uses the browser's context.request API to directly fetch the PDF, bypassing
+    the embedded viewer entirely.
+    """
     try:
         console.print(f"[blue]Downloading PDF: {filename}[/blue]")
         
         # Navigate to the PDF link using the same authenticated session
         full_url = f"{BASE_URL}/{pdf_link}" if not pdf_link.startswith("http") else pdf_link
         
-        # Create a new page for the PDF download to avoid interfering with main page
         context = page.context
-        pdf_page = await context.new_page()
         
+        #Try direct fetch via context.request (uses same cookies/session)
         try:
-            response = await pdf_page.goto(full_url, timeout=30000)
+            response = await context.request.get(full_url, timeout=30000)
             
-            if response and response.status == 200:
+            if response.status == 200:
                 content_type = response.headers.get('content-type', '').lower()
+                body = await response.body()
                 
-                if 'pdf' in content_type or 'application/pdf' in content_type:
-                    # Get the PDF content
-                    pdf_content = await response.body()
-                    
-                    # Save to file
+                # Check if we got actual PDF
+                if body.startswith(b'%PDF'):
                     output_file = output_path / filename
-                    async with aiofiles.open(output_file, 'wb') as f:
-                        await f.write(pdf_content)
-                    
+                    output_file.write_bytes(body)
                     file_size = output_file.stat().st_size
                     console.print(f"[green]✓ Downloaded {filename} ({file_size/1024:.1f}KB)[/green]")
                     return True
-                else:
-                    console.print(f"[yellow]⚠ {filename}: Not a PDF (content-type: {content_type})[/yellow]")
-                    # Save the HTML content for debugging
-                    html_content = await pdf_page.content()
-                    debug_file = output_path / f"{filename}.html"
-                    debug_file.write_text(html_content, encoding='utf-8')
-                    console.print(f"[blue]Saved error page to {debug_file}[/blue]")
-                    return False
-            else:
-                status = response.status if response else "No response"
-                console.print(f"[red]✗ Failed to download {filename}: HTTP {status}[/red]")
-                return False
                 
-        finally:
-            await pdf_page.close()
+                # If we got HTML instead, it contains an embed element
+                # Extract the actual PDF URL from the HTML page using JavaScript
+                pdf_page = await context.new_page()
+                try:
+                    await pdf_page.goto(full_url, wait_until="load", timeout=45000)
+                    
+                    # Wait for embed element to appear
+                    await asyncio.sleep(2.0)
+                    
+                    # Try to find the actual PDF URL by examining all iframes and checking for PDF content
+                    actual_pdf_url = await pdf_page.evaluate("""
+                        () => {
+                            // Check all embed elements
+                            const embeds = document.querySelectorAll('embed[type="application/pdf"]');
+                            for (const embed of embeds) {
+                                const src = embed.getAttribute('src');
+                                if (src && src !== 'about:blank') {
+                                    return src;
+                                }
+                            }
+                            
+                            // Check iframes
+                            const iframes = document.querySelectorAll('iframe');
+                            for (const iframe of iframes) {
+                                const src = iframe.getAttribute('src');
+                                if (src && (src.includes('.pdf') || src.includes('DisplayDoc'))) {
+                                    return src;
+                                }
+                            }
+                            
+                            // Look for PDF links in page
+                            const links = document.querySelectorAll('a[href*=".pdf"], a[href*="DisplayDoc"]');
+                            if (links.length > 0) {
+                                return links[0].href;
+                            }
+                            
+                            return null;
+                        }
+                    """)
+                    
+                    if actual_pdf_url and actual_pdf_url != "about:blank":
+                        # Build full URL if needed
+                        if not actual_pdf_url.startswith('http'):
+                            actual_pdf_url = f"{BASE_URL}/{actual_pdf_url}"
+                        
+                        # Fetch the actual PDF
+                        pdf_response = await context.request.get(actual_pdf_url, timeout=30000)
+                        if pdf_response.status == 200:
+                            pdf_data = await pdf_response.body()
+                            if pdf_data.startswith(b'%PDF'):
+                                output_file = output_path / filename
+                                output_file.write_bytes(pdf_data)
+                                file_size = output_file.stat().st_size
+                                console.print(f"[green]✓ Downloaded {filename} ({file_size/1024:.1f}KB)[/green]")
+                                return True
+                    
+                    console.print(f"[yellow]⚠ {filename}: No actual PDF URL found in page[/yellow]")
+                    return False
+                    
+                finally:
+                    await pdf_page.close()
+            
+            # If we reach here, direct request didn't return PDF
+            console.print(f"[yellow]⚠ {filename}: Response not a PDF[/yellow]")
+            return False
+                    
+        except Exception as req_err:
+            console.print(f"[red]✗ Request error for {filename}: {req_err}[/red]")
+            return False
             
     except Exception as e:
         console.print(f"[red]✗ Error downloading {filename}: {e}[/red]")
@@ -671,13 +1164,304 @@ async def download_case_pdfs(page: Page, docket_entries: List[Dict[str, Any]], c
     return pdf_info
 
 async def extract_costs(page: Page) -> List[Dict[str, Any]]:
-    return await grid_from_table(page, "table")
+    """Extract costs table with robust retry and context destruction recovery"""
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            # Wait for costs table to be fully loaded and visible
+            await page.wait_for_selector("table.gridview", state="visible", timeout=10000)
+            await asyncio.sleep(1.5)  # Additional stabilization time
+            
+            # Verify context is still alive
+            await page.evaluate("1")
+            
+            costs = await grid_from_table(page, "table.gridview")
+            if costs:
+                return costs
+            
+            # If no costs found, check for "no costs" message
+            content = await page.content()
+            if re.search(r'no.*costs.*found|no.*costs.*exist', content, re.I):
+                console.print("[dim]No costs present according to page content[/dim]")
+                return []
+                
+        except PWTimeout:
+            # No costs table present
+            console.print("[dim]No costs table found on page[/dim]")
+            return []
+        except Exception as e:
+            if "context" in str(e).lower() or "destroyed" in str(e).lower():
+                if attempt < max_retries - 1:
+                    console.print(f"[yellow]⚠ Context destroyed during costs extraction (attempt {attempt+1}/{max_retries}), retrying...[/yellow]")
+                    await asyncio.sleep(2.0)
+                    # Try to re-open the Costs tab
+                    try:
+                        await open_tab(page, "Costs")
+                        await asyncio.sleep(1.0)
+                    except:
+                        pass
+                    continue
+            
+            console.print(f"[yellow]⚠ Partial costs extraction due to error: {str(e)[:100]}[/yellow]")
+            return []
+    
+    console.print(f"[yellow]⚠ Costs extraction failed after {max_retries} attempts[/yellow]")
+    return []
 
 async def extract_defendant(page: Page) -> Dict[str, Any]:
-    return await kv_from_table(page, "table")
+    """Extract defendant info with context destruction recovery"""
+    try:
+        return await kv_from_table(page, "table")
+    except Exception as e:
+        console.print(f"[yellow]⚠ Partial defendant extraction due to context issue: {str(e)[:100]}[/yellow]")
+        return {}
 
-async def extract_attorneys(page: Page) -> List[Dict[str, Any]]:
-    return await grid_from_table(page, "table")
+def classify_attorney_party(attorney_name: str, case_title: str = "") -> str:
+    """Classify attorney as Defense, Prosecution, or State"""
+    attorney_lower = attorney_name.lower()
+    case_lower = case_title.lower()
+    
+    # Prosecution indicators
+    prosecution_keywords = [
+        "prosecutor", "prosecuting attorney", "assistant prosecutor",
+        "state of ohio", "o'malley", "michael c. o'malley",
+        "asst prosecutor", "asst. prosecutor", "county prosecutor"
+    ]
+    
+    if any(kw in attorney_lower for kw in prosecution_keywords):
+        return "Prosecution"
+    
+    # Check if case title mentions "State of Ohio" - helps identify prosecutors
+    if "state of ohio" in case_lower and "assistant" in attorney_lower:
+        return "Prosecution"
+    
+    # Defense is default for listed attorneys not identified as prosecution
+    return "Defense"
+
+def extract_attorney_role(attorney_data: Dict[str, Any], contact_info: str = "") -> str:
+    """Extract attorney role from available information"""
+    contact_lower = contact_info.lower()
+    name_lower = attorney_data.get("name", "").lower()
+    
+    # Role indicators in contact/description
+    if "public defender" in contact_lower or "public defender" in name_lower:
+        return "Public Defender"
+    if "appointed" in contact_lower:
+        return "Appointed Counsel"
+    if "lead" in contact_lower or "lead" in name_lower:
+        return "Lead Counsel"
+    if "co-counsel" in contact_lower:
+        return "Co-counsel"
+    
+    # Default
+    return "Attorney of Record"
+
+async def extract_attorneys(page: Page, case_title: str = "", docket_entries: Optional[List[Dict[str, Any]]] = None) -> List[Dict[str, Any]]:
+    """Extract attorney information with party classification - handles ViewState format"""
+    attorneys = []
+    
+    try:
+        # Get the page HTML
+        html = await page.content()
+        
+        # Try extracting from span elements with specific IDs first (more reliable)
+        # Pattern: SheetContentPlaceHolder_attyInfo_gvAttyInfo_lblName_N
+        name_pattern = r'<span id="[^"]*lblName_(\d+)"[^>]*>(.*?)</span>'
+        address_pattern = r'<span id="[^"]*lblAddress\d+_(\d+)"[^>]*>(.*?)</span>'
+        phone_pattern = r'<span id="[^"]*lblPhone_(\d+)"[^>]*>(.*?)</span>'
+        
+        # Extract all names, addresses, and phones with their indices
+        names = {int(m.group(1)): m.group(2).strip() for m in re.finditer(name_pattern, html)}
+        addresses = {}
+        for m in re.finditer(address_pattern, html):
+            idx = int(m.group(1))
+            if idx not in addresses:
+                addresses[idx] = []
+            addresses[idx].append(m.group(2).strip())
+        phones = {int(m.group(1)): m.group(2).strip() for m in re.finditer(phone_pattern, html)}
+        
+        # Combine data for each attorney by index
+        for idx in sorted(names.keys()):
+            name = names[idx]
+            
+            # Build contact info
+            contact_parts = []
+            if idx in addresses:
+                contact_parts.extend(addresses[idx])
+            if idx in phones:
+                contact_parts.append(phones[idx])
+            
+            attorney = {
+                'name': name,
+                'contact': '\n'.join(contact_parts) if contact_parts else None,
+                'party': classify_attorney_party(name, case_title),
+                'role': 'Attorney of Record',
+                'type': 'Retained'
+            }
+            
+            # Try to extract role from contact info
+            if contact_parts:
+                attorney['role'] = extract_attorney_role(attorney, '\n'.join(contact_parts))
+            
+            attorneys.append(attorney)
+        
+        # If pattern matching didn't work, try grid extraction
+        if not attorneys:
+            try:
+                raw_rows = await grid_from_table(page, "table")
+            except Exception as e:
+                console.print(f"[yellow]⚠ Attorney grid extraction failed: {str(e)[:100]}[/yellow]")
+                raw_rows = []
+
+            current_attorney = {}
+
+            for row in raw_rows:
+                # Flatten the row values
+                row_text = ' '.join([str(v).strip() for v in row.values() if v]).strip()
+
+                # Skip empty rows, headers, and navigation elements
+                if not row_text or ('Attorney' in row_text and 'Information' in row_text):
+                    continue
+                if any(x in row_text for x in ['Case Summary', 'Docket', 'Costs', 'Defendant', 'New Search', 'Post Bond', 'Cuyahoga County', 'Clerk of Courts']):
+                    continue
+
+                # Look for attorney name patterns
+                if 'Attorney Name' in row_text and 'Address' not in row_text:
+                    # Extract just the name
+                    if current_attorney and 'name' in current_attorney and current_attorney['name']:
+                        # Classify party and role before appending
+                        current_attorney['party'] = classify_attorney_party(current_attorney['name'], case_title)
+                        current_attorney['role'] = extract_attorney_role(current_attorney, current_attorney.get('contact', ''))
+                        current_attorney['type'] = 'Retained'
+                        attorneys.append(current_attorney)
+                    current_attorney = {}
+                    parts = row_text.split('Attorney Name')
+                    if len(parts) > 1:
+                        name = parts[-1].strip().split('\n')[0].strip()
+                        if name and len(name) > 2:
+                            current_attorney['name'] = name
+
+                # Look for address/phone
+                elif 'Address/Phone' in row_text and current_attorney:
+                    parts = row_text.split('Address/Phone')
+                    if len(parts) > 1:
+                        addr_phone = parts[-1].strip()
+                        current_attorney['contact'] = addr_phone
+
+            # Don't forget the last attorney
+            if current_attorney and 'name' in current_attorney and current_attorney['name']:
+                # Classify party and role
+                current_attorney['party'] = classify_attorney_party(current_attorney['name'], case_title)
+                current_attorney['role'] = extract_attorney_role(current_attorney, current_attorney.get('contact', ''))
+                current_attorney['type'] = 'Retained'  # Default, can be enhanced with more data
+                attorneys.append(current_attorney)
+    
+    except Exception as e:
+        console.print(f"[yellow]⚠ Attorney extraction error: {str(e)[:150]}[/yellow]")
+    
+    # Add prosecutor from case title if not already in list
+    if "STATE OF OHIO" in case_title.upper():
+        # Check if we already have a prosecutor
+        has_prosecutor = any(att.get('party') == 'Prosecution' for att in attorneys)
+        if not has_prosecutor:
+            # Try to extract actual prosecutor name from docket
+            prosecutor_name = None
+            if docket_entries:
+                prosecutor_name = extract_prosecutor_from_docket(docket_entries)
+            
+            if prosecutor_name:
+                attorneys.append({
+                    'name': prosecutor_name,
+                    'party': 'Prosecution',
+                    'role': 'Assistant Prosecuting Attorney',
+                    'type': 'State Attorney',
+                    'contact': None,
+                    'office': 'Cuyahoga County Prosecutor'
+                })
+            else:
+                # Fallback to generic prosecutor
+                attorneys.append({
+                    'name': 'Cuyahoga County Prosecutor',
+                    'party': 'Prosecution',
+                    'role': 'Prosecuting Attorney',
+                    'type': 'State Attorney',
+                    'contact': None,
+                    'office': 'Cuyahoga County Prosecutor'
+                })
+
+    # If we found nothing via grid parsing, try a safer HTML fallback that
+    #  - returns [] if the page explicitly says "No attorneys found"
+    #  - targets only tables likely to contain attorney rows (ids/classes containing atty/attorney/gvAttyInfo)
+    #  - parses <tr>/<td> rows and ignores navigation/header links
+    if not attorneys:
+        try:
+            html = await page.content()
+
+            # If page explicitly says there are no attorneys, return empty quickly
+            if re.search(r'no\s+attorneys\s+found', html, flags=re.I):
+                console.print("[blue]No attorneys present according to page content[/blue]")
+                return []
+
+            # Collect table blocks
+            table_blocks = re.findall(r'(<table[\s\S]*?</table>)', html, flags=re.I)
+            candidate_tables = []
+
+            # Prefer tables specifically mentioning attorney/atty
+            for tbl in table_blocks:
+                if re.search(r'(atty|attorney|gvAttyInfo|Atty)', tbl, flags=re.I):
+                    if re.search(r'no\s+attorneys\s+found', tbl, flags=re.I):
+                        continue
+                    candidate_tables.append(tbl)
+
+            # If none found, fall back to any gridview table that is not the global nav
+            if not candidate_tables:
+                for tbl in table_blocks:
+                    if 'gridview' in tbl.lower() and not re.search(r'no\s+attorneys\s+found', tbl, flags=re.I):
+                        candidate_tables.append(tbl)
+
+            # Parse candidate tables row-by-row, extracting name and contact heuristically
+            for tbl in candidate_tables:
+                rows = re.findall(r'<tr[\s\S]*?</tr>', tbl, flags=re.I)
+                for tr in rows:
+                    # Extract all td/th cell contents for the row
+                    tds = re.findall(r'<t[dh][^>]*>([\s\S]*?)</t[dh]>', tr, flags=re.I)
+                    cells = [re.sub(r'<[^>]+>', ' ', td).strip() for td in tds if td and td.strip()]
+                    if not cells:
+                        continue
+
+                    # Heuristic: skip rows that are clearly headers or nav links
+                    header_like = all(re.search(r'^(Attorney|Name|Address|Phone|No attorneys found|Case Summary|Docket|Costs|Defendant|New Search)$', c.strip(), flags=re.I) or not re.search(r'[A-Za-z]', c) for c in cells)
+                    if header_like:
+                        continue
+
+                    # Skip rows that are navigation or site chrome
+                    if any(x.lower() in cells[0].lower() for x in ['case summary', 'new search', 'docket', 'costs', 'defendant', 'clerk of courts']):
+                        continue
+
+                    # Choose first non-empty cell as name, second as contact if present
+                    name = cells[0]
+                    contact = cells[1] if len(cells) > 1 else ''
+
+                    # Validate name looks reasonable (contains letters and a space)
+                    if len(name) > 2 and re.search(r'[A-Za-z]', name):
+                        attorneys.append({'name': name, 'contact': contact})
+
+                if attorneys:
+                    break
+
+        except Exception as e:
+            console.print(f"[yellow]⚠ Attorney HTML fallback failed: {e}[/yellow]")
+
+    # Deduplicate by name
+    seen_names = set()
+    unique_attorneys = []
+    for att in attorneys:
+        name = (att.get('name') or '').strip()
+        if name and name not in seen_names:
+            seen_names.add(name)
+            unique_attorneys.append(att)
+
+    return unique_attorneys
 
 def next_numbers(start: int, direction: str, limit: int):
     up = list(range(start, start + limit)) if direction in ("up", "both") else []
@@ -702,6 +1486,58 @@ def load_resume_state(path: Path):
 
 def save_resume_state(path: Path, number: int):
     path.write_text(str(number))
+
+class CaseTracker:
+    """Track all cases sequentially with missing/errored status"""
+    def __init__(self, year: int, start: int, end: int, out_dir: Path):
+        self.year = year
+        self.start = start
+        self.end = end
+        self.out_dir = out_dir
+        self.successes = set()  # Cases that downloaded successfully
+        self.missing = set()    # Cases that don't exist (no case found)
+        self.errored = set()    # Cases that had errors during download
+        self.total_range = end - start + 1
+        
+    def add_success(self, number: int):
+        self.successes.add(number)
+        
+    def add_missing(self, number: int):
+        self.missing.add(number)
+        
+    def add_error(self, number: int):
+        self.errored.add(number)
+        
+    def save_logs(self):
+        """Save missing and errored case logs"""
+        logs_dir = self.out_dir / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save missing cases log
+        if self.missing:
+            missing_log = logs_dir / f"{self.year}_missing.txt"
+            missing_log.write_text(
+                "\n".join(f"{self.year}-{n:06d}" for n in sorted(self.missing)) + "\n"
+            )
+            
+        # Save errored cases log
+        if self.errored:
+            errored_log = logs_dir / f"{self.year}_errored.txt"
+            errored_log.write_text(
+                "\n".join(f"{self.year}-{n:06d}" for n in sorted(self.errored)) + "\n"
+            )
+            
+    def get_stats(self) -> Dict[str, int]:
+        """Return tracking statistics"""
+        accounted = len(self.successes) + len(self.missing) + len(self.errored)
+        return {
+            "total_range": self.total_range,
+            "successfully_downloaded": len(self.successes),
+            "missing_cases": len(self.missing),
+            "errored_cases": len(self.errored),
+            "total_accounted": accounted,
+            "unaccounted": self.total_range - accounted,
+        }
 
 def polite_delay(delay_ms: int):
     """Sleep for the specified number of milliseconds to be polite to the server."""
@@ -728,13 +1564,44 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
         "costs": [],
         "defendant": {},
         "attorneys": [],
+        "co_defendants": [],
+        "bonds": [],
+        "case_actions": [],
+        "judge_history": [],
+        "outcome": {
+            "final_status": "PENDING",
+            "disposition_date": None,
+            "disposing_judge": None,
+            "plea_deal": None,
+            "sentence": None,
+            "appeal_filed": False,
+            "appeal_case_number": None
+        },
         "errors": [],
         "html_snapshots": {},
         "pdf_info": None
     }
     
     try:
-        case_id = await search_case(page, year, number)
+        # Search with timeout - if search takes too long, skip case
+        try:
+            case_id = await asyncio.wait_for(search_case(page, year, number), timeout=60.0)
+        except asyncio.TimeoutError:
+            console.print(f"[red]✗ Case search timeout for {year}-{number:06d} (>60s)[/red]")
+            case_data["metadata"]["exists"] = False
+            case_data["metadata"]["case_id"] = None
+            case_data["errors"].append({
+                "type": "case_search_timeout",
+                "message": "Search operation exceeded 60 second timeout",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+            # Try to recover by going back to search page
+            try:
+                await navigate_to_search(page)
+            except:
+                console.print("[yellow]Could not recover to search page after timeout[/yellow]")
+            return case_data
+            
         polite_delay(DEFAULT_DELAY)
         
         if not case_id:
@@ -754,9 +1621,42 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
 
         # Extract Summary
         try:
-            await open_tab(page, "Summary")
-            case_data["html_snapshots"]["summary"] = await page.content()
-            case_data["summary"] = await extract_summary(page)
+            try:
+                await open_tab(page, "Summary")
+            except Exception as tab_err:
+                console.print(f"[yellow]⚠ Could not open Summary tab, attempting extraction anyway: {str(tab_err)[:80]}[/yellow]")
+            
+            # Check context is alive before capturing HTML
+            try:
+                await page.evaluate("1")
+                case_data["html_snapshots"]["summary"] = await page.content()
+            except Exception:
+                case_data["html_snapshots"]["summary"] = "[context_destroyed_during_snapshot]"
+            
+            summary_data = await extract_summary(page)
+            case_data["summary"] = summary_data
+            
+            # Extract co-defendants from summary
+            if "co_defendants" in summary_data:
+                case_data["co_defendants"] = summary_data["co_defendants"]
+            
+            # Extract bonds from summary
+            if "bonds" in summary_data:
+                case_data["bonds"] = summary_data["bonds"]
+            
+            # Extract case actions from summary
+            if "case_actions" in summary_data:
+                case_data["case_actions"] = summary_data["case_actions"]
+            
+            # Extract current judge and initialize judge history
+            if "current_judge" in summary_data and summary_data["current_judge"]:
+                case_data["judge_history"].append({
+                    "judge_name": summary_data["current_judge"],
+                    "assigned_date": None,  # Will try to extract from docket
+                    "assignment_type": "Current",
+                    "current": True
+                })
+            
             console.print("[green]✓ Summary extracted[/green]")
         except Exception as e:
             console.print(f"[red]✗ Summary extraction failed: {e}[/red]")
@@ -769,8 +1669,24 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
 
         # Extract Docket
         try:
-            await open_tab(page, "Docket")
-            case_data["html_snapshots"]["docket"] = await page.content()
+            try:
+                await open_tab(page, "Docket")
+                # Give the docket content time to load fully - increased for large dockets (90+ entries)
+                await asyncio.sleep(5.0)
+                await page.wait_for_load_state("domcontentloaded", timeout=15000)
+                # Extra wait for dynamic content/tables to populate
+                await page.wait_for_selector("table", timeout=15000)
+                # Additional wait for table content to finish rendering (important for large dockets)
+                await asyncio.sleep(2.0)
+            except Exception as tab_err:
+                console.print(f"[yellow]⚠ Could not open Docket tab, attempting extraction anyway: {str(tab_err)[:80]}[/yellow]")
+            
+            # Check context is alive before capturing HTML
+            try:
+                await page.evaluate("1")
+                case_data["html_snapshots"]["docket"] = await page.content()
+            except Exception:
+                case_data["html_snapshots"]["docket"] = "[context_destroyed_during_snapshot]"
             
             # Use PDF-aware extraction if downloading PDFs, otherwise use regular extraction
             if download_pdfs and (not case_id_filter or case_id in case_id_filter):
@@ -805,8 +1721,18 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
 
         # Extract Costs
         try:
-            await open_tab(page, "Costs")
-            case_data["html_snapshots"]["costs"] = await page.content()
+            try:
+                await open_tab(page, "Costs")
+            except Exception as tab_err:
+                console.print(f"[yellow]⚠ Could not open Costs tab, attempting extraction anyway: {str(tab_err)[:80]}[/yellow]")
+            
+            # Check context is alive before capturing HTML
+            try:
+                await page.evaluate("1")
+                case_data["html_snapshots"]["costs"] = await page.content()
+            except Exception:
+                case_data["html_snapshots"]["costs"] = "[context_destroyed_during_snapshot]"
+            
             case_data["costs"] = await extract_costs(page)
             console.print(f"[green]✓ Costs extracted ({len(case_data['costs'])} entries)[/green]")
         except Exception as e:
@@ -820,8 +1746,18 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
 
         # Extract Defendant
         try:
-            await open_tab(page, "Defendant")
-            case_data["html_snapshots"]["defendant"] = await page.content()
+            try:
+                await open_tab(page, "Defendant")
+            except Exception as tab_err:
+                console.print(f"[yellow]⚠ Could not open Defendant tab, attempting extraction anyway: {str(tab_err)[:80]}[/yellow]")
+            
+            # Check context is alive before capturing HTML
+            try:
+                await page.evaluate("1")
+                case_data["html_snapshots"]["defendant"] = await page.content()
+            except Exception:
+                case_data["html_snapshots"]["defendant"] = "[context_destroyed_during_snapshot]"
+            
             case_data["defendant"] = await extract_defendant(page)
             console.print("[green]✓ Defendant extracted[/green]")
         except Exception as e:
@@ -835,9 +1771,31 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
 
         # Extract Attorneys
         try:
-            await open_tab(page, "Attorney")
-            case_data["html_snapshots"]["attorneys"] = await page.content()
-            case_data["attorneys"] = await extract_attorneys(page)
+            try:
+                await open_tab(page, "Attorney")
+                # Give extra time for attorney page to fully load
+                await asyncio.sleep(1.5)
+            except Exception as tab_err:
+                console.print(f"[yellow]⚠ Could not open Attorney tab, attempting extraction anyway: {str(tab_err)[:80]}[/yellow]")
+            
+            # Check context is alive before capturing HTML
+            try:
+                await page.evaluate("1")
+                await page.wait_for_load_state("domcontentloaded", timeout=10000)
+                case_data["html_snapshots"]["attorneys"] = await page.content()
+            except Exception as html_err:
+                console.print(f"[yellow]⚠ Attorney HTML snapshot failed: {str(html_err)[:80]}[/yellow]")
+                case_data["html_snapshots"]["attorneys"] = "[context_destroyed_during_snapshot]"
+            
+            # Get case title for attorney classification
+            case_title = case_data.get("summary", {}).get("fields", {}).get("Case Title:", "") or ""
+            if not case_title:
+                # Try to construct from case ID
+                case_id = case_data.get("metadata", {}).get("case_id", "")
+                if case_id:
+                    case_title = f"THE STATE OF OHIO vs. [DEFENDANT]"
+            
+            case_data["attorneys"] = await extract_attorneys(page, case_title, case_data.get("docket", []))
             console.print(f"[green]✓ Attorneys extracted ({len(case_data['attorneys'])} entries)[/green]")
         except Exception as e:
             console.print(f"[red]✗ Attorneys extraction failed: {e}[/red]")
@@ -969,6 +1927,11 @@ async def run():
     scraper.add_argument("--download-pdfs", action="store_true", help="Download PDF files from docket entries")
     scraper.add_argument("--pdf-cases", nargs="*", help="Specific case IDs to download PDFs for (e.g., CR-25-706402-A)")
     scraper.add_argument("--discover-years", action="store_true", help="Discover and scrape full years (2025, 2024, 2023)")
+    scraper.add_argument("--live", action="store_true", help="Run in live collection mode (keep up with new cases for the year)")
+    scraper.add_argument("--workers", type=int, default=8, help="Total forward workers (default 8)")
+    scraper.add_argument("--repair-workers", type=int, default=1, help="Number of repair workers (default 1)")
+    scraper.add_argument("--frontier-interval", type=int, default=300, help="Seconds between frontier checks for new cases (default 300)")
+    scraper.add_argument("--max-batch-size", type=int, default=200, help="Max numbers to enqueue per frontier expansion")
     scraper.add_argument("--reference-case", type=int, default=706402, help="Reference case number to start discovery from")
     
     # Statistics command
@@ -1033,34 +1996,6 @@ async def run():
         # Single year mode setup will be done after browser launch
 
     async with async_playwright() as p:
-        # Use persistent context with user data directory for authenticated session
-        user_data_dir = Path("./browser_data")
-        user_data_dir.mkdir(exist_ok=True)
-        
-        context = await p.chromium.launch_persistent_context(
-            user_data_dir=str(user_data_dir),
-            headless=cfg.headless,
-            args=[
-                "--disable-blink-features=AutomationControlled",
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-                "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            ],
-            viewport={"width": 1920, "height": 1080},
-        )
-        page = context.pages[0] if context.pages else await context.new_page()
-
-        # SPEED: block heavy resources (images, media, fonts)
-        await page.route("**/*", lambda route: route.abort()
-                         if route.request.resource_type in {"image", "media", "font"}
-                         else route.continue_())
-
-        # Start tracing for debugging
-        try:
-            await context.tracing.start(screenshots=True, snapshots=True, sources=True)
-        except:
-            pass
-
         # Setup directories for single year mode
         out_dir = Path(cfg.output_dir) / str(cfg.year)
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -1086,34 +2021,121 @@ async def run():
                 table.add_row(str(idx), f"{cfg.year}-{num:06d}")
             console.print(table)
         
-        # Process years
+    # Process years
         if args.discover_years:
-            # Year discovery mode
-            await process_full_years(page, years_to_process, args.reference_case, 
-                                   cfg.output_dir, cfg.delay_ms, cfg.download_pdfs, cfg.pdf_cases)
+            # Year discovery mode - need to create a page for discovery functions
+            user_data_dir = Path("./browser_data")
+            user_data_dir.mkdir(exist_ok=True)
+            context = await p.chromium.launch_persistent_context(
+                user_data_dir=str(user_data_dir),
+                headless=cfg.headless,
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                ],
+                viewport={"width": 1920, "height": 1080},
+            )
+            page = context.pages[0] if context.pages else await context.new_page()
+            await page.route("**/*", lambda route: route.abort()
+                             if route.request.resource_type in {"image", "media", "font"}
+                             else route.continue_())
+            
+            # Pass the Playwright controller `p` along with the discovery page so
+            # the full-year processing stage can create new browser contexts.
+            await process_full_years(p, page, years_to_process, args.reference_case, 
+                                   cfg.output_dir, cfg.delay_ms, cfg.download_pdfs, cfg.pdf_cases, headless=cfg.headless)
+            await context.close()
         else:
-            # Single year/range mode  
-            await process_case_range(page, cfg.year, targets, out_dir, resume_file,
-                                   cfg.delay_ms, cfg.download_pdfs, cfg.pdf_cases)
-        
-        # Stop tracing before closing
-        try:
-            trace_dir = Path(cfg.output_dir)
-            trace_dir.mkdir(parents=True, exist_ok=True)
-            await context.tracing.stop(path=str((trace_dir / "trace.zip").resolve()))
-        except:
-            pass
-        
-        await context.close()
+            # Single year/range mode or live mode
+            if args.live:
+                # Live collection mode: keep checking frontier and run multiple workers
+                await process_live_mode(p, cfg.year, Path(cfg.output_dir) / str(cfg.year),
+                                        resume_file, cfg.delay_ms, cfg.download_pdfs, cfg.pdf_cases,
+                                        workers=args.workers, repair_workers=args.repair_workers,
+                                        frontier_interval=args.frontier_interval, max_batch_size=args.max_batch_size,
+                                        headless=cfg.headless)
+            else:
+                # Single year/range mode - pass playwright instance for context recovery
+                await process_case_range(p, cfg.year, targets, out_dir, resume_file,
+                                   cfg.delay_ms, cfg.download_pdfs, cfg.pdf_cases, headless=cfg.headless)
 
     console.print(f"[green]Done.[/green] Output at: {cfg.output_dir}")
 
-async def process_case_range(page: Page, year: int, targets: List[int], out_dir: Path, 
-                           resume_file: Path, delay_ms: int, download_pdfs: bool, pdf_cases: List[str]):
-    """Process a specific range of case numbers for a single year"""
+async def process_case_range(playwright_instance: Playwright, year: int, targets: List[int], out_dir: Path, 
+                           resume_file: Path, delay_ms: int, download_pdfs: bool, pdf_cases: List[str], headless: bool = True):
+    """Process a specific range of case numbers for a single year with context recovery and tracking"""
     processed = 0
-    with Progress() as progress:
-        task = progress.add_task("Scraping", total=len(targets))
+    context_retries = 0
+    max_context_retries = 3
+    
+    # Initialize case tracker - track every sequential number
+    year_start = targets[0]
+    year_end = targets[-1]
+    tracker = CaseTracker(year, year_start, year_end, out_dir)
+    
+    async def create_context():
+        """Create a new persistent browser context"""
+        user_data_dir = Path("./browser_data")
+        user_data_dir.mkdir(exist_ok=True)
+        
+        ctx = await playwright_instance.chromium.launch_persistent_context(
+            user_data_dir=str(user_data_dir),
+            headless=headless,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            ],
+            viewport={"width": 1920, "height": 1080},
+        )
+        return ctx
+    
+    # Create initial context
+    try:
+        context = await create_context()
+        page = context.pages[0] if context.pages else await context.new_page()
+        
+        # Block heavy resources
+        await page.route("**/*", lambda route: route.abort()
+                         if route.request.resource_type in {"image", "media", "font"}
+                         else route.continue_())
+        
+        # Warm up context by visiting search page once to handle initial TOS
+        console.print("[cyan]⏳ Warming up browser context... (handling initial TOS if needed)[/cyan]")
+        try:
+            await page.goto(f"{BASE_URL}/Search.aspx", wait_until="networkidle", timeout=20000)
+            if await check_current_page(page) == "tos":
+                console.print("[magenta]🔔 Initial TOS page detected, accepting terms...[/magenta]")
+                await ensure_past_tos(page)
+            console.print("[green]✓ Browser context ready[/green]")
+        except Exception as warmup_error:
+            console.print(f"[yellow]Warmup had an issue (not critical): {warmup_error}[/yellow]")
+        
+    except Exception as e:
+        console.print(f"[red]✗ Failed to create initial browser context: {e}[/red]")
+        raise
+    
+    # Watchdog state: time of last saved JSON and consecutive no-save counter
+    time_of_last_save = time.time()
+    consecutive_no_save = 0
+    stagnation_restarts = 0
+    
+    # Create progress bar with rich colors
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(bar_width=40),
+        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+        TextColumn("[cyan]{task.completed}/{task.total}[/cyan]"),
+        TimeRemainingColumn(),
+        console=console,
+    ) as progress:
+        task = progress.add_task(f"[bold cyan]Scraping {year}[/bold cyan]", total=len(targets))
+        
         for num in targets:
             # Create timestamped filename for the JSON output
             timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -1121,36 +2143,85 @@ async def process_case_range(page: Page, year: int, targets: List[int], out_dir:
             case_filepath = out_dir / case_filename
             
             try:
-                console.print(f"[cyan]Processing case {year}-{num:06d}...[/cyan]")
+                # Check if context is still alive
+                try:
+                    await page.evaluate("1")  # Quick test to see if page is responsive
+                except Exception as ctx_error:
+                    # Context crashed - try to recover
+                    progress.console.print(f"[yellow]⚠️  Browser context crashed, recovering...[/yellow]")
+                    try:
+                        await context.close()
+                    except:
+                        pass
+                    
+                    context_retries += 1
+                    if context_retries > max_context_retries:
+                        progress.console.print(f"[red]✗ Failed to recover context after {max_context_retries} attempts - aborting[/red]")
+                        raise RuntimeError(f"Context crashed and recovery failed after {max_context_retries} attempts")
+                    
+                    # Wait before recreating to avoid rapid failure loops
+                    await asyncio.sleep(2 ** context_retries)  # Exponential backoff: 2, 4, 8 seconds
+                    
+                    progress.console.print(f"[cyan]🔄 Recreating browser context (attempt {context_retries}/{max_context_retries})...[/cyan]")
+                    context = await create_context()
+                    page = context.pages[0] if context.pages else await context.new_page()
+                    await page.route("**/*", lambda route: route.abort()
+                                     if route.request.resource_type in {"image", "media", "font"}
+                                     else route.continue_())
+                    progress.console.print(f"[green]✓ Browser context recovered[/green]")
+                
+                # Extract case
                 case_data = await snapshot_case(page, year, num, out_dir, delay_ms, 
                                                download_pdfs, pdf_cases)
                 
-                # Save the comprehensive JSON file
-                case_filepath.write_text(
-                    json.dumps(case_data, indent=2, ensure_ascii=False), 
-                    encoding="utf-8"
-                )
+                # Only save if case exists - skip non-existent cases
+                if case_data["metadata"]["exists"]:
+                    # Save the comprehensive JSON file
+                    case_filepath.write_text(
+                        json.dumps(case_data, indent=2, ensure_ascii=False), 
+                        encoding="utf-8"
+                    )
+                    tracker.add_success(num)
+                    file_size = case_filepath.stat().st_size
+                    # Explicit single-line saved confirmation for log parsing / user visibility
+                    progress.console.print(f"SAVED_JSON {case_filepath} {file_size}")
+                    # Atomically increment per-year counter in out/stats.json
+                    try:
+                        increment_year_counter(out_dir, year)
+                    except Exception:
+                        pass
+                    # Update watchdog because we just saved a JSON
+                    try:
+                        time_of_last_save = time.time()
+                        consecutive_no_save = 0
+                    except Exception:
+                        pass
+                    progress.console.print(f"[green]✓ {year}-{num:06d}[/green] ({file_size/1024:.1f}KB)")
+                else:
+                    tracker.add_missing(num)
+                    # Mark a no-save iteration for watchdog
+                    consecutive_no_save += 1
+                    progress.console.print(f"[yellow]⊝ {year}-{num:06d}[/yellow] (missing)")
                 
-                # Log success with file info
-                file_size = case_filepath.stat().st_size
-                file_size_kb = file_size / 1024
-                console.print(f"[green]✓ Completed case {num:06d} ({file_size_kb:.1f}KB) -> {case_filename}[/green]")
-                
-                # Log extraction summary
+                # Log extraction summary if successful
                 if case_data["metadata"]["exists"]:
                     summary_items = [
-                        f"Summary: {len(case_data['summary'])} fields",
-                        f"Docket: {len(case_data['docket'])} entries", 
-                        f"Costs: {len(case_data['costs'])} entries",
-                        f"Defendant: {len(case_data['defendant'])} fields",
-                        f"Attorneys: {len(case_data['attorneys'])} entries"
+                        f"S:{len(case_data['summary'])}",
+                        f"D:{len(case_data['docket'])}", 
+                        f"C:{len(case_data['costs'])}",
+                        f"Def:{len(case_data['defendant'])}",
+                        f"Att:{len(case_data['attorneys'])}"
                     ]
                     if case_data["errors"]:
-                        summary_items.append(f"Errors: {len(case_data['errors'])}")
-                    console.print(f"[blue]  └─ {' | '.join(summary_items)}[/blue]")
+                        summary_items.append(f"Err:{len(case_data['errors'])}")
+                    progress.console.print(f"[blue]    {' | '.join(summary_items)}[/blue]")
+                
+                # Reset retry counter on successful case
+                context_retries = 0
                 
             except Exception as e:
-                console.print(f"[red]✗ Failed case {num:06d}: {str(e)}[/red]")
+                tracker.add_error(num)
+                progress.console.print(f"[red]✗ {year}-{num:06d}: {str(e)[:60]}[/red]")
                 
                 # Create error case data
                 error_case_data = {
@@ -1180,13 +2251,76 @@ async def process_case_range(page: Page, year: int, targets: List[int], out_dir:
                     json.dumps(error_case_data, indent=2, ensure_ascii=False), 
                     encoding="utf-8"
                 )
+                # Log error file saved as well
+                try:
+                    error_size = case_filepath.stat().st_size
+                    progress.console.print(f"SAVED_JSON {case_filepath} {error_size}")
+                    # Treat a saved error JSON as activity for the watchdog
+                    try:
+                        time_of_last_save = time.time()
+                        consecutive_no_save = 0
+                    except Exception:
+                        pass
+                except:
+                    pass
                 
             processed += 1
             save_resume_state(resume_file, num)
             progress.update(task, advance=1)
 
-async def process_full_years(page: Page, years: List[int], reference_case: int, 
-                           output_dir: str, delay_ms: int, download_pdfs: bool, pdf_cases: List[str]):
+            # Watchdog: if we haven't saved anything for STAGNATION_TIMEOUT seconds
+            # or we've seen many consecutive no-save iterations, recreate context
+            try:
+                now = time.time()
+                if (now - time_of_last_save) > STAGNATION_TIMEOUT or consecutive_no_save >= STAGNATION_MAX_NO_SAVE:
+                    stagnation_restarts += 1
+                    progress.console.print(f"[yellow]⚠️  No saved JSONs for {int(now - time_of_last_save)}s or {consecutive_no_save} consecutive no-saves - restarting browser context (#{stagnation_restarts})[/yellow]")
+                    try:
+                        await context.close()
+                    except Exception:
+                        pass
+
+                    # Small backoff before recreating to avoid tight crash loops
+                    await asyncio.sleep(min(30, 2 ** min(stagnation_restarts, 6)))
+                    context = await create_context()
+                    page = context.pages[0] if context.pages else await context.new_page()
+                    await page.route("**/*", lambda route: route.abort()
+                                     if route.request.resource_type in {"image", "media", "font"}
+                                     else route.continue_())
+                    # Reset watchdog markers
+                    time_of_last_save = time.time()
+                    consecutive_no_save = 0
+                    context_retries = 0
+                    progress.console.print(f"[green]✓ Browser context restarted by watchdog[/green]")
+            except Exception:
+                pass
+    
+    # Save tracking logs
+    tracker.save_logs()
+    stats = tracker.get_stats()
+    
+    # Print final summary
+    console.rule(f"[bold cyan]Year {year} Summary[/bold cyan]")
+    table = Table(title=f"Download Statistics for {year}")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Count", style="magenta")
+    table.add_row("Total Range", f"{stats['total_range']:,}")
+    table.add_row("Successfully Downloaded", f"[green]{stats['successfully_downloaded']:,}[/green]")
+    table.add_row("Missing Cases", f"[yellow]{stats['missing_cases']:,}[/yellow]")
+    table.add_row("Errored Cases", f"[red]{stats['errored_cases']:,}[/red]")
+    table.add_row("Total Accounted", f"{stats['total_accounted']:,}")
+    if stats['unaccounted'] > 0:
+        table.add_row("Unaccounted For", f"[red]{stats['unaccounted']:,}[/red]")
+    console.print(table)
+    
+    # Cleanup
+    try:
+        await context.close()
+    except:
+        pass
+
+async def process_full_years(playwright_instance, page: Page, years: List[int], reference_case: int, 
+                           output_dir: str, delay_ms: int, download_pdfs: bool, pdf_cases: List[str], headless: bool = True):
     """Discover and process full years of cases"""
     year_ranges = {}
     
@@ -1211,32 +2345,250 @@ async def process_full_years(page: Page, years: List[int], reference_case: int,
         total_cases = end_case - start_case + 1
         console.print(f"[green]📊 Year {year}: Cases {start_case:06d} to {end_case:06d} ({total_cases:,} total)[/green]")
     
-    # Process each year
+        # Process each year
     for year in years:
         start_case, end_case = year_ranges[year]
-        
+
         console.rule(f"[bold]📥 SCRAPING YEAR {year}[/bold]")
         console.print(f"[cyan]Processing cases {start_case:06d} to {end_case:06d}[/cyan]")
-        
+
         # Create year output directory
         year_dir = Path(output_dir) / str(year)
         year_dir.mkdir(parents=True, exist_ok=True)
         resume_file = year_dir / ".last_number"
-        
+
         # Check for resume
         resume_case = load_resume_state(resume_file)
         if resume_case and resume_case > start_case:
             start_case = resume_case
             console.print(f"[yellow]🔄 Resuming from case {start_case:06d}[/yellow]")
-        
+
         # Generate list of all cases for this year
         all_cases = list(range(start_case, end_case + 1))
-        
-        # Process all cases in this year
-        await process_case_range(page, year, all_cases, year_dir, resume_file,
-                               delay_ms, download_pdfs, pdf_cases)
-        
+
+        # Process all cases in this year. Pass the Playwright controller so the
+        # worker context creation uses the correct API (playwright_instance.chromium).
+        await process_case_range(playwright_instance, year, all_cases, year_dir, resume_file,
+                       delay_ms, download_pdfs, pdf_cases, headless=headless)
+
         console.print(f"[green]✅ Completed year {year}[/green]")
+
+
+async def process_live_mode(playwright_instance: Playwright, year: int, year_dir: Path, resume_file: Path,
+                            delay_ms: int, download_pdfs: bool, pdf_cases: List[str], *,
+                            workers: int = 8, repair_workers: int = 1,
+                            frontier_interval: int = 300, max_batch_size: int = 200,
+                            headless: bool = True):
+    """Run live collection for a single year.
+
+    Behavior:
+    - Discover the current end (frontier) for the year.
+    - Spawn N forward workers that claim sequential case numbers from a shared queue.
+    - Spawn 1 repair worker that re-processes missing/errored lists.
+    - Periodically (frontier_interval) probe for new cases and enqueue new numbers.
+    """
+    year_dir.mkdir(parents=True, exist_ok=True)
+    # Use a lightweight discovery context/page to probe for frontier changes
+    user_data_dir = Path("./browser_data")
+    user_data_dir.mkdir(exist_ok=True)
+
+    console.print(f"[cyan]🔴 Starting live mode for {year} with {workers} workers (+{repair_workers} repair)")
+
+    # Helper to create a context for workers
+    async def create_context_for_worker():
+        ctx = await playwright_instance.chromium.launch_persistent_context(
+            user_data_dir=str(user_data_dir), headless=headless,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            ], viewport={"width": 1920, "height": 1080},
+        )
+        return ctx
+
+    # Discover a starting point: prefer resume, then latest file in year_dir, else 1
+    resume_n = load_resume_state(resume_file)
+    start_case = int(resume_n) if resume_n else None
+    if start_case is None:
+        # Inspect existing JSON files to find a reasonable start
+        try:
+            files = list(year_dir.glob(f"{year}-*.json"))
+            if files:
+                # parse last numeric part from filenames like 2025-706402_YYYYMMDD_HHMMSS.json
+                nums = []
+                for f in files:
+                    m = re.match(rf"{year}-(\d{{6}})_", f.name)
+                    if m:
+                        nums.append(int(m.group(1)))
+                if nums:
+                    start_case = max(1, max(nums) - 200)  # back off a bit to include nearby missing
+        except Exception:
+            start_case = None
+    if start_case is None:
+        start_case = 1
+
+    # Create a discovery page to find current frontier
+    discover_ctx = await create_context_for_worker()
+    discover_page = discover_ctx.pages[0] if discover_ctx.pages else await discover_ctx.new_page()
+    await discover_page.route("**/*", lambda route: route.abort()
+                              if route.request.resource_type in {"image", "media", "font"}
+                              else route.continue_())
+
+    # Find initial frontier end
+    try:
+        frontier_end = await find_year_end(discover_page, year, max(start_case, 1))
+    except Exception as e:
+        console.print(f"[yellow]Could not discover frontier end reliably: {e}; using start_case+1000[/yellow]")
+        frontier_end = start_case + 1000
+
+    console.print(f"[green]Initial frontier for {year}: {start_case:06d} -> {frontier_end:06d}[/green]")
+
+    # Shared queue and bookkeeping
+    queue: asyncio.Queue = asyncio.Queue()
+    in_flight = set()
+    processed = set()
+
+    def enqueue_range(a: int, b: int):
+        # enqueue numbers [a..b]
+        for n in range(a, b + 1):
+            if n not in in_flight and n not in processed:
+                queue.put_nowait(n)
+                in_flight.add(n)
+
+    enqueue_range(start_case, frontier_end)
+
+    stop_event = asyncio.Event()
+
+    async def forward_worker(worker_id: int):
+        ctx = await create_context_for_worker()
+        page = ctx.pages[0] if ctx.pages else await ctx.new_page()
+        await page.route("**/*", lambda route: route.abort()
+                         if route.request.resource_type in {"image", "media", "font"}
+                         else route.continue_())
+
+        while not stop_event.is_set():
+            try:
+                n = await asyncio.wait_for(queue.get(), timeout=30.0)
+            except asyncio.TimeoutError:
+                # No work for now
+                await asyncio.sleep(1)
+                continue
+
+            try:
+                console.print(f"[cyan][W{worker_id}] Working {year}-{n:06d}[/cyan]")
+                case_data = await snapshot_case(page, year, n, year_dir, delay_ms, download_pdfs, pdf_cases)
+
+                ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+                fname = f"{year}-{n:06d}_{ts}.json"
+                fpath = year_dir / fname
+                if case_data["metadata"].get("exists"):
+                    fpath.write_text(json.dumps(case_data, indent=2, ensure_ascii=False), encoding="utf-8")
+                    file_size = fpath.stat().st_size
+                    console.print(f"SAVED_JSON {fpath} {file_size}")
+                    try:
+                        increment_year_counter(year_dir, year)
+                    except:
+                        pass
+                else:
+                    # Save a note for missing case as well so repair worker can see it
+                    fpath.write_text(json.dumps(case_data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+                # Bookkeeping
+                processed.add(n)
+                in_flight.discard(n)
+                # Update resume state to this number so future resumes skip completed
+                try:
+                    save_resume_state(resume_file, n)
+                except:
+                    pass
+
+            except Exception as e:
+                console.print(f"[red][W{worker_id}] Error on {year}-{n:06d}: {e}")
+                in_flight.discard(n)
+                processed.add(n)
+            finally:
+                queue.task_done()
+
+        try:
+            await ctx.close()
+        except:
+            pass
+
+    async def repair_worker_fn(rid: int):
+        # Periodically scan missing/errored logs and re-enqueue numbers
+        while not stop_event.is_set():
+            try:
+                logs_dir = year_dir / "logs"
+                for suffix in (f"{year}_missing.txt", f"{year}_errored.txt"):
+                    p = logs_dir / suffix
+                    if p.exists():
+                        try:
+                            for line in p.read_text().splitlines():
+                                line = line.strip()
+                                if not line:
+                                    continue
+                                m = re.search(rf"{year}-(\d{{6}})", line)
+                                if m:
+                                    n = int(m.group(1))
+                                    if n not in processed and n not in in_flight:
+                                        queue.put_nowait(n)
+                                        in_flight.add(n)
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+            await asyncio.sleep(60)
+
+    async def frontier_expander():
+        nonlocal frontier_end
+        while not stop_event.is_set():
+            await asyncio.sleep(frontier_interval)
+            try:
+                new_end = await find_year_end(discover_page, year, max(frontier_end, start_case))
+                if new_end > frontier_end:
+                    a = frontier_end + 1
+                    b = min(new_end, frontier_end + max_batch_size)
+                    console.print(f"[green]Frontier expanded: enqueueing {a:06d}-{b:06d} (was {frontier_end:06d})[/green]")
+                    enqueue_range(a, b)
+                    frontier_end = b if b < new_end else new_end
+            except Exception as e:
+                console.print(f"[yellow]Frontier probe failed: {e}[/yellow]")
+
+    # Start workers
+    tasks = []
+    for i in range(max(1, workers - repair_workers)):
+        tasks.append(asyncio.create_task(forward_worker(i + 1)))
+
+    for r in range(repair_workers):
+        tasks.append(asyncio.create_task(repair_worker_fn(r + 1)))
+
+    tasks.append(asyncio.create_task(frontier_expander()))
+
+    try:
+        # Run until canceled by user - keep the loop alive and report status periodically
+        while True:
+            await asyncio.sleep(60)
+            # Quick status
+            console.print(f"[blue]Live {year} status: queued={queue.qsize()} in_flight={len(in_flight)} processed={len(processed)} frontier={frontier_end:06d}")
+    except asyncio.CancelledError:
+        pass
+    finally:
+        stop_event.set()
+        # Wait for workers to finish
+        for t in tasks:
+            t.cancel()
+        try:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        except:
+            pass
+
+        try:
+            await discover_ctx.close()
+        except:
+            pass
 
 if __name__ == "__main__":
     asyncio.run(run())

@@ -1,0 +1,122 @@
+====================================================================================================
+LEGAL DEFENSE EVIDENCE REPORT
+====================================================================================================
+Date Generated: November 09, 2025 at 15:50
+Defendant: GIORGIY SHEPOV (DOB: 07/22/1980)
+
+EXECUTIVE SUMMARY
+----------------------------------------------------------------------------------------------------
+
+Your 2025 case (CR-25-706402-A) directly references your 2023 case (CR-23-684826-A).
+The new charge appears to be related to events triggering a probation violation in your original case.
+This report documents the judicial pattern and evidence for your defense strategy.
+    
+
+====================================================================================================
+PART 1: YOUR CURRENT CASE - CR-25-706402-A (2025)
+====================================================================================================
+
+CASE DETAILS:
+  Case ID: CR-25-706402-A
+  Year: 2025
+  Current Status: UNKNOWN (New case - at Arraignment)
+  Judge Assignment: [NOT YET ASSIGNED - Currently in Arraignment Room]
+  Next Event: Arraignment set for 11/17/2025 at 08:30 AM
+
+DEFENDANT INFO:
+  Name: GIORGIY SHEPOV
+  DOB: 07/22/1980 (Age: 45)
+  Address: 5160 STEVENSON STREET, RICHMOND HEIGHTS, OH 44143
+  Arrested By: RICHMOND HEIGHTS PD
+  Arrest Report #: 2025001169
+  Arrest Date: 08/19/2025
+
+CHARGES:
+  Count 1: DRUG POSSESSION (Statute 2925.11.A)
+  Count 2: DRUG POSSESSION (Statute 2925.11.A)
+  Indictment Date: 10/16/2025
+  Indictment Method: INDICTED ORIGINAL
+
+ATTORNEY STATUS:
+  Assigned Attorney: NONE (As of 11/09/2025)
+  NOTE: Attorney assignment typically occurs AFTER arraignment
+
+⚠️  CRITICAL CONNECTION:
+====================================================================================================
+PART 2: JUDGE ASSIGNMENTS - PATTERN ANALYSIS
+====================================================================================================
+
+JUDGES WITH CASES IN YOUR VICINITY (2023):
+
+  • CR-23-684827-A: Judge SHANNON M GALLAGHER
+  • CR-23-684828-A: Judge MICHAEL P SHAUGHNESSY
+  • CR-23-684829-A: Judge JEFFREY P SAFFOLD ⚠️ SAME JUDGE
+  • CR-23-684830-A: Judge DEBORAH M TURNER
+
+JUDGE JEFFREY P SAFFOLD - OTHER 2025 CASES:
+
+  • CR-25-706991-A: JOSEPH T SHOMON
+  • CR-25-706510-A: KELLY THEIS
+
+====================================================================================================
+PART 3: YOUR ORIGINAL CASE - CR-23-684826-A (2023)
+====================================================================================================
+
+DOWNLOAD STATUS: ⚠️ RETRIEVAL ERROR
+
+The website encountered a 'Page.content: Unable to retrieve content because the page
+is navigating and changing the content' error when attempting to download CR-23-684826-A.
+
+POSSIBLE CAUSES:
+  1. Case file is restricted or requires special access
+  2. Website navigation timing issue (requires case by case download retry)
+  3. Case records may be sealed or under review
+
+ACTION REQUIRED:
+  • CRITICAL: Visit Cuyahoga docket website directly to review CR-23-684826-A
+  • Download URL: https://cpdocket.cp.cuyahogacounty.gov
+  • Verify: Judge assignment, probation terms, violation dates
+
+====================================================================================================
+PART 4: TIMELINE OF EVENTS
+====================================================================================================
+
+2023 (Original Probation Case):
+  • Date unknown: CR-23-684826-A filed (PROBATION VIOLATION CASE)
+  • Status: Your original case - SEALED/RESTRICTED
+  • 11/05/2025: Probation Violation Hearing Update added to 2025 case
+  • 11/06/2025: Violation Hearing Set for 11/12/2025 at 09:00 AM
+
+2025 (New Drug Possession Charges):
+  • 08/19/2025: Arrested by Richmond Heights PD (Report #2025001169)
+  • 10/16/2025: Indicted on drug possession charges (2x Count 2925.11.A)
+  • 11/05/2025-11/06/2025: Probation violation noticed in 2023 case
+  • 11/17/2025: ARRAIGNMENT (Your immediate deadline)
+
+====================================================================================================
+PART 5: DEFENSE CONSIDERATIONS
+====================================================================================================
+
+IMMEDIATE ACTIONS:
+  1. ✓ Arraignment: 11/17/2025 at 08:30 AM, Arraignment Room, CP 12th Floor
+  2. REQUEST: Public Defender assignment (if indigent) or retain private counsel
+  3. OBTAIN: Complete file for CR-23-684826-A BEFORE arraignment
+  4. REQUEST: Bond/bail hearing
+
+KEY EVIDENTIARY POINTS:
+  • Connection between 2023 and 2025 cases needs investigation
+  • Timing of probation violation (11/5-11/6) vs arrest (8/19) is suspicious
+  • EMS hospitalization mentioned by user - obtain medical records
+  • Challenge arrest validity if medical records support different narrative
+
+JUDICIAL PATTERNS:
+  • Judge SAFFOLD has cases in vicinity (CR-23-684829-A)
+  • Determine if SAFFOLD will be assigned to CR-25-706402-A
+  • Judge assignment may occur after arraignment
+
+====================================================================================================
+END OF REPORT
+====================================================================================================
+
+Report prepared by: Cuyahoga CP Scraper - Legal Defense Report Generator
+Generated: 2025-11-09T15:50:23.522414

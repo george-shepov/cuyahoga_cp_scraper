@@ -1,0 +1,99 @@
+================================================================================
+2025 CUYAHOGA COUNTY COMPREHENSIVE CASE ANALYSIS
+================================================================================
+
+[100/530] 2025-706495: Cost data found: 70, Total: $13,112.32
+[200/530] 2025-706595: Cost data found: 155, Total: $27,225.18
+[300/530] 2025-706695: Cost data found: 229, Total: $40,135.88
+[400/530] 2025-706795: Cost data found: 306, Total: $53,913.22
+[500/530] 2025-706895: Cost data found: 379, Total: $66,158.33
+
+================================================================================
+FINAL STATISTICS
+================================================================================
+
+CASE PROCESSING:
+  Total files: 530
+  Total cases loaded: 530
+  Cases with errors: 102
+
+COST INFORMATION:
+  Cases with cost data: 400
+  Total cost across all cases: $69,429.57
+  Average cost per case: $173.57
+  Median cost: $130.44
+  Min cost: $99.00
+  Max cost: $756.44
+
+JUDGES (Top 15):
+  ARRAIGNMENT ROOM: 299 cases
+  JOHN P O'DONNELL: 10 cases
+  JOAN SYNENBERG: 7 cases
+  PETER J CORRIGAN: 6 cases
+  LAUREN C MOORE: 6 cases
+  CASSANDRA COLLIER-WILLIAMS: 5 cases
+  WILLIAM F. B. VODREY: 4 cases
+  DEBORAH M TURNER: 4 cases
+  JOHN J SPELLACY: 4 cases
+  KELLY ANN GALLAGHER: 4 cases
+  MAUREEN CLANCY: 4 cases
+  MICHAEL P SHAUGHNESSY: 4 cases
+  TIMOTHY MCCORMICK: 4 cases
+  ANDREW J. SANTOLI: 4 cases
+  EMILY HAGAN: 3 cases
+
+ARRESTING AGENCIES (Top 15):
+  CLEVELAND POLICE: 134 cases
+  SHERIFF: 41 cases
+  C.M.H.A.: 18 cases
+  EUCLID: 15 cases
+  OHIO STATE PATROL: 12 cases
+  LAKEWOOD: 12 cases
+  STRONGSVILLE: 10 cases
+  CLEVELAND HTS.: 10 cases
+  RICHMOND HEIGHTS: 9 cases
+  CHILD SUPPORT ENF. AGENCY: 9 cases
+  NORTH OLMSTED: 8 cases
+  PARMA: 7 cases
+  WESTLAKE: 6 cases
+  STATE OF OHIO: 5 cases
+  SOLON: 5 cases
+
+CASE STATUS (Top 10):
+  UNKNOWN: 181 cases
+  DEFN JAIL: 87 cases
+  DEFN BAIL: 59 cases
+  DEFN LVJAIL: 57 cases
+  DEFN CAPIAS: 19 cases
+
+DEFENDANT RACE (Top 10):
+  BLACK: 274 cases (51.7%)
+  WHITE: 101 cases (19.1%)
+  OTHER: 9 cases (1.7%)
+  HISPANIC: 5 cases (0.9%)
+  ASIAN: 2 cases (0.4%)
+
+CHARGES (Top 20):
+  2925.11.A - DRUG POSSESSION: 98 occurrences
+  2921.331.B - FAILURE TO COMPLY WITH ORDER,SIGNAL OF POLICE OFFICER: 38 occurrences
+  2919.25.A - DOMESTIC VIOLENCE: 37 occurrences
+  2903.18.(B)(3) - STRANGULATION: 34 occurrences
+  2903.11.A(2) - FELONIOUS ASSAULT: 34 occurrences
+  2903.11.A(1) - FELONIOUS ASSAULT: 31 occurrences
+  2923.13.A(2) - HAVING WEAPONS WHILE UNDER DISABILITY: 30 occurrences
+  2913.02.A(1) - THEFT; AGGRAVATED THEFT: 27 occurrences
+  2921.31.A - OBSTRUCTING OFFICIAL BUSINESS: 25 occurrences
+  2925.03.A(2) - TRAFFICKING OFFENSE: 24 occurrences
+  2903.13.A - ASSAULT: 24 occurrences
+  2913.51.A - RECEIVING STOLEN PROPERTY: 23 occurrences
+  2923.16.B - IMPROPERLY HANDLING FIREARMS IN A MOTOR VEHICLE: 21 occurrences
+  2903.21.A - AGGRAVATED MENACING: 20 occurrences
+  2923.12.A(2) - CARRYING CONCEALED WEAPONS: 20 occurrences
+  2903.18.(B)(2) - STRANGULATION: 17 occurrences
+  4511.19.A(1)(A) - DRIVING WHILE UNDER THE INFLUENCE OF ALCOHOL OR DRUGS: 16 occurrences
+  2909.06.A(1) - CRIMINAL DAMAGING: 16 occurrences
+  2907.322.A(1) - PANDERING SEXUALLY ORIENTED MATTER INVOLVING A MINOR: 16 occurrences
+  2919.22.A - ENDANGERING CHILDREN: 15 occurrences
+
+================================================================================
+

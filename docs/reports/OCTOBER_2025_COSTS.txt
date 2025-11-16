@@ -1,0 +1,133 @@
+================================================================================
+OCTOBER 2025 CUYAHOGA COUNTY CASES - COST ANALYSIS
+================================================================================
+
+Total Cases Found: 447
+
+Cases with Cost Information: 353
+
+================================================================================
+GRAND TOTAL OF ALL COSTS: $129,316.42
+================================================================================
+
+Average Cost per Case: $366.34
+
+
+COST BREAKDOWN BY TYPE (Top 15):
+--------------------------------------------------------------------------------
+  TOTAL COST                                         $   64,401.28  ( 49.8%)
+  COURT SPECIAL PROJECTS FUND                        $   17,650.00  ( 13.6%)
+  CLERK'S FEES                                       $   16,520.28  ( 12.8%)
+  CLEVELAND MUNI COURT                               $    8,196.00  (  6.3%)
+  COMPUTER FEES                                      $    7,060.00  (  5.5%)
+  CUYAHOGA COUNTY SHERIFF DEPT                       $    3,289.50  (  2.5%)
+  PUBLIC DEFENDER FEE, INDIGENT                      $    2,775.00  (  2.1%)
+  ROCKY RIVER MUNI COURT                             $    1,610.00  (  1.2%)
+  BEREA MUNI COURT                                   $    1,472.50  (  1.1%)
+  EUCLID MUNI COURT                                  $    1,250.00  (  1.0%)
+  LEGAL RESEARCH - CRIMINAL                          $    1,059.00  (  0.8%)
+  LYNDHURST MUNI COURT                               $      544.00  (  0.4%)
+  CLEVELAND HTS MUNI COURT                           $      490.00  (  0.4%)
+  GARFIELD HTS MUNI COURT                            $      450.00  (  0.3%)
+  BEDFORD MUNI COURT                                 $      400.00  (  0.3%)
+
+
+TOP 20 MOST EXPENSIVE CASES:
+--------------------------------------------------------------------------------
+Rank  Case ID            Case #       Total Cost  
+--------------------------------------------------------------------------------
+1     CR-23-684909-A     2023-684909  $  5,033.32
+2     CR-25-706553-A     2025-706553  $  1,512.88
+3     CR-25-706715-A     2025-706715  $  1,503.88
+4     CR-23-684948-A     2023-684948  $  1,195.36
+5     CR-25-706733-A     2025-706733  $  1,064.00
+6     CR-25-707041-A     2025-707041  $  1,002.00
+7     CR-23-684984-A     2023-684984  $    998.36
+8     CR-25-706558-A     2025-706558  $    963.58
+9     CR-25-706581-A     2025-706581  $    882.00
+10    CR-23-684889-A     2023-684889  $    800.00
+11    CR-25-706942-A     2025-706942  $    786.00
+12    CR-25-706635-A     2025-706635  $    771.72
+13    CR-25-706949-A     2025-706949  $    763.72
+14    CR-25-706491-A     2025-706491  $    702.00
+15    CR-25-706925-A     2025-706925  $    695.72
+16    CR-25-706572-A     2025-706572  $    671.72
+17    CR-25-706597-A     2025-706597  $    671.72
+18    CR-25-706613-A     2025-706613  $    667.72
+19    CR-25-706753-A     2025-706753  $    667.72
+20    CR-25-706796-A     2025-706796  $    667.72
+
+
+SAMPLE COST DETAILS (Cases with highest costs):
+--------------------------------------------------------------------------------
+
+1. CR-23-684909-A - 2023-684909
+   Total: $5,033.32
+   Cost Items:
+     - CLERK'S FEES                                                 $    282.66
+     - COMPUTER FEES                                                $     20.00
+     - COURT SPECIAL PROJECTS FUND                                  $     50.00
+     - CRIME STOPPERS                                               $      1.00
+     - CUYAHOGA COUNTY SHERIFF DEPT                                 $  1,901.00
+     - LEGAL RESEARCH - CRIMINAL                                    $      3.00
+     - PUBLIC DEFENDER FEE, INDIGENT                                $     25.00
+     - TRUMBULL COUNTY SHERIFF DEPT                                 $    228.00
+     - WITNESS FEES - CRIMINAL                                      $      6.00
+     - TOTAL COST                                                   $  2,516.66
+
+2. CR-25-706553-A - 2025-706553
+   Total: $1,512.88
+   Cost Items:
+     - BEREA MUNI COURT                                             $    487.00
+     - CLERK'S FEES                                                 $    190.44
+     - COMPUTER FEES                                                $     20.00
+     - COURT SPECIAL PROJECTS FUND                                  $     50.00
+     - CRIME STOPPERS                                               $      1.00
+     - CUYAHOGA COUNTY SHERIFF DEPT                                 $      5.00
+     - LEGAL RESEARCH - CRIMINAL                                    $      3.00
+     - TOTAL COST                                                   $    756.44
+
+3. CR-25-706715-A - 2025-706715
+   Total: $1,503.88
+   Cost Items:
+     - BEREA MUNI COURT                                             $    612.50
+     - CLERK'S FEES                                                 $     40.44
+     - COMPUTER FEES                                                $     20.00
+     - COURT SPECIAL PROJECTS FUND                                  $     50.00
+     - CRIME STOPPERS                                               $      1.00
+     - LEGAL RESEARCH - CRIMINAL                                    $      3.00
+     - PUBLIC DEFENDER FEE, INDIGENT                                $     25.00
+     - TOTAL COST                                                   $    751.94
+
+4. CR-23-684948-A - 2023-684948
+   Total: $1,195.36
+   Cost Items:
+     - CLERK'S FEES                                                 $    147.68
+     - COMPUTER FEES                                                $     20.00
+     - COURT REPORTER - CRIMINAL                                    $    175.00
+     - COURT SPECIAL PROJECTS FUND                                  $     50.00
+     - CRIME STOPPERS                                               $      1.00
+     - CUYAHOGA COUNTY SHERIFF DEPT                                 $     54.00
+     - LEGAL RESEARCH - CRIMINAL                                    $      3.00
+     - PUBLIC DEFENDER FEE, INDIGENT                                $     25.00
+     - SURCHARGE ON BAIL BOND 2937.22                               $     25.00
+     - TOTAL COST                                                   $    500.68
+     - DOMEYONO BAILEY                                              $    194.00
+
+5. CR-25-706733-A - 2025-706733
+   Total: $1,064.00
+   Cost Items:
+     - CLERK'S FEES                                                 $     29.00
+     - COMPUTER FEES                                                $     20.00
+     - COURT SPECIAL PROJECTS FUND                                  $     50.00
+     - CRIME STOPPERS                                               $      1.00
+     - CUYAHOGA COUNTY SHERIFF DEPT                                 $     18.00
+     - LEGAL RESEARCH - CRIMINAL                                    $      3.00
+     - PUBLIC DEFENDER FEE, INDIGENT                                $     25.00
+     - ROCKY RIVER MUNI COURT                                       $    386.00
+     - TOTAL COST                                                   $    532.00
+
+================================================================================
+Analysis Complete
+================================================================================
+

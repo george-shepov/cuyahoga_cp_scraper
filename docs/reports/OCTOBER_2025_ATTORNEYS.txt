@@ -1,0 +1,93 @@
+================================================================================
+OCTOBER 2025 CUYAHOGA COUNTY CASES - ATTORNEY ANALYSIS
+================================================================================
+
+Total Cases Found: 447
+
+Cases with Attorney Information: 95
+
+Unique Attorneys Found: 65
+
+
+TOP 30 ATTORNEYS BY NUMBER OF CLIENTS:
+--------------------------------------------------------------------------------
+Rank  Attorney Name                                      Clients   
+--------------------------------------------------------------------------------
+1     : PUBLIC DEFENDER                                  12        
+2     : DARYL T DENNIE                                   3         
+3     : JEFF GARDNER                                     3         
+4     : BRET JORDAN                                      3         
+5     : PATRICK LEARY                                    2         
+6     : CHRISTOPHER A GODINSKY                           2         
+7     : JAMES J HOFELICH                                 2         
+8     : DANIEL M. TIRFAGNEHU                             2         
+9     : CARLOS K JOHNSON                                 2         
+10    : EDWARD M MULLIN                                  2         
+11    : NANCY T JAMIESON                                 2         
+12    : LINDA V. GONZALEZ                                2         
+13    : DANIEL J MISIEWICZ                               2         
+14    : SHEILA DOWNS                                     2         
+15    : CRAIG W. SMOTZER                                 2         
+16    : FERNANDO MACK                                    2         
+17    : MYRON P WATSON                                   2         
+18    : SCOTT R HURLEY                                   2         
+19    : JAMES A JENKINS                                  2         
+20    : JACOB B. MARGOLIS                                2         
+21    : RACHEL M. KALAYJIAN                              2         
+22    : MARY CATHERINE CORRIGAN                          2         
+23    : JAMES S BESENYEI                                 2         
+24    : KIRAN KOVOOR MIKHAIEL                            2         
+25    : STEPHANIE MCNEAL                                 2         
+26    : FALLON RADIGAN                                   1         
+27    : MARK A DEFRANCO                                  1         
+28    : SEAN BUCHANAN                                    1         
+29    : JENNIFER MCTERNAN                                1         
+30    : WILLIAM C SHAUGHNESSY                            1         
+
+
+TOP 10 ATTORNEYS WITH CLIENT DETAILS:
+--------------------------------------------------------------------------------
+
+1. : PUBLIC DEFENDER
+   Total Clients: 12
+   Case IDs: CR-25-706452-A, CR-25-706465-A, CR-25-706491-A, CR-25-706715-A, CR-25-706733-A
+   ... and 7 more cases
+
+2. : DARYL T DENNIE
+   Total Clients: 3
+   Case IDs: CR-23-684998-A, CR-25-706737-A, CR-25-706847-A
+
+3. : JEFF GARDNER
+   Total Clients: 3
+   Case IDs: CR-25-706433-A, CR-25-706583-A, CR-25-706845-A
+
+4. : BRET JORDAN
+   Total Clients: 3
+   Case IDs: CR-25-706578-A, CR-25-706741-A, CR-25-707005-A
+
+5. : PATRICK LEARY
+   Total Clients: 2
+   Case IDs: CR-23-684889-A, CR-25-706635-A
+
+6. : CHRISTOPHER A GODINSKY
+   Total Clients: 2
+   Case IDs: CR-25-706403-A, CR-25-706510-A
+
+7. : JAMES J HOFELICH
+   Total Clients: 2
+   Case IDs: CR-25-706412-A, CR-25-707006-A
+
+8. : DANIEL M. TIRFAGNEHU
+   Total Clients: 2
+   Case IDs: CR-25-706420-A, CR-25-706968-A
+
+9. : CARLOS K JOHNSON
+   Total Clients: 2
+   Case IDs: CR-25-706423-A, CR-25-706568-A
+
+10. : EDWARD M MULLIN
+   Total Clients: 2
+   Case IDs: CR-25-706429-A, CR-25-706908-A
+
+================================================================================
+
