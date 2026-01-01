@@ -1,0 +1,7 @@
+Unique case_numbers: 14310
+Unique defendants (normalized lowercased, excluding empty/N/A): 10389
+
+Files scanned:
+2023_cases_comprehensive.csv
+2024_cases_comprehensive.csv
+2025_cases_comprehensive.csv

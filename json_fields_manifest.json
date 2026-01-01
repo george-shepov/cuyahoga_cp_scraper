@@ -1,0 +1,21 @@
+{
+  "total_cases": 19133,
+  "field_counts": {
+    "2023": 1,
+    "2025": 1,
+    "metadata": 19132,
+    "summary": 19132,
+    "docket": 19132,
+    "costs": 19132,
+    "defendant": 19132,
+    "attorneys": 19132,
+    "co_defendants": 13373,
+    "bonds": 13373,
+    "case_actions": 13373,
+    "judge_history": 13373,
+    "outcome": 13373,
+    "errors": 19132,
+    "html_snapshots": 19132,
+    "pdf_info": 19069
+  }
+}

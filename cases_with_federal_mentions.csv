@@ -1,0 +1,3 @@
+case_number,source_file,column,snippet
+CR-23-683228-A,2023_cases_comprehensive.csv,address,FEDERAL PRISON CAMP
+CR-23-683228-A,2023_cases_comprehensive.csv,full_address,"FEDERAL PRISON CAMP, 1 GLEN WAY ROAD"

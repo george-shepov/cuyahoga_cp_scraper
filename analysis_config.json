@@ -1,0 +1,60 @@
+{
+  "top_judges": [
+    "ARRAIGNMENT ROOM",
+    "JENNIFER O'DONNELL",
+    "MICHAEL P SHAUGHNESSY",
+    "EMILY HAGAN",
+    "TIMOTHY MCCORMICK",
+    "ANDREW J. SANTOLI",
+    "CASSANDRA COLLIER-WILLIAMS",
+    "JEFFREY P SAFFOLD",
+    "KEVIN J KELLEY",
+    "SHANNON M GALLAGHER"
+  ],
+  "top_prosecutors": [
+    "Cuyahoga County Prosecutor",
+    "ANDREA ISABELLA",
+    "MASON MCCARTHY",
+    "MICHAEL TIMMS",
+    "BRITTANY FLETCHER",
+    "LUKE HABERMEHL",
+    "SEAN DRAKE",
+    "CARL FELICE",
+    "MARCO TANUDRA",
+    "DOMINIC NEVILLE"
+  ],
+  "top_defense_attorneys": [
+    "PUBLIC  DEFENDER",
+    "RACHELLE D. SUMMERS",
+    "WILLIAM C SHAUGHNESSY",
+    "CRAIG W. SMOTZER",
+    "JAYE M SCHLACHET",
+    "DAVID H BROWN",
+    "LAUREN  ESARCO",
+    "FALLON  RADIGAN",
+    "BRET  JORDAN",
+    "WALTER H. EDWARDS JR."
+  ],
+  "key_metrics": [
+    "case_status",
+    "def_status",
+    "verdict",
+    "total_costs",
+    "total_docket_entries"
+  ],
+  "success_keywords": [
+    "DISMISS",
+    "NOT GUILTY",
+    "ACQUIT"
+  ],
+  "guilty_keywords": [
+    "GUILTY",
+    "PLEA"
+  ],
+  "negative_keywords": [
+    "CAPIAS",
+    "WARRANT",
+    "JAIL",
+    "INCARCERATED"
+  ]
+}

@@ -1,13 +1,197 @@
 version: '3.8'
+
 services:
-  scraper-node:
-    build: .
+  # PostgreSQL - Relational database for structured analytics
+  postgres:
+    image: postgres:16-alpine
+    container_name: cuyahoga_postgres
+    environment:
+      POSTGRES_DB: cuyahoga_cases
+      POSTGRES_USER: cuyahoga
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cuyahoga"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # MongoDB - Document store for raw scraped data
+  mongodb:
+    image: mongo:7
+    container_name: cuyahoga_mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: cuyahoga
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-changeme}
+      MONGO_INITDB_DATABASE: cuyahoga_cases
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis - Cache and message queue
+  redis:
+    image: redis:7-alpine
+    container_name: cuyahoga_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Ollama - Local LLM server
+  ollama:
+    image: ollama/ollama:latest
+    container_name: cuyahoga_ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    restart: unless-stopped
+    # Uncomment if you have GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # Scraper - Main web scraping service
+  scraper:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
     container_name: cuyahoga_scraper
     volumes:
-      - ./out:/app/out
-      - ./browser_data:/app/browser_data
-      - ./data:/app/data
+      - ../out:/app/out
+      - ../browser_data:/app/browser_data
+      - ../logs:/app/logs
     environment:
       - PYTHONUNBUFFERED=1
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=cuyahoga_cases
+      - POSTGRES_USER=cuyahoga
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - MONGO_DB=cuyahoga_cases
+      - MONGO_USER=cuyahoga
+      - MONGO_PASSWORD=${MONGO_PASSWORD:-changeme}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      - LLM_MODEL=${LLM_MODEL:-llama3}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_started
     restart: unless-stopped
-    # For production you may want to run under a dedicated user and reduce capabilities
+    command: ["python3", "main.py", "scrape", "--year", "2025", "--start", "706402", "--limit", "10"]
+
+  # API - FastAPI REST/GraphQL server
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    container_name: cuyahoga_api
+    volumes:
+      - ../out:/app/out
+    environment:
+      - PYTHONUNBUFFERED=1
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=cuyahoga_cases
+      - POSTGRES_USER=cuyahoga
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - MONGO_DB=cuyahoga_cases
+      - MONGO_USER=cuyahoga
+      - MONGO_PASSWORD=${MONGO_PASSWORD:-changeme}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OLLAMA_BASE_URL=http://ollama:11434
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  # Worker - Celery background task processor
+  worker:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: cuyahoga_worker
+    volumes:
+      - ../out:/app/out
+      - ../logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=cuyahoga_cases
+      - POSTGRES_USER=cuyahoga
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - MONGO_DB=cuyahoga_cases
+      - MONGO_USER=cuyahoga
+      - MONGO_PASSWORD=${MONGO_PASSWORD:-changeme}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["celery", "-A", "tasks.celery_app", "worker", "--loglevel=info"]
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  mongodb_config:
+  redis_data:
+  ollama_data:

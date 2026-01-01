@@ -227,6 +227,77 @@ async def kv_from_table(page: Page, table_selector: str) -> Dict[str, Any]:
         pass
     
     return data
+
+
+async def capture_printer_pdfs_on_page(page: Page, out_root: Path, case_id: str, case_data: Dict[str, Any]):
+    """Find printer-friendly links on the current page and save them as PDFs.
+    Appends saved file paths to case_data['printer_pdfs'] and records errors in case_data['errors'].
+    """
+    try:
+        print_hrefs = set()
+
+        try:
+            loc = page.locator("a[href*='isprint=Y']")
+            cnt = await loc.count()
+            for i in range(cnt):
+                h = await loc.nth(i).get_attribute('href')
+                if h:
+                    print_hrefs.add(h)
+        except Exception:
+            pass
+
+        try:
+            loc2 = page.locator("a[id*='printer']")
+            cnt2 = await loc2.count()
+            for ii in range(cnt2):
+                h = await loc2.nth(ii).get_attribute('href')
+                if h:
+                    print_hrefs.add(h)
+        except Exception:
+            pass
+
+        try:
+            loc3 = page.locator("a:has-text('Printer Friendly')")
+            cnt3 = await loc3.count()
+            for ii in range(cnt3):
+                h = await loc3.nth(ii).get_attribute('href')
+                if h:
+                    print_hrefs.add(h)
+        except Exception:
+            pass
+
+        if print_hrefs:
+            pdf_dir = out_root / 'pdfs' / case_id
+            pdf_dir.mkdir(parents=True, exist_ok=True)
+            case_data.setdefault('printer_pdfs', [])
+            idx = 0
+            for href in sorted(print_hrefs):
+                if href.startswith('http'):
+                    url = href
+                elif href.startswith('/'):
+                    url = f"{BASE_URL}{href}"
+                else:
+                    url = f"{BASE_URL}/{href}"
+
+                ts = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
+                pdf_name = f"{case_id}_printer_{idx}_{ts}.pdf"
+                pdf_path = pdf_dir / pdf_name
+                try:
+                    await page.goto(url, wait_until='networkidle', timeout=30000)
+                    await asyncio.sleep(1.0)
+                    pdf_bytes = await page.pdf(format='Letter', print_background=True)
+                    pdf_path.write_bytes(pdf_bytes)
+                    case_data['printer_pdfs'].append(str(pdf_path))
+                    idx += 1
+                except Exception as epp:
+                    case_data.setdefault('errors', [])
+                    case_data['errors'].append({
+                        'type': 'printer_pdf_error',
+                        'message': f'Failed to capture printer PDF {href}: {epp}',
+                        'timestamp': datetime.now(timezone.utc).isoformat()
+                    })
+    except Exception as e:
+        console.print(f"[yellow]⚠ capture_printer_pdfs_on_page failed: {str(e)[:160]}[/yellow]")
 async def grid_from_table(page: Page, table_selector: str) -> List[Dict[str, Any]]:
     """
     Extract table data with context destruction recovery.
@@ -481,6 +552,99 @@ async def navigate_to_search(page: Page):
             continue
     
     # Duplicate code removed - now handled in navigate_to_search above
+
+
+async def detect_year_from_case_number(page: Page, number: int) -> Optional[int]:
+    """
+    Auto-detect the year for a case number by searching without year specification
+    and extracting it from the case ID format (e.g., CR-23-678533-A -> 2023)
+    """
+    console.print(f"[cyan]🔍 Auto-detecting year for case {number:06d}...[/cyan]")
+    
+    await navigate_to_search(page)
+    
+    # Fill category
+    try:
+        category_select = page.locator("select[name*='CaseCategory']")
+        if await category_select.count() > 0:
+            await category_select.select_option(label="CRIMINAL")
+    except Exception as e:
+        console.print(f"[yellow]Failed to select category: {e}[/yellow]")
+    
+    # Skip year selection - leave it blank or on default
+    console.print("[blue]Skipping year selection to search across all years[/blue]")
+    
+    # Fill case number only
+    try:
+        case_input = page.locator("input[name*='txtCaseNum']")
+        if await case_input.count() > 0:
+            await case_input.fill(f"{number:06d}")
+            console.print(f"[green]Filled case number: {number:06d}[/green]")
+    except Exception as e:
+        console.print(f"[red]Failed to fill case number: {e}[/red]")
+        return None
+    
+    # Submit the search
+    try:
+        submit_selectors = [
+            "input[name*='btnSubmitCase']",
+            "input[type='submit'][value*='Submit']",
+        ]
+        
+        clicked = False
+        for sel in submit_selectors:
+            btn = page.locator(sel)
+            if await btn.count() > 0:
+                try:
+                    async with page.expect_navigation(timeout=20000):
+                        await btn.first.click()
+                    clicked = True
+                    break
+                except:
+                    continue
+        
+        if not clicked:
+            console.print("[red]Could not submit search form[/red]")
+            return None
+            
+        await page.wait_for_load_state("domcontentloaded", timeout=15000)
+        
+    except Exception as e:
+        console.print(f"[red]Failed to submit: {e}[/red]")
+        return None
+    
+    # Check the result page for the case ID format
+    try:
+        page_content = await page.content()
+        
+        # Look for case ID pattern: CR-YY-NNNNNN-A
+        # The year is in 2-digit format (23 = 2023, 24 = 2024, 25 = 2025)
+        case_id_pattern = re.compile(r'CR-(\d{2})-' + str(number).zfill(6))
+        match = case_id_pattern.search(page_content)
+        
+        if match:
+            year_2digit = int(match.group(1))
+            # Convert 2-digit year to 4-digit
+            full_year = 2000 + year_2digit
+            console.print(f"[green]✓ Detected year: {full_year} (from case ID pattern)[/green]")
+            return full_year
+        
+        # Alternative: look for the case link text directly
+        case_link_pattern = re.compile(r'CR-(\d{2})-\d{6}-[A-Z]')
+        matches = case_link_pattern.findall(page_content)
+        
+        if matches:
+            year_2digit = int(matches[0])
+            full_year = 2000 + year_2digit
+            console.print(f"[green]✓ Detected year: {full_year} (from case link)[/green]")
+            return full_year
+        
+        console.print("[yellow]⚠ Could not find year in case ID format[/yellow]")
+        return None
+        
+    except Exception as e:
+        console.print(f"[red]Error detecting year: {e}[/red]")
+        return None
 
 
 async def search_case(page: Page, year: int, number: int) -> Optional[str]:
@@ -1113,12 +1277,21 @@ async def download_pdf_with_playwright(page: Page, pdf_link: str, output_path: P
         return False
 
 async def download_case_pdfs(page: Page, docket_entries: List[Dict[str, Any]], case_id: str, 
-                           pdf_dir: Path) -> Dict[str, Any]:
-    """Download all PDFs for a case using the authenticated browser session"""
+                           pdf_dir: Path, sentencing_only: bool = True) -> Dict[str, Any]:
+    """Download PDFs for a case using the authenticated browser session
+    
+    Args:
+        page: Playwright page object
+        docket_entries: List of docket entries with PDF links
+        case_id: Case identifier (e.g., CR-23-684826-A)
+        pdf_dir: Base directory for PDF storage
+        sentencing_only: If True, only download sentencing/judgment entries (JE). Default True.
+    """
     pdf_info = {
         "total_pdfs": 0,
         "downloaded": 0,
         "failed": 0,
+        "skipped": 0,
         "files": []
     }
     
@@ -1126,14 +1299,27 @@ async def download_case_pdfs(page: Page, docket_entries: List[Dict[str, Any]], c
     case_pdf_dir = pdf_dir / case_id
     case_pdf_dir.mkdir(parents=True, exist_ok=True)
     
+    # Filter for PDFs
     pdf_entries = [entry for entry in docket_entries if entry.get("pdf_link")]
+    
+    # If sentencing_only, filter for JE documents
+    if sentencing_only:
+        pdf_entries = [
+            entry for entry in pdf_entries 
+            if entry.get("docket_type", entry.get("document_type", "")).upper() in ("JE", "SENTENCING", "JUDGMENT ENTRY")
+        ]
+        console.print(f"[cyan]Found {len(pdf_entries)} sentencing PDFs for case {case_id}[/cyan]")
+    else:
+        console.print(f"[cyan]Found {len(pdf_entries)} PDFs for case {case_id}[/cyan]")
+    
     pdf_info["total_pdfs"] = len(pdf_entries)
     
     if not pdf_entries:
-        console.print(f"[yellow]No PDFs found for case {case_id}[/yellow]")
+        if sentencing_only:
+            console.print(f"[blue]ℹ No sentencing PDFs found for case {case_id}[/blue]")
+        else:
+            console.print(f"[yellow]No PDFs found for case {case_id}[/yellow]")
         return pdf_info
-    
-    console.print(f"[cyan]Found {len(pdf_entries)} PDFs for case {case_id}[/cyan]")
     
     for entry in pdf_entries:
         pdf_link = entry["pdf_link"]
@@ -1667,6 +1853,11 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
             })
         polite_delay(DEFAULT_DELAY)
 
+        # Capture printer-friendly PDFs for the current tab (Summary)
+        try:
+            await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
+        except Exception as eprint:
+            console.print(f"[yellow]⚠ Printer-friendly PDF capture failed: {str(eprint)[:160]}[/yellow]")
         # Extract Docket
         try:
             try:
@@ -1693,12 +1884,17 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 case_data["docket"] = await extract_docket_with_pdfs(page)
                 console.print(f"[green]✓ Docket extracted with PDF links ({len(case_data['docket'])} entries)[/green]")
                 
-                # Download PDFs if requested
+                # Download PDFs if requested (sentencing entries only by default)
                 try:
                     pdf_dir = out_root / "pdfs"
-                    pdf_info = await download_case_pdfs(page, case_data["docket"], case_id, pdf_dir)
+                    pdf_info = await download_case_pdfs(page, case_data["docket"], case_id, pdf_dir, sentencing_only=True)
                     case_data["pdf_info"] = pdf_info
-                    console.print(f"[green]✓ PDFs: {pdf_info['downloaded']}/{pdf_info['total_pdfs']} downloaded[/green]")
+                    if pdf_info["downloaded"] > 0:
+                        console.print(f"[green]✓ Sentencing PDFs: {pdf_info['downloaded']}/{pdf_info['total_pdfs']} downloaded[/green]")
+                    elif pdf_info["total_pdfs"] == 0:
+                        console.print(f"[blue]ℹ No sentencing PDFs to download[/blue]")
+                    else:
+                        console.print(f"[yellow]⚠ PDFs: 0/{pdf_info['total_pdfs']} downloaded (all failed)[/yellow]")
                 except Exception as pdf_error:
                     console.print(f"[red]✗ PDF download failed: {pdf_error}[/red]")
                     case_data["errors"].append({
@@ -1717,6 +1913,12 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 "message": str(e),
                 "timestamp": datetime.now(timezone.utc).isoformat()
             })
+        # Capture printer-friendly PDF for Docket tab (if present)
+        try:
+            await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
+        except Exception as eprint:
+            console.print(f"[yellow]⚠ Docket printer capture failed: {str(eprint)[:160]}[/yellow]")
+
         polite_delay(DEFAULT_DELAY)
 
         # Extract Costs
@@ -1742,6 +1944,12 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 "message": str(e),
                 "timestamp": datetime.now(timezone.utc).isoformat()
             })
+        # Capture printer-friendly PDF for Costs tab (if present)
+        try:
+            await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
+        except Exception as eprint:
+            console.print(f"[yellow]⚠ Costs printer capture failed: {str(eprint)[:160]}[/yellow]")
+
         polite_delay(DEFAULT_DELAY)
 
         # Extract Defendant
@@ -1767,6 +1975,12 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 "message": str(e),
                 "timestamp": datetime.now(timezone.utc).isoformat()
             })
+        # Capture printer-friendly PDF for Defendant tab (if present)
+        try:
+            await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
+        except Exception as eprint:
+            console.print(f"[yellow]⚠ Defendant printer capture failed: {str(eprint)[:160]}[/yellow]")
+
         polite_delay(DEFAULT_DELAY)
 
         # Extract Attorneys
@@ -1804,6 +2018,12 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 "message": str(e),
                 "timestamp": datetime.now(timezone.utc).isoformat()
             })
+        # Capture printer-friendly PDF for Attorney tab (if present)
+        try:
+            await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
+        except Exception as eprint:
+            console.print(f"[yellow]⚠ Attorney printer capture failed: {str(eprint)[:160]}[/yellow]")
+
         polite_delay(DEFAULT_DELAY)
 
     except Exception as e:
@@ -1814,6 +2034,55 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
         case_data["metadata"]["exists"] = False
+
+    # Validate that we got all 5 tabs - if any are missing, flag as incomplete
+    if case_data["metadata"]["exists"]:
+        validation_issues = []
+        
+        # Check Summary (should have fields)
+        if not case_data.get("summary", {}).get("fields"):
+            validation_issues.append("Summary missing or empty")
+        
+        # Check Docket (should have entries for active cases)
+        if not case_data.get("docket"):
+            # Some very old/inactive cases might have no docket, but flag it
+            console.print("[yellow]⚠ No docket entries found[/yellow]")
+        else:
+            # Check if we have a sentencing entry (JE = Judgment Entry)
+            # Check docket_type, document_type, and Entry fields for compatibility
+            has_sentencing = any(
+                entry.get("docket_type", entry.get("document_type", "")).upper() in ("JE", "SENTENCING", "JUDGMENT ENTRY") or
+                entry.get("Entry", "").upper().startswith(("JE", "SENTENCING", "JUDGMENT ENTRY"))
+                for entry in case_data["docket"]
+            )
+            if has_sentencing:
+                je_count = sum(1 for e in case_data["docket"] 
+                              if e.get("docket_type", e.get("document_type", "")).upper() in ("JE", "SENTENCING", "JUDGMENT ENTRY") or
+                                 e.get("Entry", "").upper().startswith(("JE", "SENTENCING", "JUDGMENT ENTRY")))
+                console.print(f"[green]✓ Found {je_count} sentencing entry/entries in docket[/green]")
+            else:
+                console.print("[blue]ℹ No sentencing entry in docket[/blue]")
+        
+        # Check Costs (many cases have no costs, so just verify structure exists)
+        if "costs" not in case_data:
+            validation_issues.append("Costs tab not extracted")
+        
+        # Check Defendant (should have data)
+        if not case_data.get("defendant"):
+            validation_issues.append("Defendant data missing")
+        
+        # Check Attorneys (many cases have no attorneys, so just verify structure exists)
+        if "attorneys" not in case_data:
+            validation_issues.append("Attorneys tab not extracted")
+        
+        # Log validation issues
+        if validation_issues:
+            console.print(f"[yellow]⚠ Validation warnings: {', '.join(validation_issues)}[/yellow]")
+            case_data["errors"].append({
+                "type": "validation_warning",
+                "message": "; ".join(validation_issues),
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
 
     return case_data
 
@@ -1916,7 +2185,7 @@ async def run():
     
     # Scraper command
     scraper = subparsers.add_parser("scrape", help="Scrape court docket data")
-    scraper.add_argument("--year", type=int, default=int(os.getenv("YEAR", "2025")))
+    scraper.add_argument("--year", type=int, default=None, help="Year of cases (auto-detected if not specified)")
     scraper.add_argument("--start", type=int, default=int(os.getenv("START_NUMBER", "706402")))
     scraper.add_argument("--limit", type=int, default=int(os.getenv("LIMIT", "100")))
     scraper.add_argument("--direction", choices=["up","down","both"], default=os.getenv("DIRECTION","both"))
@@ -1976,9 +2245,16 @@ async def run():
     # Set up PDF downloading for your specific cases
     pdf_cases = args.pdf_cases or ["CR-25-706402-A", "CR-23-684826-A"]
     
+    # Handle year auto-detection
+    year_to_use = args.year
+    
+    # Simplified headless logic - if --headless flag is set, use headless mode
+    use_headless = args.headless or os.getenv("HEADLESS", "false").lower() == "true"
+    
     cfg = Cfg(
-        headless=(True if args.headless else (False if os.getenv("HEADLESS","false").lower()=="false" else True)),
-        year=args.year, start_number=args.start, direction=args.direction, limit=args.limit,
+        headless=use_headless,
+        year=year_to_use if year_to_use else int(os.getenv("YEAR", "2025")),  # Use env default if no year specified
+        start_number=args.start, direction=args.direction, limit=args.limit,
         output_dir=args.output_dir, delay_ms=args.delay_ms, resume=args.resume,
         download_pdfs=args.download_pdfs, pdf_cases=pdf_cases
     )
@@ -1996,10 +2272,38 @@ async def run():
         # Single year mode setup will be done after browser launch
 
     async with async_playwright() as p:
+        # If year was not specified, auto-detect it before proceeding
+        if year_to_use is None and not args.discover_years:
+            console.rule(f"[bold cyan]🔍 Auto-detecting year for case {args.start:06d}[/bold cyan]")
+            browser = await p.chromium.launch(headless=cfg.headless)
+            context = await browser.new_context()
+            page = await context.new_page()
+            
+            try:
+                await ensure_past_tos(page)
+                detected_year = await detect_year_from_case_number(page, args.start)
+                
+                if detected_year:
+                    cfg.year = detected_year
+                    years_to_process = [detected_year]
+                    console.print(f"[green]✓ Using auto-detected year: {detected_year}[/green]")
+                else:
+                    console.print(f"[yellow]⚠ Could not auto-detect year, using default: {cfg.year}[/yellow]")
+            except Exception as e:
+                console.print(f"[red]Error during year detection: {e}[/red]")
+                console.print(f"[yellow]Using default year: {cfg.year}[/yellow]")
+            finally:
+                await browser.close()
+        
         # Setup directories for single year mode
         out_dir = Path(cfg.output_dir) / str(cfg.year)
         out_dir.mkdir(parents=True, exist_ok=True)
         resume_file = out_dir / ".last_number"
+        
+        if cfg.headless:
+            console.print("[green]🚫 Running in HEADLESS mode (no browser windows)[/green]")
+        else:
+            console.print("[yellow]👁 Running with VISIBLE browser windows[/yellow]")
         
         # Generate targets for single year mode
         if args.discover_years:
@@ -2196,6 +2500,8 @@ async def process_case_range(playwright_instance: Playwright, year: int, targets
                         consecutive_no_save = 0
                     except Exception:
                         pass
+                    
+                    # Show file saved with size
                     progress.console.print(f"[green]✓ {year}-{num:06d}[/green] ({file_size/1024:.1f}KB)")
                 else:
                     tracker.add_missing(num)
@@ -2205,15 +2511,35 @@ async def process_case_range(playwright_instance: Playwright, year: int, targets
                 
                 # Log extraction summary if successful
                 if case_data["metadata"]["exists"]:
+                    # Count fields in summary (nested structure)
+                    summary_count = len(case_data.get('summary', {}).get('fields', {}))
+                    
                     summary_items = [
-                        f"S:{len(case_data['summary'])}",
+                        f"S:{summary_count}",
                         f"D:{len(case_data['docket'])}", 
                         f"C:{len(case_data['costs'])}",
                         f"Def:{len(case_data['defendant'])}",
                         f"Att:{len(case_data['attorneys'])}"
                     ]
+                    
+                    # Flag if we have sentencing entry
+                    has_je = any(
+                        e.get("docket_type", e.get("document_type", "")).upper() in ("JE", "SENTENCING", "JUDGMENT ENTRY") or
+                        e.get("Entry", "").upper().startswith(("JE", "SENTENCING", "JUDGMENT ENTRY"))
+                        for e in case_data['docket']
+                    )
+                    if has_je:
+                        je_count = sum(1 for e in case_data['docket'] 
+                                      if e.get("docket_type", e.get("document_type", "")).upper() in ("JE", "SENTENCING", "JUDGMENT ENTRY") or
+                                         e.get("Entry", "").upper().startswith(("JE", "SENTENCING", "JUDGMENT ENTRY")))
+                        summary_items.append(f"[JE×{je_count}]")
+                    
                     if case_data["errors"]:
-                        summary_items.append(f"Err:{len(case_data['errors'])}")
+                        # Only show errors that aren't just validation warnings
+                        real_errors = [e for e in case_data["errors"] if e.get("type") != "validation_warning"]
+                        if real_errors:
+                            summary_items.append(f"Err:{len(real_errors)}")
+                    
                     progress.console.print(f"[blue]    {' | '.join(summary_items)}[/blue]")
                 
                 # Reset retry counter on successful case

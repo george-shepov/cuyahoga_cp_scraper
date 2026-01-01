@@ -1,0 +1,21 @@
+{
+  "description": "Personal cases to monitor",
+  "cases": [
+    {
+      "case_id": "CR-23-684826-A",
+      "year": 2023,
+      "number": 684826,
+      "category": "CRIMINAL",
+      "description": "My criminal case 2023",
+      "download_pdfs": true
+    },
+    {
+      "case_id": "CR-25-706402-A",
+      "year": 2025,
+      "number": 706402,
+      "category": "CRIMINAL",
+      "description": "My criminal case 2025",
+      "download_pdfs": true
+    }
+  ]
+}
