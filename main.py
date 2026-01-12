@@ -2275,9 +2275,25 @@ async def run():
         # If year was not specified, auto-detect it before proceeding
         if year_to_use is None and not args.discover_years:
             console.rule(f"[bold cyan]🔍 Auto-detecting year for case {args.start:06d}[/bold cyan]")
-            browser = await p.chromium.launch(headless=cfg.headless)
-            context = await browser.new_context()
-            page = await context.new_page()
+            # Allow using the user's installed Chrome and profile for interactive debugging.
+            # If `CHROME_EXECUTABLE` or `CHROME_PROFILE_DIR` is set, launch a persistent
+            # context that uses that executable and profile. This lets you use your
+            # signed-in Chrome session (cookies, logins) for pages that block headless.
+            chrome_exec = os.getenv("CHROME_EXECUTABLE")
+            chrome_profile = os.getenv("CHROME_PROFILE_DIR")
+            use_persistent = bool(chrome_exec or chrome_profile)
+
+            if use_persistent:
+                profile_dir = chrome_profile or str(Path.home() / ".config" / "google-chrome" / "Default")
+                console.print(f"[cyan]Launching persistent Chrome context: exe={chrome_exec or 'system default'}, profile={profile_dir}[/cyan]")
+                browser = await p.chromium.launch_persistent_context(user_data_dir=profile_dir,
+                                                                     executable_path=chrome_exec if chrome_exec else None,
+                                                                     headless=cfg.headless)
+                page = await browser.new_page()
+            else:
+                browser = await p.chromium.launch(headless=cfg.headless)
+                context = await browser.new_context()
+                page = await context.new_page()
             
             try:
                 await ensure_past_tos(page)
