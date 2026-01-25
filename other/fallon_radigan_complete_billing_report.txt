@@ -1,0 +1,29 @@
+============================================================================================================================================
+FALLON RADIGAN - BILLING REPORT (Sample Cases)
+============================================================================================================================================
+
+CASES WITH BILLING ENTRIES FOUND: 0/5
+
+
+No billing entries found in sampled cases.
+
+============================================================================================================================================
+
+REGARDING PROSECUTOR VS. DEFENSE ATTORNEY:
+============================================================================================================================================
+
+The same attorney can work as:
+  - Defense Attorney in some cases
+  - Prosecutor in other cases
+
+These are SEPARATE CASES. An attorney works on one side or the other per case.
+
+In your list:
+  4 cases show Fallon Radigan as PROSECUTOR:
+    - CR-23-677892-A
+    - CR-23-678123-A
+    - CR-23-678641-A
+    - CR-24-691095-A
+
+  43 cases show her as DEFENSE ATTORNEY
+

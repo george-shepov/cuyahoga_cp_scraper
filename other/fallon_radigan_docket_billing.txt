@@ -1,0 +1,17 @@
+FALLON RADIGAN DOCKET BILLING REPORT
+Case: CR-23-684826-A
+====================================================================================================
+
+BILLING ENTRIES FROM DOCKET:
+
+Entry #1:
+  Date: 11/24/2025
+  Type: JE
+  Amount: $56.25
+  Full Description:
+    IT IS HEREBY ORDERED THAT FALLON RADIGAN, ESQ., HERETOFORE ASSIGNED AS COUNSEL FOR THE DEFENDANT IN THIS CAUSE, BE ALLOWED $56.25 FOR SERVICES SO RENDERED. IT IS ORDERED THAT THE COURT CERTIFY SAID AMOUNT TO THE FISCAL OFFICER AND THE COUNTY EXECUTIVE FOR ALLOWANCE AND PAYMENT. 2507440 11/24/2025 CPPMC 11/24/2025 10:03:14
+
+====================================================================================================
+
+NOTE: Only billing entries found in the docket for this case.
+To check other cases, each would need individual docket data extraction.
