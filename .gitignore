@@ -86,3 +86,10 @@ Thumbs.db
 debug_*.html
 trace.zip
 error.txt
+
+# Large generated artifacts and sensitive outputs
+archived_jsons*/
+analysis_output/
+pdf_images/
+other/*.zip
+other/*.tar.gz
