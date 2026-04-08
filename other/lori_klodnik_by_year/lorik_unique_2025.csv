@@ -1,0 +1,7 @@
+case_number,total_matches,num_files,file_paths
+CR-25-698424-A,6,1,out/2025/2025-698424_20251120_070406.json
+CR-25-699852-A,4,1,out/2025/2025-699852_20251120_122318.json
+CR-25-700233-A,3,1,out/2025/2025-700233_20251120_134248.json
+CR-25-700779-A,2,1,out/2025/2025-700779_20251120_154444.json
+CR-25-700810-A,3,1,out/2025/2025-700810_20251120_155031.json
+CR-25-705153-A,4,3,out/jasmine_jackson_cases_2023_2025.csv;out/jasmine_jackson_cases_2023_2025.csv.bak.20260216212512;out/jasmine_jackson_cases_2023_2025.csv.dedup.csv

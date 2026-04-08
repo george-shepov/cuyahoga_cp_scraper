@@ -18,6 +18,12 @@ for p in ROOT.rglob("*.json"):
     # skip common irrelevant dirs
     if any(part in SKIP_DIRS for part in p.parts):
         continue
+    # never rescan files already copied into the destination tree
+    try:
+        p.relative_to(DEST)
+        continue
+    except ValueError:
+        pass
     try:
         text = p.read_text(errors="ignore")
     except Exception:
@@ -27,6 +33,11 @@ for p in ROOT.rglob("*.json"):
         continue
     # determine destination path preserving relative structure
     rel = p.relative_to(ROOT)
+    # avoid duplicating a leading 'out' segment (which would create
+    # DEST/out/... -> DEST/out/out/... when copying files already under out/)
+    parts = rel.parts
+    if parts and parts[0] == "out":
+        rel = Path(*parts[1:])
     dest_path = DEST / rel
     dest_path.parent.mkdir(parents=True, exist_ok=True)
     # avoid copying the same file twice

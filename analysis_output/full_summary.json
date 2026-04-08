@@ -1,0 +1,628 @@
+{
+  "total_cases_scanned": 14310,
+  "by_year": {
+    "2005": 1,
+    "2010": 1,
+    "2017": 1,
+    "2023": 8387,
+    "2024": 3257,
+    "2025": 2663
+  },
+  "by_final_status": {
+    "UNKNOWN": 12431,
+    "DISMISSED": 1623,
+    "CONVICTED": 249,
+    "ACQUITTED": 7
+  },
+  "by_category": {
+    "UNCLASSIFIED": 6634,
+    "FELONY": 3802,
+    "VIOLENT": 3224,
+    "DRUG": 2266,
+    "PROPERTY": 2655,
+    "MURDER": 310
+  },
+  "top_judges": [
+    [
+      "N/A",
+      2223
+    ],
+    [
+      "ARRAIGNMENT ROOM",
+      1801
+    ],
+    [
+      "JENNIFER O'DONNELL",
+      379
+    ],
+    [
+      "MICHAEL P SHAUGHNESSY",
+      376
+    ],
+    [
+      "EMILY HAGAN",
+      373
+    ],
+    [
+      "CASSANDRA COLLIER-WILLIAMS",
+      361
+    ],
+    [
+      "TIMOTHY MCCORMICK",
+      360
+    ],
+    [
+      "KEVIN J KELLEY",
+      330
+    ],
+    [
+      "STEVEN E GALL",
+      326
+    ],
+    [
+      "SHANNON M GALLAGHER",
+      324
+    ],
+    [
+      "ANDREW J. SANTOLI",
+      324
+    ],
+    [
+      "BRIAN MOONEY",
+      319
+    ],
+    [
+      "JEFFREY P SAFFOLD",
+      318
+    ],
+    [
+      "DEBORAH M TURNER",
+      313
+    ],
+    [
+      "KELLY ANN GALLAGHER",
+      305
+    ],
+    [
+      "NANCY A FUERST",
+      303
+    ],
+    [
+      "JOHN J RUSSO",
+      298
+    ],
+    [
+      "HOLLIE L GALLAGHER",
+      296
+    ],
+    [
+      "SHERRIE MIDAY",
+      294
+    ],
+    [
+      "JOHN P O'DONNELL",
+      294
+    ],
+    [
+      "ASHLEY KILBANE",
+      291
+    ],
+    [
+      "JOAN SYNENBERG",
+      290
+    ],
+    [
+      "PETER J CORRIGAN",
+      290
+    ],
+    [
+      "WILLIAM F. B. VODREY",
+      275
+    ],
+    [
+      "MAUREEN CLANCY",
+      274
+    ],
+    [
+      "RICHARD A BELL",
+      268
+    ],
+    [
+      "NANCY MARGARET RUSSO",
+      262
+    ],
+    [
+      "JOHN D SUTULA",
+      212
+    ],
+    [
+      "DANIEL GAUL",
+      210
+    ],
+    [
+      "DAVID T MATIA",
+      208
+    ],
+    [
+      "WILLIAM T MCGINTY",
+      197
+    ],
+    [
+      "KATHLEEN ANN SUTULA",
+      180
+    ],
+    [
+      "SHIRLEY STRICKLAND SAFFOLD",
+      171
+    ],
+    [
+      "DEENA R CALABRESE",
+      170
+    ],
+    [
+      "LAUREN C MOORE",
+      142
+    ],
+    [
+      "MOLLIE ANN MURPHY",
+      124
+    ],
+    [
+      "CARL J MAZZONE",
+      114
+    ],
+    [
+      "TIMOTHY W. CLARY",
+      111
+    ],
+    [
+      "KIRA KRIVOSH",
+      106
+    ],
+    [
+      "JOY KENNEDY",
+      106
+    ],
+    [
+      "BRENDAN J SHEEHAN",
+      94
+    ],
+    [
+      "MICHAEL J RUSSO",
+      82
+    ],
+    [
+      "JOHN J SPELLACY",
+      70
+    ],
+    [
+      "ANTONIO S NICHOLSON",
+      65
+    ],
+    [
+      "DIVERSION PROGRAM",
+      52
+    ],
+    [
+      "VJ WILLIAM T MCGINTY",
+      25
+    ],
+    [
+      "REEVE KELSEY",
+      2
+    ],
+    [
+      "TIMOTHY J MCGINTY",
+      1
+    ],
+    [
+      "JANET R BURNSIDE",
+      1
+    ]
+  ],
+  "top_prosecutors": [
+    [
+      "N/A",
+      7301
+    ],
+    [
+      "Cuyahoga County Prosecutor",
+      3301
+    ],
+    [
+      "MASON MCCARTHY",
+      78
+    ],
+    [
+      "DOMINIC NEVILLE",
+      67
+    ],
+    [
+      "JORDAN MASON",
+      64
+    ],
+    [
+      "BRITTANY FLETCHER",
+      62
+    ],
+    [
+      "CARLA NEUHAUSER",
+      61
+    ],
+    [
+      "CARLEY BERMAN",
+      60
+    ],
+    [
+      "SEAN DRAKE",
+      60
+    ],
+    [
+      "BENJAMIN FUCHS",
+      59
+    ],
+    [
+      "ANDREA ISABELLA",
+      58
+    ],
+    [
+      "CHRISTOPHER WOODWORTH",
+      57
+    ],
+    [
+      "LIAM BLAKE",
+      56
+    ],
+    [
+      "LUKE HABERMEHL",
+      54
+    ],
+    [
+      "BRIAN CALLAHAN",
+      52
+    ],
+    [
+      "ALEXANDRIA SERDARU",
+      51
+    ],
+    [
+      "ELLE ENGLISH",
+      51
+    ],
+    [
+      "JOSEPH LUCCHESI",
+      49
+    ],
+    [
+      "MAALAEA NEWELL",
+      49
+    ],
+    [
+      "HALIE TURIGLIATTI",
+      48
+    ],
+    [
+      "MARYANN ZAKY",
+      48
+    ],
+    [
+      "PATRICK WHITE",
+      47
+    ],
+    [
+      "CARL FELICE",
+      47
+    ],
+    [
+      "MARCO TANUDRA",
+      47
+    ],
+    [
+      "MICHAEL J STECHSCHULTE",
+      44
+    ],
+    [
+      "ERICA SAMMON",
+      44
+    ],
+    [
+      "MORGAN AUSTIN",
+      44
+    ],
+    [
+      "BRITTANY N STIPICH",
+      43
+    ],
+    [
+      "KENAN MACK",
+      42
+    ],
+    [
+      "MICHAEL TIMMS",
+      41
+    ],
+    [
+      "JONATHAN J BLOCK",
+      41
+    ],
+    [
+      "ANJALI KANWAR",
+      39
+    ],
+    [
+      "MARGARET GRAHAM",
+      38
+    ],
+    [
+      "KYLE DILLON",
+      37
+    ],
+    [
+      "HANNAH BAKER",
+      36
+    ],
+    [
+      "MALLORY BUELOW",
+      35
+    ],
+    [
+      "MIKAYLA ORTIZ",
+      35
+    ],
+    [
+      "HYOJONG LEE",
+      34
+    ],
+    [
+      "JONATHAN W SAULINE",
+      34
+    ],
+    [
+      "DANIELLE MUSTER",
+      32
+    ],
+    [
+      "CONNOR DAVIN",
+      32
+    ],
+    [
+      "BRITTANY STIPICH",
+      31
+    ],
+    [
+      "AYOUB DAKDOUK",
+      31
+    ],
+    [
+      "DANIELLE V MUSTER",
+      31
+    ],
+    [
+      "STEPHEN R VERNIA",
+      31
+    ],
+    [
+      "JOSE TORRES",
+      30
+    ],
+    [
+      "KRYSTAL LEE",
+      30
+    ],
+    [
+      "LISA MAHNIC",
+      30
+    ],
+    [
+      "MAKENNA DAUS",
+      29
+    ],
+    [
+      "CHLOE ROBINSON",
+      29
+    ]
+  ],
+  "top_defenses": [
+    [
+      "N/A",
+      11054
+    ],
+    [
+      "PUBLIC  DEFENDER",
+      67
+    ],
+    [
+      "WILLIAM C SHAUGHNESSY",
+      46
+    ],
+    [
+      "CRAIG W. SMOTZER",
+      44
+    ],
+    [
+      "JAYE M SCHLACHET",
+      43
+    ],
+    [
+      "FALLON  RADIGAN",
+      43
+    ],
+    [
+      "RACHELLE D. SUMMERS",
+      41
+    ],
+    [
+      "DAVID H BROWN",
+      37
+    ],
+    [
+      "ANDUENA  DOBROSHI",
+      36
+    ],
+    [
+      "LAUREN  ESARCO",
+      36
+    ],
+    [
+      "NANCY T JAMIESON",
+      34
+    ],
+    [
+      "PATRICIA  LONDON",
+      33
+    ],
+    [
+      "THOMAS E SHAUGHNESSY",
+      33
+    ],
+    [
+      "BRIAN  RADIGAN",
+      32
+    ],
+    [
+      "WALTER H. EDWARDS JR.",
+      32
+    ],
+    [
+      "CHARLES M MORGAN",
+      32
+    ],
+    [
+      "THOMAS M SHAUGHNESSY",
+      31
+    ],
+    [
+      "CARLOS K JOHNSON",
+      31
+    ],
+    [
+      "JAMES J HOFELICH",
+      31
+    ],
+    [
+      "DANIEL M. TIRFAGNEHU",
+      30
+    ],
+    [
+      "BRET  JORDAN",
+      29
+    ],
+    [
+      "SEAN  BUCHANAN",
+      29
+    ],
+    [
+      "FERNANDO  MACK",
+      29
+    ],
+    [
+      "MARY JO TIPPING",
+      28
+    ],
+    [
+      "SUSAN J MORAN",
+      27
+    ],
+    [
+      "W SCOTT RAMSEY",
+      27
+    ],
+    [
+      "DARYL T DENNIE",
+      26
+    ],
+    [
+      "MORGAN L PIRC",
+      26
+    ],
+    [
+      "MAXWELL  MARTIN",
+      26
+    ],
+    [
+      "RICHARD A NEFF",
+      26
+    ],
+    [
+      "BRITT  NEWMAN",
+      25
+    ],
+    [
+      "JOSEPH D. BUCKLEY",
+      25
+    ],
+    [
+      "DANIEL J MISIEWICZ",
+      25
+    ],
+    [
+      "KELSEY  TAYLOR",
+      24
+    ],
+    [
+      "CHRISTINE M JULIAN",
+      24
+    ],
+    [
+      "JEFFREY S RICHARDSON",
+      24
+    ],
+    [
+      "AUDREY  DEL VALLE",
+      24
+    ],
+    [
+      "DAVID  TANNEHILL",
+      23
+    ],
+    [
+      "MARK A DEFRANCO",
+      23
+    ],
+    [
+      "OSCAR E RODRIGUEZ",
+      23
+    ],
+    [
+      "TIMOTHY E. HUBER",
+      23
+    ],
+    [
+      "JAMES J MCDONNELL",
+      23
+    ],
+    [
+      "JEFF  GARDNER",
+      22
+    ],
+    [
+      "JEFFREY A SHIVELY",
+      22
+    ],
+    [
+      "VALERIE R ARBIE-MCCLELLAND",
+      22
+    ],
+    [
+      "MICHAEL V. HEFFERNAN",
+      21
+    ],
+    [
+      "MICHAEL I MAREIN",
+      21
+    ],
+    [
+      "MARY CATHERINE CORRIGAN",
+      21
+    ],
+    [
+      "DEANGELO  LITTLE",
+      21
+    ],
+    [
+      "SHEILA  DOWNS",
+      21
+    ]
+  ],
+  "lvjail_community_control_cases": []
+}

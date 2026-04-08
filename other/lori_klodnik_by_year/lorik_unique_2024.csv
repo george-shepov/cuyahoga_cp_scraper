@@ -1,0 +1,4 @@
+case_number,total_matches,num_files,file_paths
+CR-24-688122-A,3,1,out/2024/2024-688122_20251119_031242.json
+CR-24-688722-A,4,3,out/jasmine_jackson_prosecutor_cases.csv;out/jasmine_jackson_prosecutor_cases.csv.bak.20260216212511;out/jasmine_jackson_prosecutor_cases.csv.dedup.csv
+CR-24-698087-A,2,1,out/2024/2024-698087_20251120_055446.json
