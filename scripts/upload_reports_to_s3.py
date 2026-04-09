@@ -14,8 +14,12 @@ import sys
 import os
 import hashlib
 from datetime import datetime
-import boto3
-from botocore.exceptions import ClientError
+try:
+    import boto3
+    from botocore.exceptions import ClientError
+except Exception:
+    boto3 = None
+    ClientError = Exception
 
 
 def sha256_file(path, chunk_size=8192):
@@ -50,6 +54,10 @@ def main():
     if not os.path.isfile(file_path):
         print(f"File not found: {file_path}")
         sys.exit(3)
+
+    if boto3 is None:
+        print("boto3 is not installed. Install boto3 to upload to S3.")
+        sys.exit(5)
 
     region = os.getenv("AWS_REGION")
     session = boto3.session.Session()
