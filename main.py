@@ -52,6 +52,8 @@ class Cfg(BaseModel):
     output_dir: str = os.getenv("OUTPUT_DIR", "./out")
     resume: bool = False
     download_pdfs: bool = False if os.getenv("DOWNLOAD_PDFS", "false").lower() == "false" else True
+    capture_printer_pdfs: bool = False if os.getenv("CAPTURE_PRINTER_PDFS", "false").lower() == "false" else True
+    download_all_pdfs: bool = False if os.getenv("DOWNLOAD_ALL_PDFS", "false").lower() == "false" else True
     pdf_cases: List[str] = []  # Specific cases to download PDFs for
 
     @field_validator("direction")
@@ -1876,7 +1878,9 @@ def polite_delay(delay_ms: int):
 
 @retry(stop=stop_after_attempt(2), wait=wait_fixed(2))
 async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: int, 
-                       download_pdfs: bool = False, case_id_filter: Optional[List[str]] = None) -> Dict[str, Any]:
+                       download_pdfs: bool = False, case_id_filter: Optional[List[str]] = None,
+                       capture_printer_pdfs: bool = False,
+                       download_all_pdfs: bool = False) -> Dict[str, Any]:
     console.print(f"[cyan]>>> Working case {year}-{number:06d}[/cyan]")
     
     # Create comprehensive case data structure
@@ -1997,11 +2001,12 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
             })
         polite_delay(DEFAULT_DELAY)
 
-        # Capture printer-friendly PDFs for the current tab (Summary)
-        try:
-            await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
-        except Exception as eprint:
-            console.print(f"[yellow]⚠ Printer-friendly PDF capture failed: {str(eprint)[:160]}[/yellow]")
+        # Capture printer-friendly PDFs for the current tab (Summary) only when explicitly enabled.
+        if capture_printer_pdfs:
+            try:
+                await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
+            except Exception as eprint:
+                console.print(f"[yellow]⚠ Printer-friendly PDF capture failed: {str(eprint)[:160]}[/yellow]")
         # Extract Docket
         try:
             try:
@@ -2031,12 +2036,24 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 # Download PDFs if requested (sentencing entries only by default)
                 try:
                     pdf_dir = out_root / "pdfs"
-                    pdf_info = await download_case_pdfs(page, case_data["docket"], case_id, pdf_dir, sentencing_only=True)
+                    pdf_info = await download_case_pdfs(
+                        page,
+                        case_data["docket"],
+                        case_id,
+                        pdf_dir,
+                        sentencing_only=not download_all_pdfs,
+                    )
                     case_data["pdf_info"] = pdf_info
                     if pdf_info["downloaded"] > 0:
-                        console.print(f"[green]✓ Sentencing PDFs: {pdf_info['downloaded']}/{pdf_info['total_pdfs']} downloaded[/green]")
+                        if download_all_pdfs:
+                            console.print(f"[green]✓ All docket PDFs: {pdf_info['downloaded']}/{pdf_info['total_pdfs']} downloaded[/green]")
+                        else:
+                            console.print(f"[green]✓ Sentencing PDFs: {pdf_info['downloaded']}/{pdf_info['total_pdfs']} downloaded[/green]")
                     elif pdf_info["total_pdfs"] == 0:
-                        console.print(f"[blue]ℹ No sentencing PDFs to download[/blue]")
+                        if download_all_pdfs:
+                            console.print(f"[blue]ℹ No docket PDFs to download[/blue]")
+                        else:
+                            console.print(f"[blue]ℹ No sentencing PDFs to download[/blue]")
                     else:
                         console.print(f"[yellow]⚠ PDFs: 0/{pdf_info['total_pdfs']} downloaded (all failed)[/yellow]")
                 except Exception as pdf_error:
@@ -2057,11 +2074,12 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 "message": str(e),
                 "timestamp": datetime.now(timezone.utc).isoformat()
             })
-        # Capture printer-friendly PDF for Docket tab (if present)
-        try:
-            await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
-        except Exception as eprint:
-            console.print(f"[yellow]⚠ Docket printer capture failed: {str(eprint)[:160]}[/yellow]")
+        # Capture printer-friendly PDF for Docket tab (if present) only when explicitly enabled.
+        if capture_printer_pdfs:
+            try:
+                await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
+            except Exception as eprint:
+                console.print(f"[yellow]⚠ Docket printer capture failed: {str(eprint)[:160]}[/yellow]")
 
         polite_delay(DEFAULT_DELAY)
 
@@ -2088,11 +2106,12 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 "message": str(e),
                 "timestamp": datetime.now(timezone.utc).isoformat()
             })
-        # Capture printer-friendly PDF for Costs tab (if present)
-        try:
-            await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
-        except Exception as eprint:
-            console.print(f"[yellow]⚠ Costs printer capture failed: {str(eprint)[:160]}[/yellow]")
+        # Capture printer-friendly PDF for Costs tab (if present) only when explicitly enabled.
+        if capture_printer_pdfs:
+            try:
+                await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
+            except Exception as eprint:
+                console.print(f"[yellow]⚠ Costs printer capture failed: {str(eprint)[:160]}[/yellow]")
 
         polite_delay(DEFAULT_DELAY)
 
@@ -2119,11 +2138,12 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 "message": str(e),
                 "timestamp": datetime.now(timezone.utc).isoformat()
             })
-        # Capture printer-friendly PDF for Defendant tab (if present)
-        try:
-            await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
-        except Exception as eprint:
-            console.print(f"[yellow]⚠ Defendant printer capture failed: {str(eprint)[:160]}[/yellow]")
+        # Capture printer-friendly PDF for Defendant tab (if present) only when explicitly enabled.
+        if capture_printer_pdfs:
+            try:
+                await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
+            except Exception as eprint:
+                console.print(f"[yellow]⚠ Defendant printer capture failed: {str(eprint)[:160]}[/yellow]")
 
         polite_delay(DEFAULT_DELAY)
 
@@ -2162,11 +2182,12 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 "message": str(e),
                 "timestamp": datetime.now(timezone.utc).isoformat()
             })
-        # Capture printer-friendly PDF for Attorney tab (if present)
-        try:
-            await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
-        except Exception as eprint:
-            console.print(f"[yellow]⚠ Attorney printer capture failed: {str(eprint)[:160]}[/yellow]")
+        # Capture printer-friendly PDF for Attorney tab (if present) only when explicitly enabled.
+        if capture_printer_pdfs:
+            try:
+                await capture_printer_pdfs_on_page(page, out_root, case_id, case_data)
+            except Exception as eprint:
+                console.print(f"[yellow]⚠ Attorney printer capture failed: {str(eprint)[:160]}[/yellow]")
 
         polite_delay(DEFAULT_DELAY)
 
@@ -2373,6 +2394,8 @@ async def run():
     scraper.add_argument("--headless", action="store_true")
     scraper.add_argument("--resume", action="store_true")
     scraper.add_argument("--download-pdfs", action="store_true", help="Download PDF files from docket entries")
+    scraper.add_argument("--capture-printer-pdfs", action="store_true", help="Capture printer-friendly page PDFs (large volume; off by default)")
+    scraper.add_argument("--all-pdfs", action="store_true", help="When --download-pdfs is set, download all docket PDFs (not only JE)")
     scraper.add_argument("--pdf-cases", nargs="*", help="Specific case IDs to download PDFs for (e.g., CR-25-706402-A)")
     scraper.add_argument("--discover-years", action="store_true", help="Discover and scrape full years (default: 2026, 2025, 2024)")
     scraper.add_argument("--years", nargs="+", type=int, help="Years to discover/scrape in order (e.g., --years 2026 2025 2024)")
@@ -2441,7 +2464,10 @@ async def run():
         year=year_to_use if year_to_use else int(os.getenv("YEAR", "2025")),  # Use env default if no year specified
         start_number=args.start, direction=args.direction, limit=args.limit,
         output_dir=args.output_dir, delay_ms=args.delay_ms, resume=args.resume,
-        download_pdfs=args.download_pdfs, pdf_cases=pdf_cases
+        download_pdfs=args.download_pdfs,
+        capture_printer_pdfs=args.capture_printer_pdfs,
+        download_all_pdfs=args.all_pdfs,
+        pdf_cases=pdf_cases
     )
 
     # Determine years to process
@@ -2550,7 +2576,7 @@ async def run():
             # Pass the Playwright controller `p` along with the discovery page so
             # the full-year processing stage can create new browser contexts.
             await process_full_years(p, page, years_to_process, args.reference_case, 
-                                   cfg.output_dir, cfg.delay_ms, cfg.download_pdfs, cfg.pdf_cases,
+                                   cfg.output_dir, cfg.delay_ms, cfg.download_pdfs, cfg.capture_printer_pdfs, cfg.download_all_pdfs, cfg.pdf_cases,
                                    headless=cfg.headless, workers=max(1, args.workers))
             await context.close()
         else:
@@ -2558,26 +2584,26 @@ async def run():
             if args.live:
                 # Live collection mode: keep checking frontier and run multiple workers
                 await process_live_mode(p, cfg.year, Path(cfg.output_dir) / str(cfg.year),
-                                        resume_file, cfg.delay_ms, cfg.download_pdfs, cfg.pdf_cases,
+                                        resume_file, cfg.delay_ms, cfg.download_pdfs, cfg.capture_printer_pdfs, cfg.download_all_pdfs, cfg.pdf_cases,
                                         workers=args.workers, repair_workers=args.repair_workers,
                                         frontier_interval=args.frontier_interval, max_batch_size=args.max_batch_size,
                                         headless=cfg.headless)
             else:
                 # Single year/range mode - pass playwright instance for context recovery
                 await process_case_range(p, cfg.year, targets, out_dir, resume_file,
-                                   cfg.delay_ms, cfg.download_pdfs, cfg.pdf_cases,
+                                   cfg.delay_ms, cfg.download_pdfs, cfg.capture_printer_pdfs, cfg.download_all_pdfs, cfg.pdf_cases,
                                    headless=cfg.headless, workers=max(1, args.workers))
 
     console.print(f"[green]Done.[/green] Output at: {cfg.output_dir}")
 
 async def process_case_range(playwright_instance: Playwright, year: int, targets: List[int], out_dir: Path,
-                           resume_file: Path, delay_ms: int, download_pdfs: bool, pdf_cases: List[str],
+                           resume_file: Path, delay_ms: int, download_pdfs: bool, capture_printer_pdfs: bool, download_all_pdfs: bool, pdf_cases: List[str],
                            headless: bool = True, workers: int = 1):
     """Process a specific range of case numbers for a single year with context recovery and tracking"""
     if workers > 1:
         await process_case_range_parallel(
             playwright_instance, year, targets, out_dir, resume_file,
-            delay_ms, download_pdfs, pdf_cases, headless=headless, workers=workers,
+            delay_ms, download_pdfs, capture_printer_pdfs, download_all_pdfs, pdf_cases, headless=headless, workers=workers,
         )
         return
 
@@ -2690,7 +2716,7 @@ async def process_case_range(playwright_instance: Playwright, year: int, targets
                 case_data = None
                 for attempt in range(1, max_case_attempts + 1):
                     case_data = await snapshot_case(page, year, num, out_dir, delay_ms,
-                                                   download_pdfs, pdf_cases)
+                                                   download_pdfs, pdf_cases, capture_printer_pdfs, download_all_pdfs)
 
                     if not case_data["metadata"].get("exists"):
                         break
@@ -2878,7 +2904,7 @@ async def process_case_range(playwright_instance: Playwright, year: int, targets
 
 
 async def process_case_range_parallel(playwright_instance: Playwright, year: int, targets: List[int], out_dir: Path,
-                                     resume_file: Path, delay_ms: int, download_pdfs: bool, pdf_cases: List[str], *,
+                                     resume_file: Path, delay_ms: int, download_pdfs: bool, capture_printer_pdfs: bool, download_all_pdfs: bool, pdf_cases: List[str], *,
                                      headless: bool = True, workers: int = 3):
     """Process case numbers in parallel with one browser context per worker."""
     workers = max(1, workers)
@@ -2942,7 +2968,7 @@ async def process_case_range_parallel(playwright_instance: Playwright, year: int
                         max_case_attempts = 3
                         case_data = None
                         for attempt in range(1, max_case_attempts + 1):
-                            case_data = await snapshot_case(page, year, num, out_dir, delay_ms, download_pdfs, pdf_cases)
+                            case_data = await snapshot_case(page, year, num, out_dir, delay_ms, download_pdfs, pdf_cases, capture_printer_pdfs, download_all_pdfs)
 
                             if not case_data["metadata"].get("exists"):
                                 break
@@ -3035,7 +3061,7 @@ async def process_case_range_parallel(playwright_instance: Playwright, year: int
     console.print(table)
 
 async def process_full_years(playwright_instance, page: Page, years: List[int], reference_case: int, 
-                           output_dir: str, delay_ms: int, download_pdfs: bool, pdf_cases: List[str],
+                           output_dir: str, delay_ms: int, download_pdfs: bool, capture_printer_pdfs: bool, download_all_pdfs: bool, pdf_cases: List[str],
                            headless: bool = True, workers: int = 1):
     """Discover and process full years of cases"""
     year_ranges = {}
@@ -3087,13 +3113,13 @@ async def process_full_years(playwright_instance, page: Page, years: List[int], 
         # Process all cases in this year. Pass the Playwright controller so the
         # worker context creation uses the correct API (playwright_instance.chromium).
         await process_case_range(playwright_instance, year, all_cases, year_dir, resume_file,
-                       delay_ms, download_pdfs, pdf_cases, headless=headless, workers=workers)
+                       delay_ms, download_pdfs, capture_printer_pdfs, download_all_pdfs, pdf_cases, headless=headless, workers=workers)
 
         console.print(f"[green]✅ Completed year {year}[/green]")
 
 
 async def process_live_mode(playwright_instance: Playwright, year: int, year_dir: Path, resume_file: Path,
-                            delay_ms: int, download_pdfs: bool, pdf_cases: List[str], *,
+                            delay_ms: int, download_pdfs: bool, capture_printer_pdfs: bool, download_all_pdfs: bool, pdf_cases: List[str], *,
                             workers: int = 8, repair_workers: int = 1,
                             frontier_interval: int = 300, max_batch_size: int = 200,
                             headless: bool = True):
@@ -3196,7 +3222,7 @@ async def process_live_mode(playwright_instance: Playwright, year: int, year_dir
 
             try:
                 console.print(f"[cyan][W{worker_id}] Working {year}-{n:06d}[/cyan]")
-                case_data = await snapshot_case(page, year, n, year_dir, delay_ms, download_pdfs, pdf_cases)
+                case_data = await snapshot_case(page, year, n, year_dir, delay_ms, download_pdfs, pdf_cases, capture_printer_pdfs, download_all_pdfs)
 
                 ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
                 fname = f"{year}-{n:06d}_{ts}.json"
