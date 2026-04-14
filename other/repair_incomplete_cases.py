@@ -319,7 +319,7 @@ def main():
     cleanup_browsers()
     
     output_dir = Path("./out")
-    years = [2023, 2024, 2025]
+    years = [2026, 2025, 2024]
     
     console.print(f"[cyan]Output directory: {output_dir}[/cyan]")
     console.print(f"[cyan]Years to process: {', '.join(map(str, years))}[/cyan]")

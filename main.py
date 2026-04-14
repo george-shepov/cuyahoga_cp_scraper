@@ -374,9 +374,18 @@ async def grid_from_table(page: Page, table_selector: str) -> List[Dict[str, Any
 
 async def check_current_page(page: Page) -> str:
     """Check what page we're currently on and return the page type"""
-    await page.wait_for_load_state("domcontentloaded", timeout=10000)
     url = page.url
-    html = await page.content()
+    html = ""
+
+    # Pages can still be navigating when checked; retry briefly before classifying.
+    for _ in range(5):
+        try:
+            await page.wait_for_load_state("domcontentloaded", timeout=5000)
+            url = page.url
+            html = await page.content()
+            break
+        except Exception:
+            await asyncio.sleep(0.5)
     
     console.print(f"[blue]Current URL: {url}[/blue] - main.py:310")
     
@@ -394,6 +403,32 @@ async def check_current_page(page: Page) -> str:
     else:
         return "unknown"
 
+
+def is_runtime_error_page_html(html: str) -> bool:
+    """Detect ASP.NET runtime error pages returned by the court site."""
+    if not html:
+        return False
+
+    h = html.lower()
+    markers = [
+        "server error in '/' application",
+        "<title>runtime error</title>",
+        "<!-- web.config configuration file -->",
+        'customerrors mode="off"',
+        'customerrors mode="remoteonly"',
+        "an application error occurred on the server",
+    ]
+    return any(marker in h for marker in markers)
+
+
+def docket_entries_look_like_runtime_error(entries: List[Dict[str, Any]]) -> bool:
+    """Detect when parsed docket rows are actually runtime error snippets."""
+    if not entries:
+        return False
+
+    blob = "\n".join(" ".join(str(v) for v in row.values() if v) for row in entries)
+    return is_runtime_error_page_html(blob)
+
 async def ensure_past_tos(page: Page):
     """Ensure we get past the TOS page - keep trying until we're not on TOS"""
     max_attempts = 5
@@ -405,7 +440,10 @@ async def ensure_past_tos(page: Page):
             return
             
         console.print(f"[magenta]On TOS page (attempt {attempt + 1}/{max_attempts})  accepting terms…[/magenta] - main.py:336")
-        html = await page.content()
+        try:
+            html = await page.content()
+        except Exception:
+            html = ""
         
         selectors = [
             "input[name*='btnYes']",  # The exact TOS button
@@ -830,12 +868,25 @@ async def search_case(page: Page, year: int, number: int) -> Optional[str]:
         console.print("[red]Submitted, but still stuck on search page — saving debug_stuck_on_search.html[/red]")
         return None
 
+    # If we landed on the search-results list page, open the first case link first.
+    if "CaseSearchList.aspx" in current_url:
+        try:
+            first_case_link = page.locator("a[href*='CR_CaseInformation_Summary.aspx?q=']").first
+            if await first_case_link.count() > 0:
+                await first_case_link.click()
+                await page.wait_for_load_state("domcontentloaded", timeout=15000)
+                response_html = await page.content()
+                current_url = page.url
+                console.print("[green]Opened first case from search list[/green]")
+        except Exception as e:
+            console.print(f"[yellow]Could not open first case from list: {str(e)[:120]}[/yellow]")
+
     # Prefer waiting for a recognizable URL/pattern
     # Summary/Docket/Costs/Defendant/Attorney all use q=… token. Accept if it appears.
     try:
         await page.wait_for_url(re.compile(r".*CR_CaseInformation_.*q=.*"), timeout=12000)
         console.print("[green]Successfully reached case information page[/green]")
-    except:
+    except Exception:
         console.print("[yellow]Timeout waiting for case info URL pattern[/yellow]")
 
     # Extract a case-id looking token
@@ -848,36 +899,104 @@ async def search_case(page: Page, year: int, number: int) -> Optional[str]:
     return None
 
 async def open_tab(page: Page, tab_name: str):
-    link = page.get_by_role("link", name=re.compile(tab_name, re.I))
-    if await link.count() > 0:
-        await link.first.click()
-        # Wait longer for complex pages (especially with multiple defendants)
+    tab_lower = tab_name.lower()
+
+    # We already land on Summary after search submit.
+    if tab_lower == "summary":
         try:
-            await page.wait_for_load_state("networkidle", timeout=20000)
-        except:
-            # If networkidle times out, at least wait for load state
-            await page.wait_for_load_state("load", timeout=15000)
-    else:
-        url = page.url
-        if "q=" in url:
-            token = url.split("q=")[-1]
-            mapping = {
-                "summary": "CR_CaseInformation_Summary.aspx",
-                "docket": "CR_CaseInformation_Docket.aspx",
-                "costs": "CR_CaseInformation_Costs.aspx",
-                "defendant": "CR_CaseInformation_Defendant.aspx",
-                "attorney": "CR_CaseInformation_Attorney.aspx",
-            }
-            key = tab_name.lower()
-            if key in mapping:
-                await page.goto(f"{BASE_URL}/{mapping[key]}?q={token}", wait_until="networkidle", timeout=20000)
+            await page.wait_for_load_state("domcontentloaded", timeout=15000)
+        except Exception:
+            pass
+        return
+
+    postback_target = {
+        "docket": "ctl00$SheetContentPlaceHolder$caseHeader$lbDocket",
+        "costs": "ctl00$SheetContentPlaceHolder$caseHeader$lbCosts",
+        "defendant": "ctl00$SheetContentPlaceHolder$caseHeader$lbDefendant",
+        "attorney": "ctl00$SheetContentPlaceHolder$caseHeader$lbAttorney",
+    }
+
+    async def go_to_tab() -> None:
+        target = postback_target.get(tab_lower)
+        if target:
+            await page.evaluate(
+                """
+                (eventTarget) => {
+                    if (typeof window.__doPostBack === 'function') {
+                        window.__doPostBack(eventTarget, '');
+                    }
+                }
+                """,
+                target,
+            )
+            try:
+                await page.wait_for_load_state("networkidle", timeout=20000)
+            except Exception:
+                try:
+                    await page.wait_for_load_state("load", timeout=15000)
+                except Exception:
+                    await page.wait_for_load_state("domcontentloaded", timeout=15000)
+            return
+
+        # Last-resort fallback for unexpected markup changes.
+        link = page.get_by_role("link", name=re.compile(tab_name, re.I))
+        if await link.count() > 0:
+            await link.first.click()
+            try:
+                await page.wait_for_load_state("networkidle", timeout=20000)
+            except Exception:
+                await page.wait_for_load_state("load", timeout=15000)
+
+    await go_to_tab()
+
+    # Some tabs render slowly; poll for stable non-error content before extraction.
+    settle_timeout_s = int(os.getenv("TAB_SETTLE_TIMEOUT_SECONDS", "45"))
+    settle_sleep_s = float(os.getenv("TAB_SETTLE_POLL_SECONDS", "1.5"))
+    deadline = time.time() + settle_timeout_s
+    saw_runtime_error = False
+
+    while time.time() < deadline:
+        try:
+            await page.wait_for_load_state("domcontentloaded", timeout=15000)
+        except Exception:
+            pass
+
+        try:
+            html = await page.content()
+        except Exception:
+            await asyncio.sleep(settle_sleep_s)
+            continue
+        is_runtime_error = is_runtime_error_page_html(html)
+
+        if is_runtime_error:
+            saw_runtime_error = True
+            # Runtime pages are often transient; recover by returning to Summary and re-clicking tab.
+            url = page.url
+            if "q=" in url and tab_lower in postback_target:
+                token = url.split("q=")[-1]
+                try:
+                    await page.goto(f"{BASE_URL}/CR_CaseInformation_Summary.aspx?q={token}", wait_until="domcontentloaded", timeout=20000)
+                    await asyncio.sleep(0.8)
+                    await go_to_tab()
+                except Exception:
+                    pass
+            await asyncio.sleep(settle_sleep_s)
+            continue
+
+        try:
+            if await page.locator("table").count() > 0:
+                await asyncio.sleep(1.0)
+                return
+        except Exception:
+            pass
+
+        await asyncio.sleep(settle_sleep_s)
 
     # Confirm the table appears; if not, log loudly and continue
-    try:
-        await page.wait_for_selector("table", timeout=15000)
-    except:
-        console.print(f"[yellow]'{tab_name}' tab did not render a table in time — continuing anyway[/yellow]")
-        (Path("out")/f"debug_no_table_{tab_name.lower()}.html").write_text(await page.content(), encoding="utf-8")
+    console.print(f"[yellow]'{tab_name}' tab did not render a stable table in time — continuing anyway[/yellow]")
+    if saw_runtime_error:
+        console.print(f"[yellow]'{tab_name}' tab repeatedly showed runtime error while loading[/yellow]")
+    (Path("out")/f"debug_no_table_{tab_name.lower()}.html").write_text(await page.content(), encoding="utf-8")
 
 # Removed save_html function - HTML content now stored in JSON structure
 
@@ -1045,13 +1164,21 @@ async def extract_docket(page: Page) -> List[Dict[str, Any]]:
     """Extract docket table entries using the same approach as extract_docket_with_pdfs"""
     try:
         docket_entries = []
+
+        # Guard against parsing ASP.NET runtime error pages as docket rows.
+        html = await page.content()
+        if is_runtime_error_page_html(html):
+            return []
         
         # Look for the docket table using the specific selectors
         table = page.locator("table.gridview, table#SheetContentPlaceHolder_caseDocket_gvDocketInformation")
         
         if await table.count() == 0:
-            # Fallback to generic grid extraction
-            return await grid_from_table(page, "table")
+            # Fallback to generic grid extraction, but reject runtime-error payloads.
+            generic_rows = await grid_from_table(page, "table")
+            if docket_entries_look_like_runtime_error(generic_rows):
+                return []
+            return generic_rows
         
         # Get all rows except header (first row is header)
         rows = table.locator("tr").nth(1).locator("~ tr")  # Skip header row
@@ -1063,8 +1190,11 @@ async def extract_docket(page: Page) -> List[Dict[str, Any]]:
             pass
         
         if row_count == 0:
-            # Try alternate selector
-            return await grid_from_table(page, "table")
+            # Try alternate selector, but reject runtime-error payloads.
+            generic_rows = await grid_from_table(page, "table")
+            if docket_entries_look_like_runtime_error(generic_rows):
+                return []
+            return generic_rows
         
         for i in range(row_count):
             try:
@@ -1095,6 +1225,8 @@ async def extract_docket(page: Page) -> List[Dict[str, Any]]:
                 # If a single row fails, continue with next
                 continue
         
+        if docket_entries_look_like_runtime_error(docket_entries):
+            return []
         return docket_entries
     except Exception as e:
         console.print(f"[yellow]⚠ Docket extraction error: {str(e)[:100]}[/yellow]")
@@ -1108,6 +1240,10 @@ async def extract_docket_with_pdfs(page: Page) -> List[Dict[str, Any]]:
         # Wait for page to stabilize and ensure we're on the right content
         await asyncio.sleep(1.0)
         await page.wait_for_load_state("domcontentloaded", timeout=10000)
+
+        html = await page.content()
+        if is_runtime_error_page_html(html):
+            return []
         
         # Look for the docket table
         table = page.locator("table.gridview, table#SheetContentPlaceHolder_caseDocket_gvDocketInformation")
@@ -1117,11 +1253,17 @@ async def extract_docket_with_pdfs(page: Page) -> List[Dict[str, Any]]:
             await table.first.wait_for(state="visible", timeout=10000)
         except:
             console.print("[yellow]Docket table not visible, trying alternate extraction[/yellow]")
-            return await grid_from_table(page, "table")
+            generic_rows = await grid_from_table(page, "table")
+            if docket_entries_look_like_runtime_error(generic_rows):
+                return []
+            return generic_rows
         
         if await table.count() == 0:
             console.print("[yellow]No docket table found[/yellow]")
-            return await grid_from_table(page, "table")
+            generic_rows = await grid_from_table(page, "table")
+            if docket_entries_look_like_runtime_error(generic_rows):
+                return []
+            return generic_rows
         
         # Get all rows except header
         rows = table.locator("tr").nth(1).locator("~ tr")  # Skip header row
@@ -1162,6 +1304,8 @@ async def extract_docket_with_pdfs(page: Page) -> List[Dict[str, Any]]:
                 console.print(f"[yellow]⚠ Error extracting docket row {i}: {str(row_err)[:80]}[/yellow]")
                 continue
         
+        if docket_entries_look_like_runtime_error(docket_entries):
+            return []
         return docket_entries
         
     except Exception as e:
@@ -2038,6 +2182,23 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
     # Validate that we got all 5 tabs - if any are missing, flag as incomplete
     if case_data["metadata"]["exists"]:
         validation_issues = []
+        required_tabs = ["summary", "docket", "costs", "defendant", "attorneys"]
+
+        missing_tab_snapshots = [
+            tab for tab in required_tabs
+            if not case_data.get("html_snapshots", {}).get(tab)
+            or case_data.get("html_snapshots", {}).get(tab) == "[context_destroyed_during_snapshot]"
+        ]
+        if missing_tab_snapshots:
+            validation_issues.append(f"Missing tab snapshots: {', '.join(missing_tab_snapshots)}")
+
+        runtime_error_tabs = []
+        for tab in required_tabs:
+            html = case_data.get("html_snapshots", {}).get(tab, "") or ""
+            if is_runtime_error_page_html(html):
+                runtime_error_tabs.append(tab)
+        if runtime_error_tabs:
+            validation_issues.append(f"Runtime error page captured for tabs: {', '.join(runtime_error_tabs)}")
         
         # Check Summary (should have fields)
         if not case_data.get("summary", {}).get("fields"):
@@ -2048,6 +2209,10 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
             # Some very old/inactive cases might have no docket, but flag it
             console.print("[yellow]⚠ No docket entries found[/yellow]")
         else:
+            docket_text_blob = "\n".join(json.dumps(e, ensure_ascii=False) for e in case_data["docket"])
+            if is_runtime_error_page_html(docket_text_blob):
+                validation_issues.append("Docket content appears to be runtime/error page instead of real docket rows")
+
             # Check if we have a sentencing entry (JE = Judgment Entry)
             # Check docket_type, document_type, and Entry fields for compatibility
             has_sentencing = any(
@@ -2074,6 +2239,18 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
         # Check Attorneys (many cases have no attorneys, so just verify structure exists)
         if "attorneys" not in case_data:
             validation_issues.append("Attorneys tab not extracted")
+
+        extraction_errors = {
+            "summary_extraction_error",
+            "docket_extraction_error",
+            "costs_extraction_error",
+            "defendant_extraction_error",
+            "attorneys_extraction_error",
+        }
+        if any(err.get("type") in extraction_errors for err in case_data.get("errors", [])):
+            validation_issues.append("One or more tab extraction steps failed")
+
+        case_data["metadata"]["complete_extraction"] = len(validation_issues) == 0
         
         # Log validation issues
         if validation_issues:
@@ -2083,6 +2260,8 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 "message": "; ".join(validation_issues),
                 "timestamp": datetime.now(timezone.utc).isoformat()
             })
+    else:
+        case_data["metadata"]["complete_extraction"] = False
 
     return case_data
 
@@ -2195,7 +2374,8 @@ async def run():
     scraper.add_argument("--resume", action="store_true")
     scraper.add_argument("--download-pdfs", action="store_true", help="Download PDF files from docket entries")
     scraper.add_argument("--pdf-cases", nargs="*", help="Specific case IDs to download PDFs for (e.g., CR-25-706402-A)")
-    scraper.add_argument("--discover-years", action="store_true", help="Discover and scrape full years (2025, 2024, 2023)")
+    scraper.add_argument("--discover-years", action="store_true", help="Discover and scrape full years (default: 2026, 2025, 2024)")
+    scraper.add_argument("--years", nargs="+", type=int, help="Years to discover/scrape in order (e.g., --years 2026 2025 2024)")
     scraper.add_argument("--live", action="store_true", help="Run in live collection mode (keep up with new cases for the year)")
     scraper.add_argument("--workers", type=int, default=8, help="Total forward workers (default 8)")
     scraper.add_argument("--repair-workers", type=int, default=1, help="Number of repair workers (default 1)")
@@ -2215,6 +2395,11 @@ async def run():
         ap.set_defaults(command="scrape")
     
     args = ap.parse_args()
+
+    global DEFAULT_DELAY
+    if hasattr(args, "delay_ms") and args.delay_ms:
+        # Ensure command-line --delay-ms actually controls polite pacing.
+        DEFAULT_DELAY = max(300, int(args.delay_ms))
     
     # Route to appropriate command
     if args.command == "stats":
@@ -2261,7 +2446,7 @@ async def run():
 
     # Determine years to process
     if args.discover_years:
-        years_to_process = [2025, 2024, 2023]
+        years_to_process = args.years if args.years else [2026, 2025, 2024]
         console.rule(f"[bold]🚀 Cuyahoga CP Full Year Discovery[/bold]")
         console.print(f"[cyan]Years to discover and scrape: {', '.join(map(str, years_to_process))}[/cyan]")
         console.print(f"[cyan]Reference case for discovery: {args.reference_case:06d}[/cyan]")
@@ -2365,7 +2550,8 @@ async def run():
             # Pass the Playwright controller `p` along with the discovery page so
             # the full-year processing stage can create new browser contexts.
             await process_full_years(p, page, years_to_process, args.reference_case, 
-                                   cfg.output_dir, cfg.delay_ms, cfg.download_pdfs, cfg.pdf_cases, headless=cfg.headless)
+                                   cfg.output_dir, cfg.delay_ms, cfg.download_pdfs, cfg.pdf_cases,
+                                   headless=cfg.headless, workers=max(1, args.workers))
             await context.close()
         else:
             # Single year/range mode or live mode
@@ -2379,13 +2565,22 @@ async def run():
             else:
                 # Single year/range mode - pass playwright instance for context recovery
                 await process_case_range(p, cfg.year, targets, out_dir, resume_file,
-                                   cfg.delay_ms, cfg.download_pdfs, cfg.pdf_cases, headless=cfg.headless)
+                                   cfg.delay_ms, cfg.download_pdfs, cfg.pdf_cases,
+                                   headless=cfg.headless, workers=max(1, args.workers))
 
     console.print(f"[green]Done.[/green] Output at: {cfg.output_dir}")
 
-async def process_case_range(playwright_instance: Playwright, year: int, targets: List[int], out_dir: Path, 
-                           resume_file: Path, delay_ms: int, download_pdfs: bool, pdf_cases: List[str], headless: bool = True):
+async def process_case_range(playwright_instance: Playwright, year: int, targets: List[int], out_dir: Path,
+                           resume_file: Path, delay_ms: int, download_pdfs: bool, pdf_cases: List[str],
+                           headless: bool = True, workers: int = 1):
     """Process a specific range of case numbers for a single year with context recovery and tracking"""
+    if workers > 1:
+        await process_case_range_parallel(
+            playwright_instance, year, targets, out_dir, resume_file,
+            delay_ms, download_pdfs, pdf_cases, headless=headless, workers=workers,
+        )
+        return
+
     processed = 0
     context_retries = 0
     max_context_retries = 3
@@ -2490,35 +2685,55 @@ async def process_case_range(playwright_instance: Playwright, year: int, targets
                                      else route.continue_())
                     progress.console.print(f"[green]✓ Browser context recovered[/green]")
                 
-                # Extract case
-                case_data = await snapshot_case(page, year, num, out_dir, delay_ms, 
-                                               download_pdfs, pdf_cases)
+                # Extract case, retrying when tabs did not fully load.
+                max_case_attempts = 3
+                case_data = None
+                for attempt in range(1, max_case_attempts + 1):
+                    case_data = await snapshot_case(page, year, num, out_dir, delay_ms,
+                                                   download_pdfs, pdf_cases)
+
+                    if not case_data["metadata"].get("exists"):
+                        break
+
+                    if case_data["metadata"].get("complete_extraction", False):
+                        break
+
+                    progress.console.print(
+                        f"[yellow]⚠ Incomplete extraction for {year}-{num:06d} (attempt {attempt}/{max_case_attempts}), retrying...[/yellow]"
+                    )
+
+                if case_data is None:
+                    raise RuntimeError(f"No case data returned for {year}-{num:06d}")
                 
                 # Only save if case exists - skip non-existent cases
                 if case_data["metadata"]["exists"]:
-                    # Save the comprehensive JSON file
-                    case_filepath.write_text(
-                        json.dumps(case_data, indent=2, ensure_ascii=False), 
-                        encoding="utf-8"
-                    )
-                    tracker.add_success(num)
-                    file_size = case_filepath.stat().st_size
-                    # Explicit single-line saved confirmation for log parsing / user visibility
-                    progress.console.print(f"SAVED_JSON {case_filepath} {file_size}")
-                    # Atomically increment per-year counter in out/stats.json
-                    try:
-                        increment_year_counter(out_dir, year)
-                    except Exception:
-                        pass
-                    # Update watchdog because we just saved a JSON
-                    try:
-                        time_of_last_save = time.time()
-                        consecutive_no_save = 0
-                    except Exception:
-                        pass
-                    
-                    # Show file saved with size
-                    progress.console.print(f"[green]✓ {year}-{num:06d}[/green] ({file_size/1024:.1f}KB)")
+                    if not case_data["metadata"].get("complete_extraction", False):
+                        # All retries exhausted and still incomplete — skip this case
+                        tracker.add_error(num)
+                        consecutive_no_save += 1
+                        progress.console.print(f"[red]✗ {year}-{num:06d}[/red] skipped (stubborn incomplete after {max_case_attempts} attempts)")
+                    else:
+                        # Save the comprehensive JSON file
+                        case_filepath.write_text(
+                            json.dumps(case_data, indent=2, ensure_ascii=False), 
+                            encoding="utf-8"
+                        )
+                        file_size = case_filepath.stat().st_size
+                        # Explicit single-line saved confirmation for log parsing / user visibility
+                        progress.console.print(f"SAVED_JSON {case_filepath} {file_size}")
+                        tracker.add_success(num)
+                        # Atomically increment per-year counter in out/stats.json
+                        try:
+                            increment_year_counter(out_dir, year)
+                        except Exception:
+                            pass
+                        # Update watchdog because we just saved a JSON
+                        try:
+                            time_of_last_save = time.time()
+                            consecutive_no_save = 0
+                        except Exception:
+                            pass
+                        progress.console.print(f"[green]✓ {year}-{num:06d}[/green] ({file_size/1024:.1f}KB)")
                 else:
                     tracker.add_missing(num)
                     # Mark a no-save iteration for watchdog
@@ -2661,25 +2876,186 @@ async def process_case_range(playwright_instance: Playwright, year: int, targets
     except:
         pass
 
+
+async def process_case_range_parallel(playwright_instance: Playwright, year: int, targets: List[int], out_dir: Path,
+                                     resume_file: Path, delay_ms: int, download_pdfs: bool, pdf_cases: List[str], *,
+                                     headless: bool = True, workers: int = 3):
+    """Process case numbers in parallel with one browser context per worker."""
+    workers = max(1, workers)
+    tracker = CaseTracker(year, targets[0], targets[-1], out_dir)
+
+    queue: asyncio.Queue[int] = asyncio.Queue()
+    for n in targets:
+        queue.put_nowait(n)
+
+    resume_lock = asyncio.Lock()
+    progress_lock = asyncio.Lock()
+    max_saved_resume = load_resume_state(resume_file) or 0
+
+    async def create_context():
+        user_data_dir = Path("./browser_data")
+        user_data_dir.mkdir(exist_ok=True)
+        ctx = await playwright_instance.chromium.launch_persistent_context(
+            user_data_dir=str(user_data_dir),
+            headless=headless,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            ],
+            viewport={"width": 1920, "height": 1080},
+        )
+        return ctx
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(bar_width=40),
+        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+        TextColumn("[cyan]{task.completed}/{task.total}[/cyan]"),
+        TimeRemainingColumn(),
+        console=console,
+    ) as progress:
+        task = progress.add_task(f"[bold cyan]Scraping {year} ({workers} workers)[/bold cyan]", total=len(targets))
+
+        async def worker_loop(worker_id: int):
+            nonlocal max_saved_resume
+            context = await create_context()
+            page = context.pages[0] if context.pages else await context.new_page()
+            await page.route("**/*", lambda route: route.abort()
+                             if route.request.resource_type in {"image", "media", "font"}
+                             else route.continue_())
+
+            try:
+                while True:
+                    try:
+                        num = queue.get_nowait()
+                    except asyncio.QueueEmpty:
+                        break
+
+                    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+                    case_filepath = out_dir / f"{year}-{num:06d}_{timestamp}.json"
+
+                    try:
+                        max_case_attempts = 3
+                        case_data = None
+                        for attempt in range(1, max_case_attempts + 1):
+                            case_data = await snapshot_case(page, year, num, out_dir, delay_ms, download_pdfs, pdf_cases)
+
+                            if not case_data["metadata"].get("exists"):
+                                break
+                            if case_data["metadata"].get("complete_extraction", False):
+                                break
+
+                            async with progress_lock:
+                                progress.console.print(
+                                    f"[yellow]⚠ W{worker_id} incomplete {year}-{num:06d} (attempt {attempt}/{max_case_attempts})[/yellow]"
+                                )
+
+                        if case_data is None:
+                            raise RuntimeError(f"No case data returned for {year}-{num:06d}")
+
+                        if case_data["metadata"].get("exists"):
+                            if not case_data["metadata"].get("complete_extraction", False):
+                                # All retries exhausted — skip stubborn case
+                                tracker.add_error(num)
+                                async with progress_lock:
+                                    progress.console.print(f"[red]✗ W{worker_id} {year}-{num:06d}[/red] skipped (stubborn incomplete after {max_case_attempts} attempts)")
+                            else:
+                                case_filepath.write_text(json.dumps(case_data, indent=2, ensure_ascii=False), encoding="utf-8")
+                                tracker.add_success(num)
+                                try:
+                                    increment_year_counter(out_dir, year)
+                                except Exception:
+                                    pass
+                                async with progress_lock:
+                                    progress.console.print(f"SAVED_JSON {case_filepath} {case_filepath.stat().st_size}")
+                        else:
+                            tracker.add_missing(num)
+
+                    except Exception as e:
+                        tracker.add_error(num)
+                        error_case_data = {
+                            "metadata": {
+                                "year": year,
+                                "number": num,
+                                "case_number_formatted": f"{year}-{num:06d}",
+                                "scraped_at": datetime.now(timezone.utc).isoformat(),
+                                "scraper_version": "1.0.0",
+                                "exists": False,
+                                "case_id": None,
+                                "complete_extraction": False,
+                            },
+                            "summary": {},
+                            "docket": [],
+                            "costs": [],
+                            "defendant": {},
+                            "attorneys": [],
+                            "errors": [{
+                                "type": "critical_scraper_error",
+                                "message": str(e),
+                                "timestamp": datetime.now(timezone.utc).isoformat(),
+                            }],
+                            "html_snapshots": {},
+                        }
+                        case_filepath.write_text(json.dumps(error_case_data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+                    async with resume_lock:
+                        if num > max_saved_resume:
+                            max_saved_resume = num
+                            save_resume_state(resume_file, num)
+
+                    async with progress_lock:
+                        progress.update(task, advance=1)
+
+                    queue.task_done()
+            finally:
+                try:
+                    await context.close()
+                except Exception:
+                    pass
+
+        await asyncio.gather(*[worker_loop(i + 1) for i in range(workers)])
+
+    tracker.save_logs()
+    stats = tracker.get_stats()
+    console.rule(f"[bold cyan]Year {year} Summary[/bold cyan]")
+    table = Table(title=f"Download Statistics for {year}")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Count", style="magenta")
+    table.add_row("Total Range", f"{stats['total_range']:,}")
+    table.add_row("Successfully Downloaded", f"[green]{stats['successfully_downloaded']:,}[/green]")
+    table.add_row("Missing Cases", f"[yellow]{stats['missing_cases']:,}[/yellow]")
+    table.add_row("Errored Cases", f"[red]{stats['errored_cases']:,}[/red]")
+    table.add_row("Total Accounted", f"{stats['total_accounted']:,}")
+    if stats['unaccounted'] > 0:
+        table.add_row("Unaccounted For", f"[red]{stats['unaccounted']:,}[/red]")
+    console.print(table)
+
 async def process_full_years(playwright_instance, page: Page, years: List[int], reference_case: int, 
-                           output_dir: str, delay_ms: int, download_pdfs: bool, pdf_cases: List[str], headless: bool = True):
+                           output_dir: str, delay_ms: int, download_pdfs: bool, pdf_cases: List[str],
+                           headless: bool = True, workers: int = 1):
     """Discover and process full years of cases"""
     year_ranges = {}
     
     # Discover ranges for each year
-    for year in years:
+    for idx, year in enumerate(years):
         console.rule(f"[bold]🔍 DISCOVERING YEAR {year}[/bold]")
-        
-        # Find start and end of year
-        if year == 2025:
-            # Use reference case for 2025
-            start_case = await find_year_start(page, year, reference_case)
-        elif year == 2024:
-            # Use case number slightly before 2025 start as reference
-            start_case = await find_year_start(page, year, reference_case - 10000)
-        else:  # 2023
-            # Use case number from 2023 reference (684826)
-            start_case = await find_year_start(page, year, 684826)
+
+        # Find start and end of year.
+        # For the first requested year, use the explicit reference. For later years,
+        # seed discovery from the previous year's discovered start minus ~10k.
+        if idx == 0:
+            year_reference = reference_case
+        else:
+            prev_year = years[idx - 1]
+            prev_start, _ = year_ranges.get(prev_year, (reference_case, reference_case))
+            year_reference = max(1, prev_start - 10000)
+
+        console.print(f"[blue]Using discovery reference {year_reference:06d} for year {year}[/blue]")
+        start_case = await find_year_start(page, year, year_reference)
         
         end_case = await find_year_end(page, year, start_case)
         year_ranges[year] = (start_case, end_case)
@@ -2711,7 +3087,7 @@ async def process_full_years(playwright_instance, page: Page, years: List[int], 
         # Process all cases in this year. Pass the Playwright controller so the
         # worker context creation uses the correct API (playwright_instance.chromium).
         await process_case_range(playwright_instance, year, all_cases, year_dir, resume_file,
-                       delay_ms, download_pdfs, pdf_cases, headless=headless)
+                       delay_ms, download_pdfs, pdf_cases, headless=headless, workers=workers)
 
         console.print(f"[green]✅ Completed year {year}[/green]")
 
