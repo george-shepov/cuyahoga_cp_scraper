@@ -28,12 +28,23 @@ CHARGE_HINT_TERMS = (
     "AMENDED TO",
     "COUNT(S)",
     "COUNT ",
-    "INDICT",
     "CHARGE",
     "OFFENSE",
     "NOLLED",
     "ACQUITT",
     "CONVICT",
+)
+PROCEDURAL_DOCKET_TERMS = (
+    "SHERIFF SERVICE OF INDICTMENT",
+    "SERVICE OF INDICTMENT",
+    "MOTION TO TERMINATE CHARGES",
+    "HEARING WAIVED",
+    "INITIAL APPEARANCE SCHEDULED",
+    "IS CANCELLED",
+    "ARRAIGNMENT",
+    "READING OF INDICTMENT WAIVED",
+    "ORP - WARRANT ON INDICTMENT",
+    "ORDERED TO TRANSPORT",
 )
 NON_CHARGE_DOCKET_TERMS = (
     "PAYMENT ON ACCOUNT",
@@ -59,8 +70,8 @@ PRIMARY_CRIME_TYPE_ORDER = {
     "PROPERTY": 3,
     "OTHER": 4,
 }
+NON_SUBSTANTIVE_STATUTE_PREFIXES = {"2743", "2949"}
 SUMMARY_STATUTE_FIELD_KEYS = {
-    "INDICT",
     "COMPLAINT",
     "INFORMATION",
     "CHARGE",
@@ -165,6 +176,8 @@ def _extract_docket_charge_rows(docket: List[Dict[str, Any]]) -> List[Dict[str, 
         if not description or _is_non_charge_docket_entry(description):
             continue
         text = description.upper()
+        if any(term in text for term in PROCEDURAL_DOCKET_TERMS):
+            continue
         statute_match = STATUTE_RE.search(text)
         if not statute_match and not any(term in text for term in CHARGE_HINT_TERMS):
             continue
@@ -233,6 +246,14 @@ def _classify_crime_type(description: str, statute: str) -> str:
     if not text.strip():
         return "UNKNOWN"
 
+    # Ignore known non-charge/cost statutes that can appear in noisy docket-derived text.
+    statute_text = str(statute or "")
+    m = re.search(r"\b(\d{4})", statute_text)
+    if m and m.group(1) in NON_SUBSTANTIVE_STATUTE_PREFIXES:
+        return "UNKNOWN"
+    if any(term in text for term in ["DEFENDANT DECLARED INDIGENT", "COURT COST", "FEE BILL SUBMITTED"]):
+        return "UNKNOWN"
+
     violent_terms = [
         "MURDER",
         "HOMICIDE",
@@ -245,6 +266,16 @@ def _classify_crime_type(description: str, statute: str) -> str:
         "FELONIOUS",
         "WEAPON",
         "FIREARM",
+        "FAILURE TO COMPLY WITH ORDER,SIGNAL OF POLICE OFFICER",
+        "OBSTRUCTING OFFICIAL BUSINESS",
+        "OBSTRUCTING JUSTICE",
+        "RESISTING ARREST",
+        "TAMPERING WITH EVIDENCE",
+        "HAVING WEAPONS WHILE UNDER DISABILITY",
+        "IMPROPERLY HANDLING FIREARMS",
+        "FUGITIVE",
+        "CRUELTY AGAINST COMPANION ANIMAL",
+        "MENACING BY STALKING",
     ]
     drug_terms = [
         "DRUG",
@@ -268,6 +299,9 @@ def _classify_crime_type(description: str, statute: str) -> str:
         "VANDAL",
         "ARSON",
         "CRIMINAL DAMAGING",
+        "IDENTITY FRAUD",
+        "BREAKING AND ENTERING",
+        "STOPPING AFTER ACCIDENT",
     ]
     sex_terms = [
         "RAPE",
@@ -288,7 +322,7 @@ def _classify_crime_type(description: str, statute: str) -> str:
         return "PROPERTY"
 
     # Fallback to statute-family mapping for Ohio code sections when description text is sparse.
-    m = re.search(r"\b(\d{4})", str(statute or ""))
+    m = re.search(r"\b(\d{4})", statute_text)
     if m:
         code = int(m.group(1))
         if code in {2903, 2905, 2909, 2919, 2923}:
@@ -299,6 +333,16 @@ def _classify_crime_type(description: str, statute: str) -> str:
             return "DRUG"
         if code in {2911, 2913}:
             return "PROPERTY"
+        if code in {2921, 2917, 2963}:
+            return "VIOLENT"
+        if code == 2950:
+            return "SEX"
+        if code in {4510, 4511, 4549}:
+            return "PROPERTY"
+        if code in {1315, 3772}:
+            return "PROPERTY"
+        if code == 2927:
+            return "VIOLENT"
 
     return "OTHER"
 
