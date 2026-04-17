@@ -300,6 +300,103 @@ async def capture_printer_pdfs_on_page(page: Page, out_root: Path, case_id: str,
                     })
     except Exception as e:
         console.print(f"[yellow]⚠ capture_printer_pdfs_on_page failed: {str(e)[:160]}[/yellow]")
+
+
+async def capture_tab_artifacts_on_page(page: Page, tab_name: str, case_data: Dict[str, Any]) -> None:
+    """Capture rich per-tab artifacts so data can be re-parsed later without re-scraping.
+
+    Stores table payloads, links, and page metadata under case_data['tab_artifacts'][tab_name].
+    """
+    try:
+        tab_key = str(tab_name or "unknown").strip().lower()
+        if "tab_artifacts" not in case_data or not isinstance(case_data.get("tab_artifacts"), dict):
+            case_data["tab_artifacts"] = {}
+
+        artifact: Dict[str, Any] = {
+            "captured_at": datetime.now(timezone.utc).isoformat(),
+            "url": page.url,
+            "title": "",
+            "tables": [],
+            "links": [],
+        }
+
+        try:
+            artifact["title"] = await page.title()
+        except Exception:
+            artifact["title"] = ""
+
+        # Capture links in tab content for later forensic/semantic extraction.
+        try:
+            links = page.locator("a[href]")
+            link_count = await links.count()
+            for i in range(link_count):
+                try:
+                    href = await links.nth(i).get_attribute("href")
+                    text = (await links.nth(i).inner_text()).strip()
+                    if href:
+                        artifact["links"].append({"text": text, "href": href})
+                except Exception:
+                    continue
+        except Exception:
+            pass
+
+        # Capture all table content on page to support re-classification without re-download.
+        try:
+            tables = page.locator("table")
+            table_count = await tables.count()
+            for ti in range(table_count):
+                try:
+                    t = tables.nth(ti)
+                    header_cells = t.locator("tr th")
+                    header_count = await header_cells.count()
+                    headers: List[str] = []
+                    for hi in range(header_count):
+                        try:
+                            headers.append((await header_cells.nth(hi).inner_text()).strip())
+                        except Exception:
+                            headers.append("")
+
+                    row_locator = t.locator("tr")
+                    row_count = await row_locator.count()
+                    rows: List[List[str]] = []
+                    for ri in range(row_count):
+                        try:
+                            cells = row_locator.nth(ri).locator("th, td")
+                            cell_count = await cells.count()
+                            row_vals: List[str] = []
+                            for ci in range(cell_count):
+                                try:
+                                    row_vals.append((await cells.nth(ci).inner_text()).strip())
+                                except Exception:
+                                    row_vals.append("")
+                            if row_vals:
+                                rows.append(row_vals)
+                        except Exception:
+                            continue
+
+                    artifact["tables"].append(
+                        {
+                            "index": ti,
+                            "headers": headers,
+                            "rows": rows,
+                        }
+                    )
+                except Exception:
+                    continue
+        except Exception:
+            pass
+
+        case_data["tab_artifacts"][tab_key] = artifact
+    except Exception as e:
+        case_data.setdefault("errors", [])
+        case_data["errors"].append(
+            {
+                "type": "tab_artifact_capture_error",
+                "message": f"{tab_name}: {str(e)[:180]}",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+
 async def grid_from_table(page: Page, table_selector: str) -> List[Dict[str, Any]]:
     """
     Extract table data with context destruction recovery.
@@ -1880,7 +1977,8 @@ def polite_delay(delay_ms: int):
 async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: int, 
                        download_pdfs: bool = False, case_id_filter: Optional[List[str]] = None,
                        capture_printer_pdfs: bool = False,
-                       download_all_pdfs: bool = False) -> Dict[str, Any]:
+                       download_all_pdfs: bool = False,
+                       capture_tab_artifacts: bool = True) -> Dict[str, Any]:
     console.print(f"[cyan]>>> Working case {year}-{number:06d}[/cyan]")
     
     # Create comprehensive case data structure
@@ -1913,6 +2011,7 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
         },
         "errors": [],
         "html_snapshots": {},
+        "tab_artifacts": {},
         "pdf_info": None
     }
     
@@ -1966,6 +2065,8 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 case_data["html_snapshots"]["summary"] = await page.content()
             except Exception:
                 case_data["html_snapshots"]["summary"] = "[context_destroyed_during_snapshot]"
+            if capture_tab_artifacts:
+                await capture_tab_artifacts_on_page(page, "summary", case_data)
             
             summary_data = await extract_summary(page)
             case_data["summary"] = summary_data
@@ -2027,6 +2128,8 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 case_data["html_snapshots"]["docket"] = await page.content()
             except Exception:
                 case_data["html_snapshots"]["docket"] = "[context_destroyed_during_snapshot]"
+            if capture_tab_artifacts:
+                await capture_tab_artifacts_on_page(page, "docket", case_data)
             
             # Use PDF-aware extraction if downloading PDFs, otherwise use regular extraction
             if download_pdfs and (not case_id_filter or case_id in case_id_filter):
@@ -2096,6 +2199,8 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 case_data["html_snapshots"]["costs"] = await page.content()
             except Exception:
                 case_data["html_snapshots"]["costs"] = "[context_destroyed_during_snapshot]"
+            if capture_tab_artifacts:
+                await capture_tab_artifacts_on_page(page, "costs", case_data)
             
             case_data["costs"] = await extract_costs(page)
             console.print(f"[green]✓ Costs extracted ({len(case_data['costs'])} entries)[/green]")
@@ -2128,6 +2233,8 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                 case_data["html_snapshots"]["defendant"] = await page.content()
             except Exception:
                 case_data["html_snapshots"]["defendant"] = "[context_destroyed_during_snapshot]"
+            if capture_tab_artifacts:
+                await capture_tab_artifacts_on_page(page, "defendant", case_data)
             
             case_data["defendant"] = await extract_defendant(page)
             console.print("[green]✓ Defendant extracted[/green]")
@@ -2164,6 +2271,8 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
             except Exception as html_err:
                 console.print(f"[yellow]⚠ Attorney HTML snapshot failed: {str(html_err)[:80]}[/yellow]")
                 case_data["html_snapshots"]["attorneys"] = "[context_destroyed_during_snapshot]"
+            if capture_tab_artifacts:
+                await capture_tab_artifacts_on_page(page, "attorneys", case_data)
             
             # Get case title for attorney classification
             case_title = case_data.get("summary", {}).get("fields", {}).get("Case Title:", "") or ""

@@ -90,6 +90,20 @@ def _classify_crime_type(description: str, statute: str) -> str:
         return "DRUG"
     if any(t in text for t in property_terms):
         return "PROPERTY"
+
+    # Fallback to statute-family mapping for Ohio code sections when description text is sparse.
+    m = re.search(r"\b(\d{4})", str(statute or ""))
+    if m:
+        code = int(m.group(1))
+        if code in {2903, 2905, 2909, 2919, 2923}:
+            return "VIOLENT"
+        if code == 2907:
+            return "SEX"
+        if code == 2925:
+            return "DRUG"
+        if code in {2911, 2913}:
+            return "PROPERTY"
+
     return "OTHER"
 
 
@@ -177,6 +191,51 @@ def _compute_outcome_and_resolution(
         start_dt.date().isoformat() if start_dt else None,
         resolution_dt.date().isoformat() if resolution_dt else None,
     )
+
+
+def _compute_disposition_signals(charges: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Extract case-level disposition signals from charge dispositions."""
+    texts: List[str] = []
+    for ch in charges:
+        if not isinstance(ch, dict):
+            continue
+        disp = str(ch.get("disposition", "") or "").strip().upper()
+        if disp:
+            texts.append(disp)
+
+    has_dismissal = any(
+        any(term in t for term in ["DISMISS", "NOLLE", "NO BILL", "WITHDRAWN"])
+        for t in texts
+    )
+    has_conviction_related = any(
+        any(term in t for term in ["GUILTY", "GLTY", "CONVICT", "SENTENCE", "JAIL", "PRISON", "COMMUNITY CONTROL"])
+        for t in texts
+    )
+    plea_indicated = any(
+        any(term in t for term in ["PLD", "PLEA", "NO CONTEST", "N/C"])
+        for t in texts
+    )
+    trial_indicated = any(
+        any(term in t for term in ["TRIAL", "VERDICT", "ACQUITT", "NOT GUILTY"])
+        for t in texts
+    )
+
+    if plea_indicated and not trial_indicated:
+        disposition_mode = "PLEA"
+    elif trial_indicated and not plea_indicated:
+        disposition_mode = "TRIAL"
+    elif plea_indicated and trial_indicated:
+        disposition_mode = "MIXED"
+    else:
+        disposition_mode = "UNKNOWN"
+
+    return {
+        "dismissal_flag": has_dismissal,
+        "conviction_related_flag": has_conviction_related,
+        "plea_flag": plea_indicated,
+        "trial_flag": trial_indicated,
+        "disposition_mode": disposition_mode,
+    }
 
 
 def _representation_bucket(defense_entries: List[Dict[str, Any]]) -> str:
@@ -323,6 +382,7 @@ def build_latest_dataset() -> pd.DataFrame:
             [c for c in summary_charges if isinstance(c, dict)],
             [a for a in case_actions if isinstance(a, dict)],
         )
+        disposition_signals = _compute_disposition_signals([c for c in summary_charges if isinstance(c, dict)])
 
         representation_bucket = _representation_bucket(defense_entries)
         retained_count = 0
@@ -369,6 +429,11 @@ def build_latest_dataset() -> pd.DataFrame:
                 "resolution_days": resolution_days,
                 "case_start_date": start_date or "",
                 "case_resolution_date": resolution_date or "",
+                "dismissal_flag": disposition_signals["dismissal_flag"],
+                "conviction_related_flag": disposition_signals["conviction_related_flag"],
+                "plea_flag": disposition_signals["plea_flag"],
+                "trial_flag": disposition_signals["trial_flag"],
+                "disposition_mode": disposition_signals["disposition_mode"],
                 "file": str(p.relative_to(REPO_ROOT)),
                 "scraped_at": str(meta.get("scraped_at") or ""),
             }
@@ -401,6 +466,11 @@ def build_latest_dataset() -> pd.DataFrame:
                 "resolution_days",
                 "case_start_date",
                 "case_resolution_date",
+                "dismissal_flag",
+                "conviction_related_flag",
+                "plea_flag",
+                "trial_flag",
+                "disposition_mode",
                 "file",
                 "scraped_at",
             ]

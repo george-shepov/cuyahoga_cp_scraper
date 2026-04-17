@@ -327,6 +327,25 @@ def _top_k(df: pd.DataFrame, k: int = 25) -> pd.DataFrame:
     return df.head(max(1, k)).reset_index(drop=True)
 
 
+def _is_pending_status(value: str) -> bool:
+    text = str(value or "").upper()
+    if not text:
+        return True
+    pending_tokens = [
+        "PEND",
+        "ACTIVE",
+        "OPEN",
+        "TRIAL",
+        "ARRAIGN",
+        "PRETRIAL",
+        "BOND",
+        "JAIL",
+        "WARRANT",
+        "DEFN",
+    ]
+    return any(token in text for token in pending_tokens)
+
+
 @st.cache_data(ttl=120)
 def build_overall_stat_frames() -> Dict[str, pd.DataFrame]:
     df = build_latest_dataset()
@@ -340,6 +359,10 @@ def build_overall_stat_frames() -> Dict[str, pd.DataFrame]:
             "crime_mom": empty,
             "judge_concentration": empty,
             "prosecutor_concentration": empty,
+            "judge_metrics": empty,
+            "prosecutor_metrics": empty,
+            "backlog_buckets": empty,
+            "field_completeness": empty,
             "judge_load": empty,
             "pros_load": empty,
             "attorney_load": empty,
@@ -352,6 +375,12 @@ def build_overall_stat_frames() -> Dict[str, pd.DataFrame]:
     work = df.copy()
     work["scraped_dt"] = pd.to_datetime(work["scraped_at"], errors="coerce", utc=True).dt.tz_convert(None)
     work["scraped_month"] = work["scraped_dt"].dt.to_period("M").astype(str)
+    work["case_start_dt"] = pd.to_datetime(work["case_start_date"], errors="coerce")
+    work["case_resolution_dt"] = pd.to_datetime(work["case_resolution_date"], errors="coerce")
+
+    today = pd.Timestamp(datetime.utcnow().date())
+    start_fallback = work["case_start_dt"].fillna(work["scraped_dt"])
+    work["pending_age_days"] = (today - start_fallback).dt.days
 
     new_cases = (
         work.groupby(["year", "scraped_month"], dropna=False)
@@ -443,6 +472,24 @@ def build_overall_stat_frames() -> Dict[str, pd.DataFrame]:
     )
     judge_load["avg_charge_count"] = judge_load["avg_charge_count"].round(2)
 
+    judge_metrics = (
+        work.groupby("judge", dropna=False)
+        .agg(
+            case_count=("case_id", "count"),
+            median_charges_per_case=("charge_count", "median"),
+            median_disposition_days=("resolution_days", "median"),
+            plea_cases=("plea_flag", "sum"),
+            trial_cases=("trial_flag", "sum"),
+        )
+        .reset_index()
+    )
+    judge_metrics["median_charges_per_case"] = judge_metrics["median_charges_per_case"].round(2)
+    judge_metrics["median_disposition_days"] = judge_metrics["median_disposition_days"].fillna(0).round(1)
+    split_den = (judge_metrics["plea_cases"] + judge_metrics["trial_cases"]).replace(0, pd.NA)
+    judge_metrics["plea_share_pct"] = ((judge_metrics["plea_cases"] / split_den) * 100).fillna(0).round(1)
+    judge_metrics["trial_share_pct"] = ((judge_metrics["trial_cases"] / split_den) * 100).fillna(0).round(1)
+    judge_metrics = judge_metrics.sort_values("case_count", ascending=False)
+
     pros_rows: List[Dict[str, object]] = []
     attorney_rows: List[Dict[str, object]] = []
     for _, r in work.iterrows():
@@ -482,6 +529,15 @@ def build_overall_stat_frames() -> Dict[str, pd.DataFrame]:
     if pros_df.empty:
         pros_load = pd.DataFrame(columns=["prosecutor", "case_count", "unique_judges", "dominant_crime"])
         pros_crime = pd.DataFrame(columns=["prosecutor", "crime", "case_count"])
+        prosecutor_metrics = pd.DataFrame(
+            columns=[
+                "prosecutor",
+                "case_count",
+                "dismissal_rate",
+                "conviction_related_share",
+                "avg_case_complexity",
+            ]
+        )
         prosecutor_concentration = pd.DataFrame(
             columns=[
                 "crime",
@@ -517,6 +573,41 @@ def build_overall_stat_frames() -> Dict[str, pd.DataFrame]:
             .reset_index(name="case_count")
             .sort_values("case_count", ascending=False)
         )
+
+        prosecutor_case_rows: List[Dict[str, object]] = []
+        for _, r in work.iterrows():
+            case_prosecutors = _split_semicolon_scalar(str(r.get("prosecutors", "") or ""))
+            complexity_score = float(r.get("charge_count", 0) or 0) + (float(r.get("docket_count", 0) or 0) / 10.0)
+            for p in case_prosecutors:
+                prosecutor_case_rows.append(
+                    {
+                        "prosecutor": p,
+                        "dismissal_flag": bool(r.get("dismissal_flag", False)),
+                        "conviction_related_flag": bool(r.get("conviction_related_flag", False)),
+                        "complexity_score": complexity_score,
+                    }
+                )
+
+        prosecutor_metrics = pd.DataFrame(
+            columns=["prosecutor", "case_count", "dismissal_rate", "conviction_related_share", "avg_case_complexity"]
+        )
+        if prosecutor_case_rows:
+            pcm = pd.DataFrame(prosecutor_case_rows)
+            prosecutor_metrics = (
+                pcm.groupby("prosecutor", dropna=False)
+                .agg(
+                    case_count=("prosecutor", "count"),
+                    dismissal_rate=("dismissal_flag", "mean"),
+                    conviction_related_share=("conviction_related_flag", "mean"),
+                    avg_case_complexity=("complexity_score", "mean"),
+                )
+                .reset_index()
+                .sort_values("case_count", ascending=False)
+            )
+            prosecutor_metrics["dismissal_rate"] = (prosecutor_metrics["dismissal_rate"] * 100).round(1)
+            prosecutor_metrics["conviction_related_share"] = (prosecutor_metrics["conviction_related_share"] * 100).round(1)
+            prosecutor_metrics["avg_case_complexity"] = prosecutor_metrics["avg_case_complexity"].round(2)
+
         prosecutor_concentration = (
             pros_crime.groupby("crime", dropna=False)
             .apply(
@@ -633,6 +724,50 @@ def build_overall_stat_frames() -> Dict[str, pd.DataFrame]:
     pros_judge = _exploded_links(work, "prosecutors", "judge")
     pros_judge = pros_judge.rename(columns={"prosecutors": "prosecutor"})
 
+    pending_mask = work["outcome_bucket"].eq("UNKNOWN") | work["status"].apply(_is_pending_status)
+    pending = work[pending_mask].copy()
+    pending["age_bucket"] = pd.cut(
+        pending["pending_age_days"].fillna(0),
+        bins=[-1, 30, 90, 180, 365, 100000],
+        labels=["0-30", "31-90", "91-180", "181-365", "366+"],
+    )
+    pending["age_bucket"] = pending["age_bucket"].astype(str).replace("nan", "UNKNOWN")
+    age_order = ["0-30", "31-90", "91-180", "181-365", "366+", "UNKNOWN"]
+    pending["age_bucket"] = pd.Categorical(pending["age_bucket"], categories=age_order, ordered=True)
+    backlog_buckets = (
+        pending.groupby("age_bucket", dropna=False)
+        .size()
+        .reset_index(name="case_count")
+        .sort_values("age_bucket")
+    )
+
+    total_rows = max(1, len(work))
+    completeness_rules = [
+        ("judge", work["judge"].astype(str).str.strip().ne("")),
+        ("status", work["status"].astype(str).str.strip().ne("")),
+        ("defendant", work["defendant"].astype(str).str.strip().ne("")),
+        ("prosecutors", work["prosecutors"].astype(str).str.strip().ne("")),
+        ("attorneys", work["attorneys"].astype(str).str.strip().ne("")),
+        ("primary_crime_type_known", work["primary_crime_type"].astype(str).ne("UNKNOWN")),
+        ("charge_count_positive", pd.to_numeric(work["charge_count"], errors="coerce").fillna(0).gt(0)),
+        ("outcome_bucket_known", work["outcome_bucket"].astype(str).ne("UNKNOWN")),
+        ("resolution_days", pd.to_numeric(work["resolution_days"], errors="coerce").notna()),
+        ("case_start_date", work["case_start_date"].astype(str).str.strip().ne("")),
+    ]
+    completeness_rows: List[Dict[str, object]] = []
+    for field_name, mask in completeness_rules:
+        present = int(mask.sum())
+        missing = int(total_rows - present)
+        completeness_rows.append(
+            {
+                "field": field_name,
+                "present": present,
+                "missing": missing,
+                "completeness_pct": round((present / total_rows) * 100, 2),
+            }
+        )
+    field_completeness = pd.DataFrame(completeness_rows).sort_values("completeness_pct")
+
     return {
         "base": work,
         "new_cases": new_cases,
@@ -641,6 +776,10 @@ def build_overall_stat_frames() -> Dict[str, pd.DataFrame]:
         "crime_mom": crime_mom,
         "judge_concentration": judge_concentration,
         "prosecutor_concentration": prosecutor_concentration,
+        "judge_metrics": judge_metrics,
+        "prosecutor_metrics": prosecutor_metrics,
+        "backlog_buckets": backlog_buckets,
+        "field_completeness": field_completeness,
         "judge_load": judge_load,
         "pros_load": pros_load,
         "attorney_load": attorney_load,
@@ -726,13 +865,28 @@ def render_overall_stats() -> None:
     st.markdown("### Prosecutor Concentration Index by Crime Type")
     st.dataframe(_top_k(frames["prosecutor_concentration"], 100), use_container_width=True)
 
+    st.markdown("### Judges: Median Charges, Disposition Speed, Plea-vs-Trial Split")
+    st.dataframe(_top_k(frames["judge_metrics"], 80), use_container_width=True)
+
+    st.markdown("### Prosecutors: Dismissal, Conviction Share, Case Complexity")
+    st.dataframe(_top_k(frames["prosecutor_metrics"], 80), use_container_width=True)
+
+    st.markdown("### System Backlog (Pending Age Buckets)")
+    backlog = frames["backlog_buckets"]
+    if not backlog.empty:
+        st.bar_chart(backlog.set_index("age_bucket"))
+    st.dataframe(backlog, use_container_width=True)
+
+    st.markdown("### Data Quality Alerts (Field Completeness)")
+    st.dataframe(frames["field_completeness"], use_container_width=True)
+
     st.markdown("### Judges Caseload")
     st.dataframe(_top_k(frames["judge_load"], 40), use_container_width=True)
 
     st.markdown("### Prosecutors: Assignments and Workload")
     st.dataframe(_top_k(frames["pros_load"], 60), use_container_width=True)
 
-    st.markdown("### Attorneys: Assignments and Workload")
+    st.markdown("### Defense Attorneys: Client Mix, Favorable Outcome Rate, Time-to-Resolution")
     st.dataframe(_top_k(frames["attorney_load"], 60), use_container_width=True)
 
     st.markdown("### Which Judges Get What Kind of Cases")
