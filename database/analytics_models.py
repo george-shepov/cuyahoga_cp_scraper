@@ -5,12 +5,13 @@ Tracks judges, prosecutors, and defense attorneys with detailed metrics
 
 from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, String, Float, DateTime, Boolean, Text, 
-    ForeignKey, Date, Enum, JSON, Index, CheckConstraint
+    Column, Integer, String, Float, DateTime,
+    ForeignKey, JSON, Index
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-import enum
+
+from database.models_postgres import Attorney, Judge
 
 Base = declarative_base()
 
@@ -60,7 +61,7 @@ class JudgePerformance(Base):
     
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    judge = relationship("Judge", back_populates="performance")
+    judge = relationship(Judge)
 
 
 class ProsecutorPerformance(Base):
@@ -110,7 +111,7 @@ class ProsecutorPerformance(Base):
     
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    attorney = relationship("Attorney", back_populates="prosecutor_performance")
+    attorney = relationship(Attorney)
 
 
 class DefenseAttorneyPerformance(Base):
@@ -170,7 +171,7 @@ class DefenseAttorneyPerformance(Base):
 
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    attorney = relationship("Attorney", back_populates="defense_performance")
+    attorney = relationship(Attorney)
 
 
 class JudgeProsecutorMatchup(Base):

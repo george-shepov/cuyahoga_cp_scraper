@@ -4,11 +4,10 @@ Recommends best defense attorneys based on judge, prosecutor, and charge type
 Uses historical performance data and machine learning
 """
 
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
-import numpy as np
+from sqlalchemy import and_
 
 
 class AttorneyRecommender:
@@ -59,12 +58,19 @@ class AttorneyRecommender:
         # Score each attorney
         scored_attorneys = []
         for attorney, performance in attorneys:
-            score = self._calculate_attorney_score(
-                attorney.id,
+            score_breakdown = self._build_score_breakdown(
                 judge_id,
                 prosecutor_id,
                 charge_type,
                 performance
+            )
+            score = self._calculate_attorney_score(score_breakdown)
+
+            matchup_win_rate = self._get_matchup_win_rate(
+                attorney.id, judge_id, prosecutor_id, performance
+            )
+            charge_type_win_rate = self._get_charge_type_win_rate(
+                charge_type, performance
             )
             
             scored_attorneys.append({
@@ -75,14 +81,27 @@ class AttorneyRecommender:
                 "overall_win_rate": performance.win_rate,
                 "total_cases": performance.total_cases,
                 "effectiveness_score": performance.effectiveness_score,
-                "matchup_win_rate": self._get_matchup_win_rate(
-                    attorney.id, judge_id, prosecutor_id, performance
-                ),
-                "charge_type_win_rate": self._get_charge_type_win_rate(
-                    charge_type, performance
-                ),
+                "matchup_win_rate": matchup_win_rate,
+                "charge_type_win_rate": charge_type_win_rate,
                 "avg_sentence_reduction": performance.sentence_reduction_rate,
                 "trial_win_rate": performance.trial_win_rate,
+                "score_breakdown": score_breakdown,
+                "coverage_label": self._get_coverage_label(performance.total_cases),
+                "key_factors": self._build_key_factors(
+                    attorney.name,
+                    performance.win_rate,
+                    matchup_win_rate,
+                    charge_type_win_rate,
+                    performance.total_cases,
+                    performance.effectiveness_score,
+                ),
+                "explanation_preview": self._build_explanation_preview(
+                    attorney.name,
+                    matchup_win_rate,
+                    charge_type_win_rate,
+                    performance.win_rate,
+                    performance.total_cases,
+                ),
             })
         
         # Sort by score descending
@@ -90,24 +109,14 @@ class AttorneyRecommender:
         
         return scored_attorneys[:top_n]
     
-    def _calculate_attorney_score(
+    def _build_score_breakdown(
         self,
-        attorney_id: int,
         judge_id: int,
         prosecutor_id: int,
         charge_type: str,
         performance: Any
-    ) -> float:
-        """
-        Calculate composite score for attorney recommendation
-        
-        Scoring factors:
-        1. Matchup-specific win rate (40% weight)
-        2. Charge-type specific win rate (30% weight)
-        3. Overall effectiveness score (15% weight)
-        4. Trial win rate (10% weight)
-        5. Sentence reduction rate (5% weight)
-        """
+    ) -> Dict[str, Any]:
+        """Build the weighted score components for a recommendation."""
         # 1. Matchup-specific performance
         matchup_key = f"{judge_id}_{prosecutor_id}"
         matchup_data = performance.performance_by_matchup.get(matchup_key, {})
@@ -126,26 +135,34 @@ class AttorneyRecommender:
         
         # 5. Sentence mitigation
         sentence_score = performance.sentence_reduction_rate * 5.0
-        
-        # Total score (0-100)
-        total_score = (
-            matchup_score +
-            charge_score +
-            effectiveness_score +
-            trial_score +
-            sentence_score
-        )
-        
-        # Confidence penalty for low case volume
+
+        confidence_penalty = 0.0
         if performance.total_cases < 20:
             confidence_penalty = (20 - performance.total_cases) * 0.02
-            total_score *= (1.0 - confidence_penalty)
-        
+
+        return {
+            "matchup_score": round(matchup_score, 2),
+            "charge_score": round(charge_score, 2),
+            "effectiveness_score": round(effectiveness_score, 2),
+            "trial_score": round(trial_score, 2),
+            "sentence_score": round(sentence_score, 2),
+            "confidence_penalty": round(confidence_penalty, 2),
+        }
+
+    def _calculate_attorney_score(self, score_breakdown: Dict[str, Any]) -> float:
+        total_score = (
+            score_breakdown["matchup_score"] +
+            score_breakdown["charge_score"] +
+            score_breakdown["effectiveness_score"] +
+            score_breakdown["trial_score"] +
+            score_breakdown["sentence_score"]
+        )
+        total_score *= 1.0 - score_breakdown.get("confidence_penalty", 0.0)
         return round(total_score, 2)
     
     def _get_matchup_win_rate(
         self,
-        attorney_id: int,
+        _attorney_id: int,
         judge_id: int,
         prosecutor_id: int,
         performance: Any
@@ -167,6 +184,79 @@ class AttorneyRecommender:
             "PROPERTY": performance.property_crime_win_rate,
         }
         return charge_type_map.get(charge_type, performance.win_rate)
+
+    def _get_coverage_label(self, total_cases: int) -> str:
+        if total_cases >= 50:
+            return "HIGH"
+        if total_cases >= 20:
+            return "MEDIUM"
+        return "LIMITED"
+
+    def _build_key_factors(
+        self,
+        attorney_name: str,
+        overall_win_rate: float,
+        matchup_win_rate: float,
+        charge_type_win_rate: float,
+        total_cases: int,
+        effectiveness_score: float,
+    ) -> List[str]:
+        return [
+            f"{attorney_name} has a {matchup_win_rate:.1%} historical win rate in this judge-prosecutor matchup.",
+            f"The charge-type win rate is {charge_type_win_rate:.1%}, which helps anchor the recommendation to this case profile.",
+            f"The overall win rate is {overall_win_rate:.1%} across {total_cases} tracked cases.",
+            f"The effectiveness score is {effectiveness_score:.1f} out of 10 based on aggregate performance inputs.",
+        ]
+
+    def _build_explanation_preview(
+        self,
+        attorney_name: str,
+        matchup_win_rate: float,
+        charge_type_win_rate: float,
+        overall_win_rate: float,
+        total_cases: int,
+    ) -> str:
+        return (
+            f"{attorney_name} is recommended because the historical matchup record ({matchup_win_rate:.1%}), "
+            f"charge-type performance ({charge_type_win_rate:.1%}), and broader case history "
+            f"({overall_win_rate:.1%} across {total_cases} cases) all support the fit."
+        )
+
+    def explain_recommendation(
+        self,
+        *,
+        judge_id: int,
+        prosecutor_id: int,
+        charge_type: str,
+        attorney_id: int,
+    ) -> Dict[str, Any]:
+        recommendations = self.get_recommendations(
+            judge_id=judge_id,
+            prosecutor_id=prosecutor_id,
+            charge_type=charge_type,
+            top_n=25,
+        )
+        recommendation = next(
+            (item for item in recommendations if item["attorney_id"] == attorney_id),
+            None,
+        )
+        if recommendation is None:
+            return {"error": "Recommendation data not found for attorney"}
+
+        return {
+            "attorney_id": recommendation["attorney_id"],
+            "attorney_name": recommendation["attorney_name"],
+            "summary": recommendation["explanation_preview"],
+            "key_factors": recommendation["key_factors"],
+            "coverage_label": recommendation["coverage_label"],
+            "evidence": {
+                "overall_win_rate": recommendation["overall_win_rate"],
+                "matchup_win_rate": recommendation["matchup_win_rate"],
+                "charge_type_win_rate": recommendation["charge_type_win_rate"],
+                "total_cases": recommendation["total_cases"],
+                "score_breakdown": recommendation["score_breakdown"],
+            },
+        }
 
     def get_matchup_analysis(
         self,
@@ -314,9 +404,10 @@ class AttorneyRecommender:
 
             attorney_obj, performance = attorney
 
-            score = self._calculate_attorney_score(
-                attorney_id, judge_id, prosecutor_id, charge_type, performance
+            score_breakdown = self._build_score_breakdown(
+                judge_id, prosecutor_id, charge_type, performance
             )
+            score = self._calculate_attorney_score(score_breakdown)
 
             comparisons.append({
                 "attorney_id": attorney_id,
@@ -334,6 +425,7 @@ class AttorneyRecommender:
                 "trial_win_rate": performance.trial_win_rate,
                 "avg_sentence_days": performance.avg_sentence_duration_days,
                 "effectiveness_score": performance.effectiveness_score,
+                "score_breakdown": score_breakdown,
             })
 
         # Sort by recommendation score

@@ -5,10 +5,12 @@ Query + scheduled alert utilities for scraper operations.
 
 from __future__ import annotations
 
+import csv
 import json
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from io import StringIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -20,6 +22,50 @@ LOGS_DIR = REPO_ROOT / "logs"
 JOBS_FILE = LOGS_DIR / "query_jobs.json"
 STATE_FILE = LOGS_DIR / "query_job_state.json"
 ALERTS_FILE = LOGS_DIR / "query_alerts.log"
+STATUTE_RE = re.compile(r"\b\d{4}\.\d+(?:\.[A-Z0-9]+)?")
+CHARGE_HINT_TERMS = (
+    "GUILTY TO",
+    "AMENDED TO",
+    "COUNT(S)",
+    "COUNT ",
+    "INDICT",
+    "CHARGE",
+    "OFFENSE",
+    "NOLLED",
+    "ACQUITT",
+    "CONVICT",
+)
+NON_CHARGE_DOCKET_TERMS = (
+    "PAYMENT ON ACCOUNT",
+    "REPARATION FEE",
+    "COURT REPORTER FEE",
+    "SHERIFF FEES",
+    "COURT COST",
+    "BOND REFUNDED",
+    "BOOKING COST",
+    "FEE BILL SUBMITTED",
+    "SUPERVISION FEES",
+    "DATE OF OFFENSE",
+    "INDICTED ORIGINAL",
+    "INDICTED BINDOVER",
+    "ARRESTED",
+    "PRETRIAL HELD",
+    "CAPIAS",
+)
+PRIMARY_CRIME_TYPE_ORDER = {
+    "VIOLENT": 0,
+    "SEX": 1,
+    "DRUG": 2,
+    "PROPERTY": 3,
+    "OTHER": 4,
+}
+SUMMARY_STATUTE_FIELD_KEYS = {
+    "INDICT",
+    "COMPLAINT",
+    "INFORMATION",
+    "CHARGE",
+    "OFFENSE",
+}
 
 
 @dataclass
@@ -30,6 +76,156 @@ class QueryResult:
 
 def _split_terms(value: str) -> List[str]:
     return [x.strip() for x in str(value or "").split(";") if x.strip()]
+
+
+def _normalize_charge_row(description: str, statute: str, disposition: str = "") -> Optional[Dict[str, str]]:
+    normalized = {
+        "charge_description": str(description or "").strip(),
+        "statute": str(statute or "").strip(),
+        "disposition": str(disposition or "").strip(),
+    }
+    if not any(normalized.values()):
+        return None
+    return normalized
+
+
+def _is_non_charge_docket_entry(description: str) -> bool:
+    text = str(description or "").strip().upper()
+    if not text:
+        return True
+    return any(term in text for term in NON_CHARGE_DOCKET_TERMS)
+
+
+def _parse_embedded_charge_rows(fields: Dict[str, Any]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    if not isinstance(fields, dict):
+        return rows
+
+    for value in fields.values():
+        if not isinstance(value, dict):
+            continue
+        if str(value.get("format") or "").strip().lower() != "csv":
+            continue
+        csv_data = str(value.get("data") or "")
+        if not csv_data.strip():
+            continue
+
+        try:
+            reader = csv.DictReader(StringIO(csv_data))
+        except csv.Error:
+            continue
+
+        fieldnames = {str(name or "").strip().lower() for name in (reader.fieldnames or [])}
+        if "statute" not in fieldnames:
+            continue
+        if not ({"charge description", "charge_description", "description"} & fieldnames):
+            continue
+
+        for row in reader:
+            if not isinstance(row, dict):
+                continue
+            normalized = _normalize_charge_row(
+                row.get("Charge Description") or row.get("charge_description") or row.get("Description") or row.get("description") or "",
+                row.get("Statute") or row.get("statute") or "",
+                row.get("Disposition") or row.get("disposition") or "",
+            )
+            if normalized:
+                rows.append(normalized)
+
+    return rows
+
+
+def _extract_summary_field_charge_rows(fields: Dict[str, Any]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    if not isinstance(fields, dict):
+        return rows
+
+    for key, value in fields.items():
+        key_text = str(key or "").strip()
+        value_text = str(value or "").strip()
+        if not value_text:
+            continue
+        key_upper = key_text.rstrip(":").upper()
+        if key_upper not in SUMMARY_STATUTE_FIELD_KEYS:
+            continue
+        statute_match = STATUTE_RE.search(value_text)
+        normalized = _normalize_charge_row(key_upper, statute_match.group(0) if statute_match else value_text)
+        if normalized:
+            rows.append(normalized)
+
+    return rows
+
+
+def _extract_docket_charge_rows(docket: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for entry in docket:
+        if not isinstance(entry, dict):
+            continue
+        description = str(entry.get("description", "") or "").strip()
+        if not description or _is_non_charge_docket_entry(description):
+            continue
+        text = description.upper()
+        statute_match = STATUTE_RE.search(text)
+        if not statute_match and not any(term in text for term in CHARGE_HINT_TERMS):
+            continue
+        normalized = _normalize_charge_row(description, statute_match.group(0) if statute_match else "")
+        if normalized:
+            rows.append(normalized)
+    return rows
+
+
+def _derive_charge_rows(
+    summary_charges: List[Dict[str, Any]],
+    fields: Dict[str, Any],
+    docket: List[Dict[str, Any]],
+) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+
+    for charge in summary_charges:
+        if not isinstance(charge, dict):
+            continue
+        normalized = _normalize_charge_row(
+            charge.get("charge_description", ""),
+            charge.get("statute", ""),
+            charge.get("disposition", ""),
+        )
+        if normalized:
+            rows.append(normalized)
+
+    rows.extend(_parse_embedded_charge_rows(fields))
+    rows.extend(_extract_summary_field_charge_rows(fields))
+    rows.extend(_extract_docket_charge_rows(docket))
+
+    deduped: List[Dict[str, str]] = []
+    seen = set()
+    for row in rows:
+        key = (
+            row["charge_description"].upper(),
+            row["statute"].upper(),
+            row["disposition"].upper(),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(row)
+
+    return deduped
+
+
+def _pick_primary_crime_type(crime_types: List[str]) -> str:
+    filtered = [crime_type for crime_type in crime_types if crime_type and crime_type != "UNKNOWN"]
+    if not filtered:
+        return "OTHER"
+
+    counts: Dict[str, int] = {}
+    for crime_type in filtered:
+        counts[crime_type] = counts.get(crime_type, 0) + 1
+
+    ranked = sorted(
+        counts.items(),
+        key=lambda item: (-item[1], PRIMARY_CRIME_TYPE_ORDER.get(item[0], 99), item[0]),
+    )
+    return ranked[0][0]
 
 
 def _classify_crime_type(description: str, statute: str) -> str:
@@ -335,6 +531,7 @@ def build_latest_dataset() -> pd.DataFrame:
         costs = data.get("costs", [])
         summary_charges = _safe_list(summary.get("charges"))
         case_actions = _safe_list(summary.get("case_actions"))
+        charge_rows = _derive_charge_rows(summary_charges, fields if isinstance(fields, dict) else {}, docket)
 
         pros: List[str] = []
         defs: List[str] = []
@@ -363,26 +560,21 @@ def build_latest_dataset() -> pd.DataFrame:
                 defs.append(name)
                 defense_entries.append(a)
 
-        crime_types: List[str] = []
-        for ch in summary_charges:
-            if not isinstance(ch, dict):
-                continue
-            crime_types.append(
-                _classify_crime_type(
-                    str(ch.get("charge_description", "") or ""),
-                    str(ch.get("statute", "") or ""),
-                )
-            )
-        unique_crime_types = sorted({ct for ct in crime_types if ct})
-        non_unknown_crimes = [ct for ct in unique_crime_types if ct != "UNKNOWN"]
-        primary_crime_type = non_unknown_crimes[0] if non_unknown_crimes else "UNKNOWN"
+        crime_types = [
+            _classify_crime_type(ch.get("charge_description", ""), ch.get("statute", ""))
+            for ch in charge_rows
+        ]
+        unique_crime_types = sorted({ct for ct in crime_types if ct and ct != "UNKNOWN"})
+        if not unique_crime_types:
+            unique_crime_types = ["OTHER"]
+        primary_crime_type = _pick_primary_crime_type(crime_types)
 
         outcome_bucket, resolution_days, start_date, resolution_date = _compute_outcome_and_resolution(
             fields if isinstance(fields, dict) else {},
-            [c for c in summary_charges if isinstance(c, dict)],
+            charge_rows,
             [a for a in case_actions if isinstance(a, dict)],
         )
-        disposition_signals = _compute_disposition_signals([c for c in summary_charges if isinstance(c, dict)])
+        disposition_signals = _compute_disposition_signals(charge_rows)
 
         representation_bucket = _representation_bucket(defense_entries)
         retained_count = 0
@@ -423,7 +615,7 @@ def build_latest_dataset() -> pd.DataFrame:
                 "public_defender_count": public_defender_count,
                 "crime_types": "; ".join(unique_crime_types),
                 "primary_crime_type": primary_crime_type,
-                "charge_count": len(summary_charges),
+                "charge_count": len(charge_rows),
                 "outcome_bucket": outcome_bucket,
                 "favorable_outcome": outcome_bucket == "FAVORABLE",
                 "resolution_days": resolution_days,

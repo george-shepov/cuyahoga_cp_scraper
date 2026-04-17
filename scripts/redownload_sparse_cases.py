@@ -93,6 +93,8 @@ def build_commands(by_year: Dict[int, List[int]], delay_ms: int, include_pdfs: b
                 "up",
                 "--delay-ms",
                 str(delay_ms),
+                "--workers",
+                "1",
             ]
             if include_pdfs:
                 cmd.extend(["--download-pdfs", "--all-pdfs"])

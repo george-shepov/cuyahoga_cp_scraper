@@ -4,7 +4,6 @@ Normalized relational schema for analytics and reporting
 """
 
 from datetime import datetime
-from typing import Optional
 from sqlalchemy import (
     Column, Integer, String, Float, DateTime, Boolean, Text, 
     ForeignKey, Date, Enum, JSON, Index
@@ -34,6 +33,21 @@ class DispositionType(str, enum.Enum):
     PENDING = "PENDING"
 
 
+class ContentType(str, enum.Enum):
+    FAQ = "FAQ"
+    GUIDE = "GUIDE"
+    JUDGE_PROFILE = "JUDGE_PROFILE"
+    PROSECUTOR_PROFILE = "PROSECUTOR_PROFILE"
+    RECOMMENDATION_EXPLANATION = "RECOMMENDATION_EXPLANATION"
+
+
+class ContentStatus(str, enum.Enum):
+    DRAFT = "DRAFT"
+    UNDER_REVIEW = "UNDER_REVIEW"
+    APPROVED = "APPROVED"
+    ARCHIVED = "ARCHIVED"
+
+
 class Case(Base):
     __tablename__ = "cases"
     
@@ -59,6 +73,7 @@ class Case(Base):
     appeals_case_number = Column(String(50))
     
     # Relationships
+    judge = relationship("Judge", back_populates="cases")
     defendant = relationship("Defendant", back_populates="case", uselist=False)
     charges = relationship("Charge", back_populates="case", cascade="all, delete-orphan")
     docket_entries = relationship("DocketEntry", back_populates="case", cascade="all, delete-orphan")
@@ -305,4 +320,73 @@ class JudgeStatistics(Base):
     last_updated = Column(DateTime, default=datetime.utcnow)
 
     judge = relationship("Judge", back_populates="statistics")
+
+
+class KnowledgeContent(Base):
+    __tablename__ = "knowledge_content"
+
+    id = Column(Integer, primary_key=True)
+    slug = Column(String(160), unique=True, nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    question = Column(Text)
+    summary = Column(Text)
+    body = Column(Text, nullable=False)
+
+    content_type = Column(Enum(ContentType), nullable=False, index=True)
+    status = Column(Enum(ContentStatus), nullable=False, default=ContentStatus.DRAFT, index=True)
+    audience = Column(String(50), default="public")
+    charge_type = Column(String(50), index=True)
+
+    tags = Column(JSON, default=list)
+    source_payload = Column(JSON, default=dict)
+    source_metrics = Column(JSON, default=dict)
+    citations = Column(JSON, default=list)
+
+    related_judge_id = Column(Integer, ForeignKey("judges.id"), nullable=True)
+    related_prosecutor_id = Column(Integer, ForeignKey("attorneys.id"), nullable=True)
+    related_attorney_id = Column(Integer, ForeignKey("attorneys.id"), nullable=True)
+
+    prompt_version = Column(String(50), default="kb-v1")
+    ai_provider = Column(String(50))
+    ai_model = Column(String(100))
+
+    reviewer_name = Column(String(200))
+    reviewed_at = Column(DateTime)
+    approved_at = Column(DateTime)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        Index("idx_knowledge_content_type_status", "content_type", "status"),
+    )
+
+
+class RecommendationExplanationSnapshot(Base):
+    __tablename__ = "recommendation_explanations"
+
+    id = Column(Integer, primary_key=True)
+    content_id = Column(Integer, ForeignKey("knowledge_content.id"), nullable=True)
+
+    judge_id = Column(Integer, ForeignKey("judges.id"), nullable=False)
+    prosecutor_id = Column(Integer, ForeignKey("attorneys.id"), nullable=False)
+    attorney_id = Column(Integer, ForeignKey("attorneys.id"), nullable=False)
+    charge_type = Column(String(50), default="GENERAL", index=True)
+
+    explanation_summary = Column(Text, nullable=False)
+    explanation_points = Column(JSON, default=list)
+    evidence = Column(JSON, default=dict)
+    confidence_label = Column(String(50), default="LIMITED")
+
+    generated_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        Index(
+            "idx_recommendation_explanations_lookup",
+            "judge_id",
+            "prosecutor_id",
+            "attorney_id",
+            "charge_type",
+        ),
+    )
 

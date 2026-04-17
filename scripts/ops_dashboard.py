@@ -42,7 +42,7 @@ def parse_ts_from_filename(path: Path) -> Optional[datetime]:
         return None
     try:
         return datetime.strptime(m.group(1), "%Y%m%d_%H%M%S")
-    except Exception:
+    except ValueError:
         return None
 
 
@@ -76,7 +76,7 @@ def load_state() -> Dict:
         if isinstance(data, dict):
             data.setdefault("retry_queue", {})
             return data
-    except Exception:
+    except (json.JSONDecodeError, OSError):
         pass
     return {
         "consecutive_errors": 0,
@@ -156,7 +156,7 @@ def failed_latest_cases(latest_df: pd.DataFrame) -> pd.DataFrame:
         p = REPO_ROOT / str(r["file"])
         try:
             obj = json.loads(p.read_text(encoding="utf-8"))
-        except Exception:
+        except (json.JSONDecodeError, OSError):
             rows.append(
                 {
                     "year": int(r["year"]),
@@ -226,7 +226,7 @@ def case_history(year: int, number: int) -> pd.DataFrame:
             obj = json.loads(p.read_text(encoding="utf-8"))
             exists_val = (obj.get("metadata", {}) or {}).get("exists")
             hash_val = normalized_payload_hash_from_obj(obj)
-        except Exception:
+        except (json.JSONDecodeError, OSError):
             hash_val = "<invalid-json>"
 
         rows.append(
@@ -830,76 +830,76 @@ def render_overall_stats() -> None:
 
     left, right = st.columns(2)
     left.markdown("### Indigent vs Paying Defendants")
-    left.dataframe(rep, use_container_width=True)
+    left.dataframe(rep, width="stretch")
 
     right.markdown("### Crime Types with Counts")
-    right.dataframe(frames["crime_counts"], use_container_width=True)
+    right.dataframe(frames["crime_counts"], width="stretch")
 
     st.markdown("### Assigned Attorney vs Hired Attorney")
-    st.dataframe(assigned_vs_hired, use_container_width=True)
+    st.dataframe(assigned_vs_hired, width="stretch")
 
     st.markdown("### New Cases Over Time")
     new_cases = frames["new_cases"]
     if not new_cases.empty:
         new_by_year = new_cases.groupby("year", dropna=False)["case_count"].sum().reset_index()
         st.bar_chart(new_by_year.set_index("year"))
-        st.dataframe(_top_k(new_cases.sort_values(["year", "scraped_month"], ascending=[False, False]), 36), use_container_width=True)
+        st.dataframe(_top_k(new_cases.sort_values(["year", "scraped_month"], ascending=[False, False]), 36), width="stretch")
 
     st.markdown("### Trending Crimes (Year x Crime Type)")
     crime_by_year = frames["crime_by_year"]
     if not crime_by_year.empty:
         pivot = crime_by_year.pivot(index="year", columns="primary_crime_type", values="case_count").fillna(0)
         st.bar_chart(pivot)
-    st.dataframe(_top_k(crime_by_year, 80), use_container_width=True)
+    st.dataframe(_top_k(crime_by_year, 80), width="stretch")
 
     st.markdown("### Crime Types Month-over-Month Trend")
     crime_mom = frames["crime_mom"]
     if not crime_mom.empty:
         mom_pivot = crime_mom.pivot(index="scraped_month", columns="primary_crime_type", values="case_count").fillna(0)
         st.line_chart(mom_pivot)
-    st.dataframe(_top_k(crime_mom.sort_values(["scraped_month", "case_count"], ascending=[False, False]), 120), use_container_width=True)
+    st.dataframe(_top_k(crime_mom.sort_values(["scraped_month", "case_count"], ascending=[False, False]), 120), width="stretch")
 
     st.markdown("### Judge Concentration Index by Crime Type")
-    st.dataframe(_top_k(frames["judge_concentration"], 100), use_container_width=True)
+    st.dataframe(_top_k(frames["judge_concentration"], 100), width="stretch")
 
     st.markdown("### Prosecutor Concentration Index by Crime Type")
-    st.dataframe(_top_k(frames["prosecutor_concentration"], 100), use_container_width=True)
+    st.dataframe(_top_k(frames["prosecutor_concentration"], 100), width="stretch")
 
     st.markdown("### Judges: Median Charges, Disposition Speed, Plea-vs-Trial Split")
-    st.dataframe(_top_k(frames["judge_metrics"], 80), use_container_width=True)
+    st.dataframe(_top_k(frames["judge_metrics"], 80), width="stretch")
 
     st.markdown("### Prosecutors: Dismissal, Conviction Share, Case Complexity")
-    st.dataframe(_top_k(frames["prosecutor_metrics"], 80), use_container_width=True)
+    st.dataframe(_top_k(frames["prosecutor_metrics"], 80), width="stretch")
 
     st.markdown("### System Backlog (Pending Age Buckets)")
     backlog = frames["backlog_buckets"]
     if not backlog.empty:
         st.bar_chart(backlog.set_index("age_bucket"))
-    st.dataframe(backlog, use_container_width=True)
+    st.dataframe(backlog, width="stretch")
 
     st.markdown("### Data Quality Alerts (Field Completeness)")
-    st.dataframe(frames["field_completeness"], use_container_width=True)
+    st.dataframe(frames["field_completeness"], width="stretch")
 
     st.markdown("### Judges Caseload")
-    st.dataframe(_top_k(frames["judge_load"], 40), use_container_width=True)
+    st.dataframe(_top_k(frames["judge_load"], 40), width="stretch")
 
     st.markdown("### Prosecutors: Assignments and Workload")
-    st.dataframe(_top_k(frames["pros_load"], 60), use_container_width=True)
+    st.dataframe(_top_k(frames["pros_load"], 60), width="stretch")
 
     st.markdown("### Defense Attorneys: Client Mix, Favorable Outcome Rate, Time-to-Resolution")
-    st.dataframe(_top_k(frames["attorney_load"], 60), use_container_width=True)
+    st.dataframe(_top_k(frames["attorney_load"], 60), width="stretch")
 
     st.markdown("### Which Judges Get What Kind of Cases")
-    st.dataframe(_top_k(frames["judge_crime"], 100), use_container_width=True)
+    st.dataframe(_top_k(frames["judge_crime"], 100), width="stretch")
 
     st.markdown("### Which Judges Get Which Prosecutors")
-    st.dataframe(_top_k(frames["pros_judge"], 100), use_container_width=True)
+    st.dataframe(_top_k(frames["pros_judge"], 100), width="stretch")
 
     st.markdown("### Which Prosecutors Get Which Crime Types")
-    st.dataframe(_top_k(frames["pros_crime"], 100), use_container_width=True)
+    st.dataframe(_top_k(frames["pros_crime"], 100), width="stretch")
 
     st.markdown("### Which Attorneys Get Which Crime Types")
-    st.dataframe(_top_k(frames["attorney_crime"], 100), use_container_width=True)
+    st.dataframe(_top_k(frames["attorney_crime"], 100), width="stretch")
 
     with st.expander("Suggested Next Stats by Group"):
         st.markdown(
@@ -941,7 +941,7 @@ def render_overview() -> None:
 
     if not gaps.empty:
         st.write("Gap density by year")
-        st.dataframe(gaps, use_container_width=True)
+        st.dataframe(gaps, width="stretch")
 
 
 def render_retry_queue() -> None:
@@ -954,12 +954,12 @@ def render_retry_queue() -> None:
             continue
         try:
             year = int(y)
-        except Exception:
+        except ValueError:
             continue
         rows.append({"year": year, "queued_count": len(nums), "sample": ", ".join(str(n) for n in sorted(nums)[:20])})
     if rows:
         df = pd.DataFrame(rows).sort_values("year")
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width="stretch")
     else:
         st.info("Retry queue is empty.")
 
@@ -976,7 +976,7 @@ def render_errors() -> None:
 
     year_filter = st.multiselect("Filter years", sorted(failed["year"].unique().tolist()), default=sorted(failed["year"].unique().tolist()))
     show = failed[failed["year"].isin(year_filter)] if year_filter else failed
-    st.dataframe(show, use_container_width=True)
+    st.dataframe(show, width="stretch")
 
 
 def render_alerts() -> None:
@@ -985,14 +985,14 @@ def render_alerts() -> None:
     if alerts.empty:
         st.info("No alert entries yet. Alerts are written by daily_streams to logs/case_change_alerts.log")
     else:
-        st.dataframe(alerts.iloc[::-1], use_container_width=True)
+        st.dataframe(alerts.iloc[::-1], width="stretch")
 
     st.subheader("Scheduled Query Alerts")
     q_alerts = load_query_alerts()
     if q_alerts.empty:
         st.info("No scheduled query alerts yet. They are written to logs/query_alerts.log")
     else:
-        st.dataframe(q_alerts.iloc[::-1], use_container_width=True)
+        st.dataframe(q_alerts.iloc[::-1], width="stretch")
 
 
 def render_query_lab() -> None:
@@ -1053,11 +1053,11 @@ def render_query_lab() -> None:
         )
 
         st.caption(f"Result rows: {len(result.rows)}")
-        st.dataframe(result.rows, use_container_width=True)
+        st.dataframe(result.rows, width="stretch")
 
         if not result.grouped.empty:
             st.caption("Grouped output")
-            st.dataframe(result.grouped, use_container_width=True)
+            st.dataframe(result.grouped, width="stretch")
 
         st.markdown("### Save As Scheduled Query")
         with st.form("save_query_job_form"):
@@ -1126,7 +1126,7 @@ def render_scheduled_jobs() -> None:
             }
         )
 
-    st.dataframe(pd.DataFrame(rows), use_container_width=True)
+    st.dataframe(pd.DataFrame(rows), width="stretch")
 
     ids = [str(j.get("id", "")) for j in jobs]
     selected = st.selectbox("Select job", ids)
@@ -1164,7 +1164,7 @@ def render_case_explorer() -> None:
         st.warning("No snapshots found for this case.")
         return
 
-    st.dataframe(hist, use_container_width=True)
+    st.dataframe(hist, width="stretch")
 
     distinct = hist["hash"].nunique(dropna=True)
     st.caption(f"Snapshots: {len(hist)} | Distinct payload hashes: {distinct}")

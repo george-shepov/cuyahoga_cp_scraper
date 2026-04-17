@@ -4,6 +4,18 @@
 
 The Cuyahoga Court Scraper now includes comprehensive analytics and AI-powered insights for legal professionals. This system tracks judges, prosecutors, and defense attorneys to provide data-driven recommendations.
 
+## Crime Type Classification
+
+The operations dashboard no longer relies only on `summary.charges` when assigning crime types. When the court JSON omits normalized charges, analytics now recover charge signals from:
+
+- Embedded charge tables stored in `summary.fields`
+- Summary statute fields such as `INDICT` or `COMPLAINT`
+- Docket entries that contain charge language or cited statutes
+
+If a case JSON has no usable offense signal in any of those places, analytics classify it as `OTHER` instead of `UNKNOWN`. This keeps the crime-type charts aligned with what is actually present in the scraped record.
+
+When a case contains both a specific category and residual `OTHER` rows, the dashboard now uses the specific category as the case's `primary_crime_type` instead of letting `OTHER` win by sort order alone.
+
 ## Key Features
 
 ### 1. **Attorney Recommendation Engine** 🎯
