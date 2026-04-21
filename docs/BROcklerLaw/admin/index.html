@@ -557,6 +557,55 @@
       text-transform: uppercase;
       cursor: pointer;
     }
+    .add-faq-form {
+      display: none;
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px;
+      border: 1px solid rgba(22, 25, 29, 0.14);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.92);
+      gap: 8px;
+    }
+    .add-faq-form.is-open {
+      display: grid;
+    }
+    .add-faq-form textarea,
+    .add-faq-form input,
+    .add-faq-form select {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid rgba(22, 25, 29, 0.14);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.9rem;
+      padding: 8px 10px;
+    }
+    .add-faq-form textarea {
+      min-height: 84px;
+      resize: vertical;
+    }
+    .add-faq-form-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .add-faq-form-actions button {
+      min-height: 36px;
+      border-radius: 999px;
+      border: 1px solid rgba(22, 25, 29, 0.12);
+      background: rgba(22, 25, 29, 0.06);
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0 12px;
+      cursor: pointer;
+    }
     .faq-card.is-editing p { display: none; }
     .faq-card.is-editing .faq-answer-editor,
     .faq-card.is-selected .faq-answer-editor { display: block; }
@@ -1018,6 +1067,22 @@
           <button id="add-faq-btn" class="add-faq-btn" type="button" title="Add a manual FAQ question">
             Add Question
           </button>
+          <form id="add-faq-form" class="add-faq-form" novalidate>
+            <textarea id="new-faq-question" placeholder="Question" required></textarea>
+            <textarea id="new-faq-answer" placeholder="Answer" required></textarea>
+            <input id="new-faq-tags" type="text" placeholder="Optional tags (comma-separated)">
+            <select id="new-faq-rating" aria-label="New question rating">
+              <option value="1">Rating 1/5</option>
+              <option value="2">Rating 2/5</option>
+              <option value="3" selected>Rating 3/5</option>
+              <option value="4">Rating 4/5</option>
+              <option value="5">Rating 5/5</option>
+            </select>
+            <div class="add-faq-form-actions">
+              <button type="submit">Save Question</button>
+              <button id="cancel-add-faq" type="button">Cancel</button>
+            </div>
+          </form>
           <button id="export-btn" type="button" style="display:none;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#5f6d40,#404d28);border:0;color:#f4f8ed;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;">
             Download Public Page (approved only)
           </button>
@@ -1169,6 +1234,12 @@
       var errorNode = document.querySelector("[data-login-error]");
       var logoutButton = document.querySelector("[data-review-logout]");
       var addFaqButton = document.getElementById("add-faq-btn");
+      var addFaqForm = document.getElementById("add-faq-form");
+      var newFaqQuestionInput = document.getElementById("new-faq-question");
+      var newFaqAnswerInput = document.getElementById("new-faq-answer");
+      var newFaqTagsInput = document.getElementById("new-faq-tags");
+      var newFaqRatingSelect = document.getElementById("new-faq-rating");
+      var cancelAddFaqButton = document.getElementById("cancel-add-faq");
       var faqGrid = document.querySelector(".faq-grid");
       var usernameInput = form ? form.elements.username : null;
       var passwordInput = form ? form.elements.password : null;
@@ -1669,23 +1740,46 @@
             openModal();
             return;
           }
-          var question = window.prompt("Enter a new FAQ question:");
-          if (!question || !question.trim()) { return; }
-          var answer = window.prompt("Enter the answer for this question:");
-          if (!answer || !answer.trim()) { return; }
-          var tags = window.prompt("Optional tags (comma-separated):", "") || "";
-          var rating = window.prompt("Optional rating 1-5:", "3") || "3";
-          var normalizedRating = String(Math.max(1, Math.min(5, parseInt(rating, 10) || 3)));
+          if (addFaqForm) {
+            addFaqForm.classList.toggle("is-open");
+            if (addFaqForm.classList.contains("is-open") && newFaqQuestionInput) {
+              newFaqQuestionInput.focus();
+            }
+          }
+        });
+      }
+      if (cancelAddFaqButton) {
+        cancelAddFaqButton.addEventListener("click", function () {
+          if (!addFaqForm) { return; }
+          addFaqForm.classList.remove("is-open");
+          addFaqForm.reset();
+        });
+      }
+      if (addFaqForm) {
+        addFaqForm.addEventListener("submit", function (event) {
+          event.preventDefault();
+          if (!body.classList.contains("review-mode")) {
+            openModal();
+            return;
+          }
+          var question = (newFaqQuestionInput && newFaqQuestionInput.value || "").trim();
+          var answer = (newFaqAnswerInput && newFaqAnswerInput.value || "").trim();
+          if (!question || !answer) {
+            window.alert("Question and answer are required.");
+            return;
+          }
+          var tags = (newFaqTagsInput && newFaqTagsInput.value || "").trim();
+          var normalizedRating = String(Math.max(1, Math.min(5, parseInt(newFaqRatingSelect ? newFaqRatingSelect.value : "3", 10) || 3)));
           var id = "manual-" + Date.now() + "-" + Math.floor(Math.random() * 100000);
           savedManualQuestions.unshift({
             id: id,
-            question: question.trim(),
-            answer: answer.trim(),
-            tags: tags.trim(),
+            question: question,
+            answer: answer,
+            tags: tags,
             rating: normalizedRating
           });
           savedMeta[id] = {
-            tags: tags.trim(),
+            tags: tags,
             rating: normalizedRating
           };
           persistSavedManualQuestions();
