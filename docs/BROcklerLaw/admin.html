@@ -1093,7 +1093,7 @@
       var FAQ_STORAGE_KEY = "brockler-faq-answer-edits";
       var FAQ_VISIBILITY_KEY = "brockler-faq-visibility";
       var FAQ_VISIBILITY_VERSION_KEY = "brockler-faq-visibility-version";
-      var FAQ_VISIBILITY_VERSION = "traffic-ovi-approved-v1";
+      var FAQ_VISIBILITY_VERSION = "traffic-ovi-approved-v2-all-visible";
       var DEFAULT_VISIBLE_QUESTIONS = {
         "Will I lose my license after an OVI or DUI in Ohio?": true,
         "Can a DUI or OVI charge be reduced or dismissed?": true,
@@ -1142,10 +1142,7 @@
       }
 
       function buildDefaultVisibility(card) {
-        if (isDefaultVisibleQuestion(card)) {
-          return { approved: true, visible: true };
-        }
-        return { approved: false, visible: false };
+        return { approved: true, visible: true };
       }
 
       function migrateVisibilityState() {
