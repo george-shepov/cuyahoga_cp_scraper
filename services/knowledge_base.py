@@ -49,6 +49,8 @@ class KnowledgeBaseService:
         status: ContentStatus = ContentStatus.APPROVED,
         content_type: Optional[ContentType] = None,
         charge_type: Optional[str] = None,
+        audience: Optional[str] = None,
+        include_hidden: bool = False,
         limit: int = 50,
     ) -> List[KnowledgeContent]:
         query = self.db.query(KnowledgeContent).filter(KnowledgeContent.status == status)
@@ -56,7 +58,22 @@ class KnowledgeBaseService:
             query = query.filter(KnowledgeContent.content_type == content_type)
         if charge_type:
             query = query.filter(KnowledgeContent.charge_type == charge_type)
-        return query.order_by(KnowledgeContent.updated_at.desc()).limit(limit).all()
+        if audience:
+            query = query.filter(KnowledgeContent.audience == audience)
+
+        items = query.order_by(KnowledgeContent.updated_at.desc()).limit(max(limit * 4, 100)).all()
+
+        if include_hidden:
+            return items[:limit]
+
+        visible_items: List[KnowledgeContent] = []
+        for item in items:
+            source_payload = item.source_payload or {}
+            if source_payload.get("visible", True):
+                visible_items.append(item)
+            if len(visible_items) >= limit:
+                break
+        return visible_items
 
     def get_content_by_slug(
         self,
@@ -90,7 +107,11 @@ class KnowledgeBaseService:
         ai_provider: Optional[str] = None,
         ai_model: Optional[str] = None,
         prompt_version: str = "kb-v1",
+        visible: bool = True,
     ) -> KnowledgeContent:
+        source_payload = source_payload or {}
+        source_payload.setdefault("visible", visible)
+
         content = KnowledgeContent(
             slug=self._unique_slug(slug or slugify(title)),
             title=title,
@@ -102,7 +123,7 @@ class KnowledgeBaseService:
             audience=audience,
             charge_type=charge_type,
             tags=tags or [],
-            source_payload=source_payload or {},
+            source_payload=source_payload,
             source_metrics=source_metrics or {},
             citations=citations or [],
             ai_provider=ai_provider,
@@ -142,6 +163,62 @@ class KnowledgeBaseService:
         if not content:
             return None
         content.status = ContentStatus.ARCHIVED
+        content.reviewer_name = reviewer_name
+        content.reviewed_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(content)
+        return content
+
+    def set_visibility(self, slug: str, visible: bool, reviewer_name: str) -> Optional[KnowledgeContent]:
+        content = self.get_content_any_status(slug)
+        if not content:
+            return None
+
+        payload = dict(content.source_payload or {})
+        payload["visible"] = bool(visible)
+        payload["visibility_updated_by"] = reviewer_name
+        payload["visibility_updated_at"] = datetime.utcnow().isoformat()
+        content.source_payload = payload
+        content.reviewer_name = reviewer_name
+        content.reviewed_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(content)
+        return content
+
+    def update_publishing_controls(
+        self,
+        *,
+        slug: str,
+        reviewer_name: str,
+        featured: Optional[bool] = None,
+        tenant_slug: Optional[str] = None,
+        legal_review_needed: Optional[bool] = None,
+        risk_flags: Optional[List[str]] = None,
+    ) -> Optional[KnowledgeContent]:
+        content = self.get_content_any_status(slug)
+        if not content:
+            return None
+
+        payload = dict(content.source_payload or {})
+        if featured is not None:
+            payload["featured"] = bool(featured)
+
+        if tenant_slug is not None:
+            normalized_slug = tenant_slug.strip().lower()
+            payload["tenant_slug"] = normalized_slug if normalized_slug else None
+            if normalized_slug:
+                content.audience = f"tenant:{normalized_slug}"
+
+        if legal_review_needed is not None:
+            payload["legal_review_needed"] = bool(legal_review_needed)
+
+        if risk_flags is not None:
+            payload["risk_flags"] = sorted({flag.strip() for flag in risk_flags if flag and flag.strip()})
+
+        payload["publishing_updated_by"] = reviewer_name
+        payload["publishing_updated_at"] = datetime.utcnow().isoformat()
+
+        content.source_payload = payload
         content.reviewer_name = reviewer_name
         content.reviewed_at = datetime.utcnow()
         self.db.commit()

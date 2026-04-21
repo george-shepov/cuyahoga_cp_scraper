@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
+from sqlalchemy import asc, desc
 
 from database.models_postgres import ContentStatus, ContentType
 from database.session import SessionLocal, init_db
@@ -90,6 +91,11 @@ class KnowledgeContentResponse(BaseModel):
     reviewed_at: Optional[datetime]
     approved_at: Optional[datetime]
     updated_at: datetime
+    visible: bool = True
+    featured: bool = False
+    tenant_slug: Optional[str] = None
+    legal_review_needed: bool = False
+    risk_flags: List[str] = Field(default_factory=list)
 
 
 class ContentDraftRequest(BaseModel):
@@ -98,7 +104,9 @@ class ContentDraftRequest(BaseModel):
     content_type: ContentType
     question: Optional[str] = None
     summary: Optional[str] = None
+    audience: str = "public"
     charge_type: Optional[str] = None
+    visible: bool = True
     tags: List[str] = Field(default_factory=list)
     citations: List[str] = Field(default_factory=list)
     source_payload: Dict[str, Any] = Field(default_factory=dict)
@@ -119,6 +127,41 @@ class ContentGenerationRequest(BaseModel):
 class ContentReviewActionRequest(BaseModel):
     action: str = Field(..., description="One of: submit, under_review, approve, archive")
     reviewer_name: str
+
+
+class ContentVisibilityRequest(BaseModel):
+    visible: bool
+    reviewer_name: str
+
+
+class ContentPublishingRequest(BaseModel):
+    reviewer_name: str
+    featured: Optional[bool] = None
+    tenant_slug: Optional[str] = None
+    legal_review_needed: Optional[bool] = None
+    risk_flags: Optional[List[str]] = None
+
+
+class CaseListItemResponse(BaseModel):
+    id: int
+    case_id: Optional[str]
+    case_number: str
+    year: int
+    number: int
+    case_type: Optional[str]
+    status: str
+    defendant_name: Optional[str]
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+
+class CaseListResponse(BaseModel):
+    total: int
+    limit: int
+    offset: int
+    sort_by: str
+    sort_direction: str
+    items: List[CaseListItemResponse] = Field(default_factory=list)
 
 
 class ContentExportResponse(BaseModel):
@@ -158,6 +201,7 @@ async def startup_event():
 
 
 def serialize_content(content) -> KnowledgeContentResponse:
+    source_payload = content.source_payload or {}
     return KnowledgeContentResponse(
         slug=content.slug,
         title=content.title,
@@ -173,6 +217,11 @@ def serialize_content(content) -> KnowledgeContentResponse:
         reviewed_at=content.reviewed_at,
         approved_at=content.approved_at,
         updated_at=content.updated_at,
+        visible=source_payload.get("visible", True),
+        featured=source_payload.get("featured", False),
+        tenant_slug=source_payload.get("tenant_slug"),
+        legal_review_needed=source_payload.get("legal_review_needed", False),
+        risk_flags=source_payload.get("risk_flags", []),
     )
 
 
@@ -287,6 +336,8 @@ async def explain_attorney_recommendation(
 async def list_knowledge_content(
     content_type: Optional[ContentType] = Query(None, description="Content type filter"),
     charge_type: Optional[str] = Query(None, description="Charge type filter"),
+    audience: Optional[str] = Query(None, description="Audience scope, e.g. public or tenant:brocklerlaw"),
+    include_hidden: bool = Query(False, description="Include hidden entries when true"),
     limit: int = Query(25, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
@@ -297,6 +348,8 @@ async def list_knowledge_content(
             status=ContentStatus.APPROVED,
             content_type=content_type,
             charge_type=charge_type,
+            audience=audience,
+            include_hidden=include_hidden,
             limit=limit,
         )
         return [serialize_content(item) for item in items]
@@ -354,13 +407,111 @@ async def create_content_draft(
             content_type=request.content_type,
             question=request.question,
             summary=request.summary,
+            audience=request.audience,
             charge_type=request.charge_type,
+            visible=request.visible,
             tags=request.tags,
             citations=request.citations,
             source_payload=request.source_payload,
             source_metrics=request.source_metrics,
         )
         return serialize_content(item)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.post("/api/v1/content/{slug}/visibility", response_model=KnowledgeContentResponse)
+async def set_content_visibility(
+    slug: str,
+    request: ContentVisibilityRequest,
+    db: Session = Depends(get_db)
+):
+    """Set FAQ visibility without removing approval state (publish/unpublish control)."""
+    try:
+        service = KnowledgeBaseService(db)
+        updated = service.set_visibility(
+            slug=slug,
+            visible=request.visible,
+            reviewer_name=request.reviewer_name,
+        )
+        if updated is None:
+            raise HTTPException(status_code=404, detail="Content not found")
+        return serialize_content(updated)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.post("/api/v1/content/{slug}/publishing", response_model=KnowledgeContentResponse)
+async def update_content_publishing_controls(
+    slug: str,
+    request: ContentPublishingRequest,
+    db: Session = Depends(get_db)
+):
+    """Update publishing metadata (feature, tenant assignment, legal-review, risk flags)."""
+    try:
+        service = KnowledgeBaseService(db)
+        updated = service.update_publishing_controls(
+            slug=slug,
+            reviewer_name=request.reviewer_name,
+            featured=request.featured,
+            tenant_slug=request.tenant_slug,
+            legal_review_needed=request.legal_review_needed,
+            risk_flags=request.risk_flags,
+        )
+        if updated is None:
+            raise HTTPException(status_code=404, detail="Content not found")
+        return serialize_content(updated)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.get("/api/v1/public/faq", response_model=List[KnowledgeContentResponse])
+async def list_global_featured_faq(
+    include_hidden: bool = Query(False, description="Include hidden content when true"),
+    limit: int = Query(50, ge=1, le=500),
+    db: Session = Depends(get_db)
+):
+    """List global approved FAQ items (featured-first ordering in app layer)."""
+    try:
+        service = KnowledgeBaseService(db)
+        items = service.list_content(
+            status=ContentStatus.APPROVED,
+            content_type=ContentType.FAQ,
+            audience="public",
+            include_hidden=include_hidden,
+            limit=limit,
+        )
+        serialized = [serialize_content(item) for item in items]
+        serialized.sort(key=lambda item: (not item.featured, -item.updated_at.timestamp()))
+        return serialized
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.get("/api/v1/public/{tenant_slug}/faq", response_model=List[KnowledgeContentResponse])
+async def list_public_tenant_faq(
+    tenant_slug: str,
+    include_hidden: bool = Query(False, description="Include hidden content when true"),
+    limit: int = Query(50, ge=1, le=500),
+    db: Session = Depends(get_db)
+):
+    """List tenant FAQ content, visible by default and optionally including hidden entries."""
+    try:
+        service = KnowledgeBaseService(db)
+        items = service.list_content(
+            status=ContentStatus.APPROVED,
+            content_type=ContentType.FAQ,
+            audience=f"tenant:{tenant_slug}",
+            include_hidden=include_hidden,
+            limit=limit,
+        )
+        serialized = [serialize_content(item) for item in items]
+        serialized.sort(key=lambda item: (not item.featured, -item.updated_at.timestamp()))
+        return serialized
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -524,6 +675,91 @@ async def get_case_quadrant_analysis(
         return quadrant_analysis
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.get("/api/v1/cases", response_model=CaseListResponse)
+async def list_cases(
+    search: Optional[str] = Query(None, description="Case number/id or defendant name search"),
+    last_name: Optional[str] = Query(None, description="Defendant last-name prefix"),
+    year: Optional[int] = Query(None, description="Case year filter"),
+    case_type: Optional[str] = Query(None, description="Case prefix like CR"),
+    sort_by: str = Query("created", description="created, updated, type, case_number"),
+    sort_direction: str = Query("desc", description="asc or desc"),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+):
+    """List cases newest-first by default with optional sorting and filtering."""
+    try:
+        from database.models_postgres import Case, Defendant
+
+        query = db.query(Case).outerjoin(Defendant, Defendant.case_id == Case.id)
+
+        if search:
+            search_term = f"%{search.strip()}%"
+            query = query.filter(
+                (Case.case_number.ilike(search_term)) |
+                (Case.case_id.ilike(search_term)) |
+                (Defendant.name.ilike(search_term))
+            )
+
+        if last_name:
+            query = query.filter(Defendant.name.ilike(f"{last_name.strip()}%"))
+
+        if year:
+            query = query.filter(Case.year == year)
+
+        if case_type:
+            prefix = case_type.strip().upper()
+            query = query.filter(Case.case_number.ilike(f"{prefix}-%"))
+
+        direction_fn = asc if sort_direction.strip().lower() == "asc" else desc
+        sort_key = sort_by.strip().lower()
+
+        if sort_key == "updated":
+            order_col = Case.updated_at
+        elif sort_key == "type":
+            order_col = Case.case_number
+        elif sort_key == "case_number":
+            order_col = Case.number
+        else:
+            order_col = Case.scraped_at
+            sort_key = "created"
+
+        total = query.count()
+        cases = query.order_by(direction_fn(order_col), desc(Case.number)).offset(offset).limit(limit).all()
+
+        items: List[CaseListItemResponse] = []
+        for case in cases:
+            case_type_value: Optional[str] = None
+            if case.case_number and "-" in case.case_number:
+                case_type_value = case.case_number.split("-", 1)[0]
+
+            items.append(
+                CaseListItemResponse(
+                    id=case.id,
+                    case_id=case.case_id,
+                    case_number=case.case_number,
+                    year=case.year,
+                    number=case.number,
+                    case_type=case_type_value,
+                    status=case.status.value if case.status else "UNKNOWN",
+                    defendant_name=case.defendant.name if case.defendant else None,
+                    created_at=case.scraped_at,
+                    updated_at=case.updated_at,
+                )
+            )
+
+        return CaseListResponse(
+            total=total,
+            limit=limit,
+            offset=offset,
+            sort_by=sort_key,
+            sort_direction="asc" if direction_fn == asc else "desc",
+            items=items,
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
