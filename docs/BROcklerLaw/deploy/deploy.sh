@@ -9,7 +9,8 @@
 #   bash docs/BROcklerLaw/deploy/deploy.sh
 #
 # What it does:
-#   1. Copies index.html, admin.html to /var/www/foxxiie.com/brocklerlaw/
+#   1. Copies Brockler site + admin pages to /var/www/foxxiie.com/brocklerlaw/
+#      and copies foxxiie homepage to /var/www/foxxiie.com/index.html
 #   2. Installs the save API (/opt/brocklerlaw-save/save_api.py)
 #   3. Enables & starts the brocklerlaw-save systemd service
 #   4. Installs Nginx config (sites-available/foxxiie.com)
@@ -58,6 +59,11 @@ remote_sudo() {
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HTML_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+ROOT_HTML_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)/foxxiie"
+HTTP_ONLY_CONF="/tmp/nginx-foxxiie-http.conf"
+
+# Extract only the HTTP server block so first deploy works before SSL certs exist.
+awk '/^# ── HTTPS/{exit} {print}' "$SCRIPT_DIR/nginx-foxxiie.conf" > "$HTTP_ONLY_CONF"
 
 echo "==> Deploying BrocklerLaw to $VPS_HOST"
 echo "    SSH key: $SSH_KEY"
@@ -68,11 +74,24 @@ else
 fi
 
 # ── 1. Upload site files ─────────────────────────────────────────────────────
-echo "--- Uploading index.html + admin.html"
-remote_sudo "mkdir -p $SITE_DIR"
+echo "--- Uploading Brockler site + admin pages"
+remote_sudo "mkdir -p $SITE_DIR/admin"
 $SCP "$HTML_DIR/index.html" "$VPS_HOST:/tmp/brockler_index.html"
 $SCP "$HTML_DIR/admin.html" "$VPS_HOST:/tmp/brockler_admin.html"
+if [[ -f "$HTML_DIR/admin/index.html" ]]; then
+    $SCP "$HTML_DIR/admin/index.html" "$VPS_HOST:/tmp/brockler_admin_index.html"
+fi
 remote_sudo "mv /tmp/brockler_index.html $SITE_DIR/index.html && mv /tmp/brockler_admin.html $SITE_DIR/admin.html"
+remote_sudo "if [ -f /tmp/brockler_admin_index.html ]; then mv /tmp/brockler_admin_index.html $SITE_DIR/admin/index.html; fi"
+
+echo "--- Uploading foxxiie.com homepage"
+if [[ -f "$ROOT_HTML_DIR/index.html" ]]; then
+    remote_sudo "mkdir -p /var/www/foxxiie.com"
+    $SCP "$ROOT_HTML_DIR/index.html" "$VPS_HOST:/tmp/foxxiie_root_index.html"
+    remote_sudo "mv /tmp/foxxiie_root_index.html /var/www/foxxiie.com/index.html"
+else
+    echo "WARN: $ROOT_HTML_DIR/index.html not found. Root homepage will not be updated."
+fi
 
 # ── 2. Upload save API ───────────────────────────────────────────────────────
 echo "--- Uploading save API"
@@ -82,6 +101,7 @@ remote_sudo "mv /tmp/save_api.py $API_DIR/save_api.py && chmod 755 $API_DIR/save
 
 # Set site root ownership so www-data can write index.html
 remote_sudo "chown -R www-data:www-data $SITE_DIR"
+remote_sudo "if [ -f /var/www/foxxiie.com/index.html ]; then chown www-data:www-data /var/www/foxxiie.com/index.html; fi"
 
 # ── 3. Install + start systemd service ──────────────────────────────────────
 echo "--- Installing systemd service"
@@ -92,7 +112,12 @@ $SSH "$VPS_HOST" "systemctl is-active brocklerlaw-save" || true
 
 # ── 4. Install Nginx config ──────────────────────────────────────────────────
 echo "--- Installing Nginx config"
-$SCP "$SCRIPT_DIR/nginx-foxxiie.conf" "$VPS_HOST:/tmp/nginx-foxxiie.conf"
+if $SSH "$VPS_HOST" "test -f /etc/letsencrypt/live/foxxiie.com/fullchain.pem"; then
+    $SCP "$SCRIPT_DIR/nginx-foxxiie.conf" "$VPS_HOST:/tmp/nginx-foxxiie.conf"
+else
+    echo "    SSL cert not found yet, installing HTTP-only config first"
+    $SCP "$HTTP_ONLY_CONF" "$VPS_HOST:/tmp/nginx-foxxiie.conf"
+fi
 remote_sudo "mv /tmp/nginx-foxxiie.conf /etc/nginx/sites-available/foxxiie.com"
 remote_sudo "ln -sf /etc/nginx/sites-available/foxxiie.com /etc/nginx/sites-enabled/foxxiie.com"
 remote_sudo "nginx -t && nginx -s reload"
@@ -125,10 +150,12 @@ remote_sudo "
 
 # ── 7. Final Nginx reload ────────────────────────────────────────────────────
 echo "--- Reloading Nginx"
+# Install full HTTPS+HTTP config now that certificate exists.
+$SCP "$SCRIPT_DIR/nginx-foxxiie.conf" "$VPS_HOST:/tmp/nginx-foxxiie.conf"
+remote_sudo "mv /tmp/nginx-foxxiie.conf /etc/nginx/sites-available/foxxiie.com"
 remote_sudo "nginx -t && nginx -s reload"
 
 echo ""
 echo "==> Done!"
-echo "    http://foxxiie.com/brocklerlaw/"
 echo "    https://foxxiie.com/brocklerlaw/"
-echo "    Admin: http://foxxiie.com/brocklerlaw/admin.html"
+echo "    Admin: https://foxxiie.com/brocklerlaw/admin/"

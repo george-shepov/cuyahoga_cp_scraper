@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Cuyahoga County Court Database | FOXXIIE</title>
+  <meta name="description" content="Searchable directory of Cuyahoga County Common Pleas judges, defense attorneys, and prosecutors — with Ohio Supreme Court bar records.">
+  <meta name="theme-color" content="#12151a">
+  <style>
+    :root {
+      --ink: #16191d;
+      --ink-soft: #53606c;
+      --ink-inverse: #f9f5ee;
+      --line: rgba(22, 25, 29, 0.11);
+      --steel: #263342;
+      --accent: #b56a34;
+      --accent-light: #d7874d;
+      --good: #2a7a3b;
+      --warn: #9a6200;
+      --bad: #8b1a1a;
+      --shadow: 0 22px 70px rgba(24, 28, 34, 0.13);
+      --card-shadow: 0 18px 40px rgba(24, 28, 34, 0.08);
+      --radius-xl: 32px;
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --serif: "Baskerville", "Iowan Old Style", "Palatino Linotype", serif;
+      --sans: "Avenir Next", "Segoe UI", "Trebuchet MS", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; min-height: 100vh;
+      color: var(--ink); font-family: var(--sans);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(181, 106, 52, 0.15), transparent 24%),
+        radial-gradient(circle at 85% 12%, rgba(38, 51, 66, 0.10), transparent 22%),
+        linear-gradient(180deg, #f6efe3 0%, #efe5d7 48%, #f7f1e8 100%);
+      overflow-x: hidden;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(22, 25, 29, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(22, 25, 29, 0.03) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at center, black 52%, transparent 100%);
+      opacity: 0.5;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── layout ─────────────────────────────────────────────────── */
+    .shell {
+      position: relative; z-index: 1;
+      width: min(100% - 20px, 1180px);
+      margin: 0 auto;
+      padding: max(16px, env(safe-area-inset-top)) 0 max(28px, env(safe-area-inset-bottom));
+    }
+
+    /* ── hero ────────────────────────────────────────────────────── */
+    .hero {
+      margin-top: 12px; padding: 28px 24px 24px;
+      border-radius: var(--radius-xl);
+      border: 1px solid rgba(255,255,255,0.46);
+      background: linear-gradient(135deg, rgba(16,19,25,0.97), rgba(31,39,50,0.96));
+      color: var(--ink-inverse);
+      box-shadow: var(--shadow);
+      overflow: hidden; position: relative; isolation: isolate;
+    }
+    .hero::before {
+      content: ""; position: absolute; border-radius: 999px; filter: blur(14px); z-index: -1;
+      width: 320px; height: 320px; right: -80px; top: -130px;
+      background: radial-gradient(circle, rgba(181,106,52,0.52), transparent 68%);
+    }
+    .hero::after {
+      content: ""; position: absolute; border-radius: 999px; filter: blur(12px); z-index: -1;
+      width: 260px; height: 260px; left: -90px; bottom: -140px;
+      background: radial-gradient(circle, rgba(38,51,66,0.55), transparent 70%);
+    }
+    .nav {
+      display: flex; justify-content: space-between;
+      gap: 16px; align-items: center; margin-bottom: 24px;
+    }
+    .brand-mark { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.22em; color: rgba(249,245,238,0.55); }
+    .brand-name { font-family: var(--serif); font-size: 1.5rem; letter-spacing: 0.01em; }
+    .eyebrow {
+      display: inline-flex; gap: 10px; align-items: center;
+      padding: 8px 14px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.08);
+      color: #ffddb9; text-transform: uppercase;
+      letter-spacing: 0.16em; font-size: 0.68rem; font-weight: 700;
+    }
+    h1 {
+      font-family: var(--serif); font-weight: 700; letter-spacing: -0.04em;
+      margin: 16px 0 0; font-size: clamp(2.6rem, 9vw, 5.2rem); line-height: 0.94;
+    }
+    .hero-sub {
+      margin: 14px 0 0; max-width: 58ch;
+      color: rgba(249,245,238,0.80); line-height: 1.7; font-size: 0.98rem;
+    }
+    .stats-row {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px;
+    }
+    .stat-chip {
+      padding: 8px 16px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.07);
+      font-size: 0.82rem; color: rgba(249,245,238,0.82);
+    }
+    .stat-chip strong { color: #ffddb9; }
+
+    /* ── tabs ─────────────────────────────────────────────────────── */
+    .tabs-bar {
+      margin-top: 18px;
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 10px 20px; border: none; cursor: pointer;
+      border-radius: 999px; font-family: var(--sans);
+      font-size: 0.88rem; font-weight: 600; letter-spacing: 0.03em;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(249,245,238,0.72);
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: linear-gradient(180deg, #d7874d, #b86532);
+      border-color: transparent;
+      color: #fffaf4;
+      box-shadow: 0 8px 20px rgba(181,106,52,0.30);
+    }
+    .tab-btn:hover:not(.active) {
+      background: rgba(255,255,255,0.13);
+      color: rgba(249,245,238,0.92);
+    }
+
+    /* ── search ───────────────────────────────────────────────────── */
+    .search-row {
+      margin-top: 18px;
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    }
+    .search-wrap {
+      flex: 1; min-width: 220px;
+      position: relative;
+    }
+    .search-wrap svg {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--ink-soft); pointer-events: none;
+    }
+    .search-input {
+      width: 100%; padding: 11px 14px 11px 40px;
+      border: 1px solid var(--line); border-radius: 999px;
+      font-family: var(--sans); font-size: 0.92rem;
+      background: rgba(255,255,255,0.9);
+      color: var(--ink); outline: none;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(181,106,52,0.12);
+    }
+    .result-count { font-size: 0.82rem; color: var(--ink-soft); white-space: nowrap; }
+
+    /* ── section panels ───────────────────────────────────────────── */
+    .section {
+      margin-top: 16px; padding: 20px;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,250,243,0.9));
+      box-shadow: var(--card-shadow);
+    }
+    .section.hidden { display: none; }
+    .kicker {
+      display: inline-block; margin-bottom: 8px;
+      color: var(--accent); text-transform: uppercase;
+      letter-spacing: 0.16em; font-size: 0.72rem; font-weight: 700;
+    }
+    .section h2 {
+      font-family: var(--serif); font-weight: 700; letter-spacing: -0.03em;
+      margin: 0 0 4px; font-size: clamp(1.8rem, 5vw, 2.8rem); line-height: 0.98;
+    }
+    .section-desc { color: var(--ink-soft); font-size: 0.9rem; margin: 0 0 18px; line-height: 1.6; }
+
+    /* ── card grid ────────────────────────────────────────────────── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      border-radius: var(--radius-md);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.95);
+      padding: 16px 18px;
+      box-shadow: 0 4px 16px rgba(24,28,34,0.06);
+      display: flex; flex-direction: column; gap: 8px;
+      transition: box-shadow 0.2s, transform 0.15s;
+    }
+    .card:hover {
+      box-shadow: 0 10px 32px rgba(24,28,34,0.12);
+      transform: translateY(-2px);
+    }
+    .card-name {
+      font-family: var(--serif); font-weight: 700;
+      font-size: 1.05rem; letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    .card-employer {
+      font-size: 0.82rem; color: var(--ink-soft);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .badges { display: flex; flex-wrap: wrap; gap: 5px; }
+    .badge {
+      padding: 3px 10px; border-radius: 999px;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em;
+    }
+    .badge-active { background: #e7f5eb; color: #1e5c2a; border: 1px solid #b3dbbe; }
+    .badge-inactive { background: #fdf0ed; color: #7a2a20; border: 1px solid #f0b8ad; }
+    .badge-suspended { background: #fff3e0; color: #8b5000; border: 1px solid #f5c97e; }
+    .badge-default { background: #f0f3f7; color: #4a5568; border: 1px solid #d1d9e6; }
+    .badge-discipline { background: #fef3cd; color: #856404; border: 1px solid #f5d87e; }
+    .badge-cases { background: #eef3fb; color: #2a4a7a; border: 1px solid #bdd0ef; }
+    .badge-rate { background: #f3f0fb; color: #4a3a7a; border: 1px solid #c9bfed; }
+
+    .card-meta {
+      font-size: 0.78rem; color: var(--ink-soft);
+      display: grid; grid-template-columns: auto 1fr; gap: 2px 10px;
+      line-height: 1.6;
+    }
+    .card-meta dt { font-weight: 600; color: var(--ink); }
+    .card-meta dd { margin: 0; }
+
+    .card-actions { margin-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .card-link {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 14px; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
+      border: 1px solid var(--line);
+      background: rgba(181,106,52,0.07); color: var(--accent);
+      transition: background 0.15s;
+    }
+    .card-link:hover { background: rgba(181,106,52,0.14); }
+
+    /* ── judge table ──────────────────────────────────────────────── */
+    .judge-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .judge-table th {
+      text-align: left; padding: 10px 14px;
+      border-bottom: 2px solid var(--line);
+      font-weight: 700; font-size: 0.75rem;
+      text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-soft);
+    }
+    .judge-table td { padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .judge-table tr:last-child td { border-bottom: none; }
+    .judge-table tr:hover td { background: rgba(181,106,52,0.04); }
+
+    /* ── no-data / loading ────────────────────────────────────────── */
+    .placeholder {
+      padding: 48px 20px; text-align: center;
+      color: var(--ink-soft); font-size: 0.95rem; line-height: 1.7;
+    }
+    .placeholder strong { display: block; font-size: 1.3rem; margin-bottom: 8px; color: var(--ink); font-family: var(--serif); }
+
+    /* ── responsive ───────────────────────────────────────────────── */
+    @media (min-width: 680px) {
+      .hero { padding: 36px 32px 30px; }
+      .section { padding: 28px 28px; }
+    }
+    @media (max-width: 500px) {
+      .card-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── HERO ───────────────────────────────────────────────── -->
+  <section class="hero">
+    <nav class="nav">
+      <div class="brand">
+        <div class="brand-mark">foxxiie.com</div>
+        <div class="brand-name">Court Database</div>
+      </div>
+      <a href="/brocklerlaw/" class="tab-btn" style="font-size:0.8rem;padding:8px 16px;">
+        Brockler Law ↗
+      </a>
+    </nav>
+
+    <div class="eyebrow">
+      <span>⚖</span>
+      <span>Cuyahoga County Common Pleas</span>
+    </div>
+    <h1>Judges,<br>Attorneys<br>&amp; Prosecutors</h1>
+    <p class="hero-sub">
+      Public court record analysis from 13 000+ criminal cases (2023–2025).
+      Defense attorneys are enriched with their Ohio Supreme Court bar registration data.
+    </p>
+
+    <div class="stats-row" id="statsRow">
+      <div class="stat-chip"><strong id="statJudges">—</strong> judges</div>
+      <div class="stat-chip"><strong id="statAttys">—</strong> defense attorneys</div>
+      <div class="stat-chip"><strong id="statPros">—</strong> prosecutors</div>
+      <div class="stat-chip">Updated <strong id="statDate">—</strong></div>
+    </div>
+
+    <div class="tabs-bar">
+      <button class="tab-btn active" data-tab="attorneys">Defense Attorneys</button>
+      <button class="tab-btn" data-tab="judges">Judges</button>
+      <button class="tab-btn" data-tab="prosecutors">Prosecutors</button>
+    </div>
+  </section>
+
+  <!-- ── SEARCH BAR ─────────────────────────────────────────── -->
+  <div class="search-row">
+    <div class="search-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="search-input" type="search" id="searchInput"
+        placeholder="Search by name…" autocomplete="off" aria-label="Search">
+    </div>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+
+  <!-- ── ATTORNEYS PANEL ────────────────────────────────────── -->
+  <section class="section" id="panel-attorneys">
+    <div class="kicker">Defense Bar</div>
+    <h2>Defense Attorneys</h2>
+    <p class="section-desc">
+      Performance data from scraped case records. Ohio bar registration pulled from the
+      <a href="https://www.supremecourt.ohio.gov/AttorneySearch/" target="_blank" rel="noopener"
+         style="color:var(--accent);font-weight:600;">Ohio Supreme Court Attorney Search</a>.
+      Attorneys sorted by number of cases handled.
+    </p>
+    <div class="card-grid" id="attysGrid">
+      <div class="placeholder"><strong>Loading data…</strong>Run <code>python3 scripts/fetch_sc_attorneys.py</code> to generate data.json</div>
+    </div>
+  </section>
+
+  <!-- ── JUDGES PANEL ───────────────────────────────────────── -->
+  <section class="section hidden" id="panel-judges">
+    <div class="kicker">Bench</div>
+    <h2>Judges</h2>
+    <p class="section-desc">Common Pleas Criminal Division judges, sorted by case volume (2023–2025).</p>
+    <table class="judge-table" id="judgesTable">
+      <thead>
+        <tr>
+          <th>Judge</th>
+          <th style="text-align:right">Cases</th>
+          <th>Notable Patterns</th>
+        </tr>
+      </thead>
+      <tbody id="judgesTbody">
+        <tr><td colspan="3" class="placeholder"><strong>Loading…</strong></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── PROSECUTORS PANEL ──────────────────────────────────── -->
+  <section class="section hidden" id="panel-prosecutors">
+    <div class="kicker">State</div>
+    <h2>Prosecutors</h2>
+    <p class="section-desc">Cuyahoga County Prosecutor's Office — ADA performance by case volume (2023–2025).</p>
+    <div class="card-grid" id="prosGrid">
+      <div class="placeholder"><strong>Loading data…</strong></div>
+    </div>
+  </section>
+
+</div><!-- /shell -->
+
+<script>
+// ── Data loading ─────────────────────────────────────────────────────────────
+let DB = null;
+let activeTab = "attorneys";
+let searchTerm = "";
+
+async function loadData() {
+  try {
+    const r = await fetch("data.json");
+    if (!r.ok) throw new Error("data.json not found");
+    DB = await r.json();
+    document.getElementById("statJudges").textContent = DB.judges.length;
+    document.getElementById("statAttys").textContent = DB.attorneys.length;
+    document.getElementById("statPros").textContent = DB.prosecutors.length;
+    document.getElementById("statDate").textContent = (DB.generated || "").split(" ")[0];
+    render();
+  } catch(e) {
+    // data.json doesn't exist yet — show instructions
+    console.warn(e);
+    document.getElementById("resultCount").textContent = "No data.json — run fetch script";
+  }
+}
+
+// ── Rendering ────────────────────────────────────────────────────────────────
+function statusBadgeClass(status) {
+  if (!status) return "badge-default";
+  const s = status.toLowerCase();
+  if (s === "active") return "badge-active";
+  if (s.includes("inactive") || s.includes("retired")) return "badge-inactive";
+  if (s.includes("suspend")) return "badge-suspended";
+  return "badge-default";
+}
+
+function rateColor(rate) {
+  if (!rate) return "";
+  const n = parseFloat(rate);
+  if (n >= 50) return "color:#1e5c2a;font-weight:700;";
+  if (n >= 25) return "color:#8b5000;font-weight:700;";
+  return "color:#7a2a20;font-weight:700;";
+}
+
+function scLink(regNum) {
+  if (!regNum) return "";
+  return `https://www.supremecourt.ohio.gov/AttorneySearch/#/${regNum}/attyinfo`;
+}
+
+function renderAttorneyCard(a, query) {
+  const name = a.name || "";
+  const q = query ? query.toLowerCase() : "";
+  if (q && !name.toLowerCase().includes(q)) return null;
+
+  const badgeStatus = a.status
+    ? `<span class="badge ${statusBadgeClass(a.status)}">${a.status}</span>`
+    : "";
+  const badgeDiscipline = (a.has_discipline === "YES")
+    ? `<span class="badge badge-discipline">⚠ Discipline</span>`
+    : "";
+  const badgeCases = `<span class="badge badge-cases">${a.cases} cases</span>`;
+  const badgeRate = a.success_rate
+    ? `<span class="badge badge-rate" style="${rateColor(a.success_rate)}">${a.success_rate} success</span>`
+    : "";
+
+  const metaRows = [];
+  if (a.reg_number) metaRows.push(`<dt>Reg #</dt><dd>${a.reg_number}</dd>`);
+  if (a.admission_date) metaRows.push(`<dt>Admitted</dt><dd>${a.admission_date}</dd>`);
+  if (a.admitted_by) metaRows.push(`<dt>By</dt><dd>${a.admitted_by}</dd>`);
+  if (a.law_school) metaRows.push(`<dt>Law school</dt><dd>${a.law_school}</dd>`);
+  if (a.employer || a.job_title) {
+    const emp = [a.job_title, a.employer].filter(Boolean).join(" · ");
+    metaRows.push(`<dt>Firm</dt><dd>${emp}</dd>`);
+  }
+  if (a.guilty || a.not_guilty || a.dismissed) {
+    metaRows.push(`<dt>Outcomes</dt><dd>${a.guilty}G / ${a.not_guilty}NG / ${a.dismissed}D</dd>`);
+  }
+
+  const scBtn = a.reg_number
+    ? `<a class="card-link" href="${scLink(a.reg_number)}" target="_blank" rel="noopener">Ohio SC Profile ↗</a>`
+    : "";
+
+  return `
+    <div class="card">
+      <div class="card-name">${name}</div>
+      ${a.employer ? `<div class="card-employer">${a.employer}</div>` : ""}
+      <div class="badges">${badgeStatus}${badgeDiscipline}${badgeCases}${badgeRate}</div>
+      ${metaRows.length ? `<dl class="card-meta">${metaRows.join("")}</dl>` : ""}
+      ${scBtn ? `<div class="card-actions">${scBtn}</div>` : ""}
+    </div>`;
+}
+
+function renderProsecutorCard(p, query) {
+  const name = p.name || "";
+  const q = query ? query.toLowerCase() : "";
+  if (q && !name.toLowerCase().includes(q)) return null;
+
+  const badgeCases = `<span class="badge badge-cases">${p.cases} cases</span>`;
+  const badgeRate = p.conviction_rate
+    ? `<span class="badge badge-rate">${p.conviction_rate} conv.</span>`
+    : "";
+  const meta = [];
+  if (p.guilty || p.not_guilty || p.dismissed) {
+    meta.push(`<dt>Outcomes</dt><dd>${p.guilty}G / ${p.not_guilty}NG / ${p.dismissed}D</dd>`);
+  }
+
+  return `
+    <div class="card">
+      <div class="card-name">${name}</div>
+      <div class="badges">${badgeCases}${badgeRate}</div>
+      ${meta.length ? `<dl class="card-meta">${meta.join("")}</dl>` : ""}
+    </div>`;
+}
+
+function render() {
+  if (!DB) return;
+  const q = searchTerm.trim().toLowerCase();
+
+  // Attorneys
+  const attysHtml = DB.attorneys
+    .map(a => renderAttorneyCard(a, q))
+    .filter(Boolean);
+  const attysGrid = document.getElementById("attysGrid");
+  attysGrid.innerHTML = attysHtml.length
+    ? attysHtml.join("")
+    : `<div class="placeholder"><strong>No results</strong>Try a different search.</div>`;
+
+  // Judges
+  const judgesRows = DB.judges
+    .filter(j => !q || j.name.toLowerCase().includes(q))
+    .map(j => `
+      <tr>
+        <td><strong>${j.name}</strong></td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums">${j.cases.toLocaleString()}</td>
+        <td style="color:var(--ink-soft);font-size:0.82rem">${j.patterns || "—"}</td>
+      </tr>`);
+  document.getElementById("judgesTbody").innerHTML = judgesRows.length
+    ? judgesRows.join("")
+    : `<tr><td colspan="3" class="placeholder"><strong>No results</strong></td></tr>`;
+
+  // Prosecutors
+  const prosHtml = DB.prosecutors
+    .map(p => renderProsecutorCard(p, q))
+    .filter(Boolean);
+  const prosGrid = document.getElementById("prosGrid");
+  prosGrid.innerHTML = prosHtml.length
+    ? prosHtml.join("")
+    : `<div class="placeholder"><strong>No results</strong>Try a different search.</div>`;
+
+  // result count
+  const counts = { attorneys: attysHtml.length, judges: judgesRows.length, prosecutors: prosHtml.length };
+  const total = counts[activeTab];
+  const totalAll = DB[activeTab === "attorneys" ? "attorneys" : activeTab].length;
+  document.getElementById("resultCount").textContent =
+    q ? `${total} of ${totalAll} results` : `${total} entries`;
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+document.querySelectorAll(".tab-btn[data-tab]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll(".tab-btn[data-tab]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".section[id^='panel-']").forEach(p => p.classList.add("hidden"));
+    document.getElementById("panel-" + activeTab).classList.remove("hidden");
+    render();
+    document.getElementById("panel-" + activeTab).scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
+
+// ── Search ────────────────────────────────────────────────────────────────────
+let searchTimer;
+document.getElementById("searchInput").addEventListener("input", e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    searchTerm = e.target.value;
+    render();
+  }, 180);
+});
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
