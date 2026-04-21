@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Management System - Brockler Law Admin</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg: #f3ecdf;
+      --bg-soft: #fbf7ef;
+      --panel: rgba(255, 255, 255, 0.68);
+      --ink: #16191d;
+      --ink-soft: #53606c;
+      --accent: #b56a34;
+      --success: #2d7d3e;
+      --danger: #c84c2d;
+      --radius-md: 18px;
+      --sans: "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--sans);
+      background: linear-gradient(135deg, #f6efe3 0%, #efe5d7 100%);
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      background: var(--panel);
+      padding: 1.5rem;
+      border-radius: var(--radius-md);
+      backdrop-filter: blur(12px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: var(--accent);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid rgba(22, 25, 29, 0.1);
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      border: none;
+      color: var(--ink-soft);
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.3s ease;
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .panel h2 {
+      margin: 0 0 1.5rem 0;
+      font-size: 1.4rem;
+      color: var(--ink);
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 0.75rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid rgba(22, 25, 29, 0.2);
+      border-radius: 8px;
+      font-family: var(--sans);
+      font-size: 1rem;
+      color: var(--ink);
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="number"]:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(181, 106, 52, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+      font-family: monospace;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #a55a2a;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(181, 106, 52, 0.3);
+    }
+
+    .btn-secondary {
+      background: rgba(22, 25, 29, 0.1);
+      color: var(--ink);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(22, 25, 29, 0.15);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #b83f26;
+    }
+
+    .block-list {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .block-item {
+      background: rgba(181, 106, 52, 0.08);
+      border-left: 4px solid var(--accent);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+    }
+
+    .block-item h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.1rem;
+      color: var(--ink);
+    }
+
+    .block-item p {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+      max-width: 300px;
+      word-break: break-word;
+    }
+
+    .block-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .block-actions button {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    .preview {
+      background: white;
+      border: 1px solid rgba(22, 25, 29, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      min-height: 300px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .preview h3 {
+      color: var(--accent);
+      margin-top: 0;
+    }
+
+    .status-message {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .status-message.show {
+      display: block;
+    }
+
+    .status-message.success {
+      background: rgba(45, 125, 62, 0.1);
+      color: var(--success);
+      border-left: 4px solid var(--success);
+    }
+
+    .status-message.error {
+      background: rgba(200, 76, 45, 0.1);
+      color: var(--danger);
+      border-left: 4px solid var(--danger);
+    }
+
+    .grid-2 {
+      grid-template-columns: 1fr;
+    }
+
+    @media (max-width: 1024px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .editor-toolbar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      background: rgba(181, 106, 52, 0.05);
+      border-radius: 8px;
+    }
+
+    .editor-toolbar button {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .product-card {
+      background: white;
+      border: 1px solid rgba(22, 25, 29, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+
+        .product-badge {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: bold;
+          margin-bottom: 0.5rem;
+        }
+
+        .badge-approved {
+          background: rgba(45, 125, 62, 0.2);
+          color: var(--success);
+        }
+
+        .badge-pending {
+          background: rgba(181, 106, 52, 0.2);
+          color: var(--accent);
+        }
+
+        .popularity-score {
+          font-size: 0.85rem;
+          color: var(--ink-soft);
+          margin: 0.5rem 0;
+        }
+    }
+
+    .product-card h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1rem;
+    }
+
+    .product-card p {
+      margin: 0 0 1rem 0;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+    }
+
+    .product-price {
+      font-size: 1.4rem;
+      color: var(--accent);
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📝 Content Management System</h1>
+      <div>
+        <button class="btn-secondary" onclick="logout()">Logout</button>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('blocks')">Content Blocks</button>
+      <button class="tab-btn" onclick="switchTab('products')">Merch Store</button>
+      <button class="tab-btn" onclick="switchTab('analytics')">Analytics</button>
+      <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
+    </div>
+
+    <!-- Content Blocks Tab -->
+    <div id="blocks-tab" class="tab-content active">
+      <div class="status-message" id="blocks-status"></div>
+      <div class="content-grid">
+        <div class="panel">
+          <h2>Add New Block</h2>
+          <div class="form-group">
+            <label>Block ID/Name</label>
+            <input type="text" id="blockId" placeholder="e.g., hero-section, about-us">
+          </div>
+          <div class="form-group">
+            <label>Block Title</label>
+            <input type="text" id="blockTitle" placeholder="Display title">
+          </div>
+          <div class="form-group">
+            <label>Section/Category</label>
+            <select id="blockSection">
+              <option value="hero">Hero</option>
+              <option value="about">About</option>
+              <option value="services">Services</option>
+              <option value="testimonials">Testimonials</option>
+              <option value="faq">FAQ</option>
+              <option value="contact">Contact</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Content (HTML allowed)</label>
+            <div class="editor-toolbar">
+              <button class="btn-secondary" onclick="insertHTML('<h3>', 'blockContent')">H3</button>
+              <button class="btn-secondary" onclick="insertHTML('<strong>', 'blockContent')">Bold</button>
+              <button class="btn-secondary" onclick="insertHTML('<em>', 'blockContent')">Italic</button>
+              <button class="btn-secondary" onclick="insertHTML('<a href=\"#\">', 'blockContent')">Link</button>
+              <button class="btn-secondary" onclick="insertHTML('<br>', 'blockContent')">Line Break</button>
+            </div>
+            <textarea id="blockContent" placeholder="Enter content (HTML allowed)"></textarea>
+          </div>
+          <div class="button-group">
+            <button class="btn-primary" onclick="saveBlock()">Save Block</button>
+            <button class="btn-secondary" onclick="clearBlockForm()">Clear</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Preview</h2>
+          <div class="preview" id="blockPreview">
+            <p style="color: var(--ink-soft);">Your content preview will appear here...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Existing Blocks</h2>
+        <div class="block-list" id="blockList">
+          <p style="color: var(--ink-soft);">Loading blocks...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Merch Store Tab -->
+    <div id="products-tab" class="tab-content">
+      <div class="status-message" id="products-status"></div>
+      <div class="panel">
+        <h2>Add New Product</h2>
+        <div class="content-grid grid-2">
+          <div>
+            <div class="form-group">
+              <label>Product Name</label>
+              <input type="text" id="productName" placeholder="e.g., Brockler T-Shirt">
+            </div>
+            <div class="form-group">
+              <label>SKU</label>
+              <input type="text" id="productSku" placeholder="e.g., BROCK-001">
+            </div>
+            <div class="form-group">
+              <label>Price ($)</label>
+              <input type="number" id="productPrice" placeholder="19.99" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="productDescription" placeholder="Product description"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Image URL</label>
+              <input type="text" id="productImage" placeholder="https://...">
+            </div>
+            <div class="form-group">
+              <label>Approval Status</label>
+              <select id="productApproved">
+                <option value="false">Pending Approval</option>
+                <option value="true">Approved</option>
+              </select>
+            </div>
+            <div class="button-group">
+              <button class="btn-primary" onclick="saveProduct()">Save Product</button>
+              <button class="btn-secondary" onclick="clearProductForm()">Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Products</h2>
+        <div class="product-grid" id="productList">
+          <p style="color: var(--ink-soft);">No products yet. Add one above!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div id="analytics-tab" class="tab-content">
+      <div class="panel">
+        <h2>Analytics Dashboard</h2>
+        <p>Loading analytics...</p>
+        <iframe id="analytics-frame" style="width: 100%; height: 600px; border: 1px solid rgba(22, 25, 29, 0.1); border-radius: 8px;" src="http://localhost:8000/docs"></iframe>
+      </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="settings-tab" class="tab-content">
+      <div class="panel">
+        <h2>Site Settings</h2>
+        <div class="form-group">
+          <label>Site Title</label>
+          <input type="text" id="siteTitle" placeholder="Aaron Brockler - Criminal Defense Attorney">
+        </div>
+        <div class="form-group">
+          <label>Site Description</label>
+          <textarea id="siteDescription" placeholder="Meta description for SEO"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Contact Email</label>
+          <input type="email" id="contactEmail" placeholder="contact@brocklerlaw.com">
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="text" id="phoneNumber" placeholder="+1 (216) 555-0000">
+        </div>
+        <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:8765';
+
+    function switchTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      // Show selected tab
+      document.getElementById(tabName + '-tab').classList.add('active');
+      event.target.classList.add('active');
+
+      if (tabName === 'blocks') loadBlocks();
+      if (tabName === 'products') loadProducts();
+    }
+
+    function showStatus(message, type, tabName) {
+      const statusEl = document.getElementById(tabName + '-status');
+      statusEl.textContent = message;
+      statusEl.className = 'status-message show ' + type;
+      setTimeout(() => statusEl.classList.remove('show'), 4000);
+    }
+
+    function updatePreview() {
+      const title = document.getElementById('blockTitle').value || 'Block Title';
+      const content = document.getElementById('blockContent').value || 'No content yet...';
+      document.getElementById('blockPreview').innerHTML = `
+        <h3>${escapeHtml(title)}</h3>
+        <div>${content}</div>
+      `;
+    }
+
+    function insertHTML(tag, elementId) {
+      const el = document.getElementById(elementId);
+      el.focus();
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      const text = el.value;
+      const before = text.substring(0, start);
+      const selected = text.substring(start, end);
+      const after = text.substring(end);
+      el.value = before + tag + selected + after;
+      updatePreview();
+    }
+
+    function saveBlock() {
+      const id = document.getElementById('blockId').value;
+      const title = document.getElementById('blockTitle').value;
+      const section = document.getElementById('blockSection').value;
+      const content = document.getElementById('blockContent').value;
+
+      if (!id || !title || !content) {
+        showStatus('Please fill all fields', 'error', 'blocks');
+        return;
+      }
+
+      const block = { id, title, section, content, createdAt: new Date().toISOString() };
+      localStorage.setItem('block_' + id, JSON.stringify(block));
+      showStatus('Block saved successfully!', 'success', 'blocks');
+      clearBlockForm();
+      loadBlocks();
+    }
+
+    function clearBlockForm() {
+      document.getElementById('blockId').value = '';
+      document.getElementById('blockTitle').value = '';
+      document.getElementById('blockContent').value = '';
+      updatePreview();
+    }
+
+    function loadBlocks() {
+      const listEl = document.getElementById('blockList');
+      const blocks = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('block_')) {
+          blocks.push(JSON.parse(localStorage.getItem(key)));
+        }
+      }
+
+      if (blocks.length === 0) {
+        listEl.innerHTML = '<p style="color: var(--ink-soft);">No blocks yet. Create one above!</p>';
+        return;
+      }
+
+      listEl.innerHTML = blocks.map(block => `
+        <div class="block-item">
+          <div>
+            <h3>${escapeHtml(block.title)}</h3>
+            <p><strong>ID:</strong> ${escapeHtml(block.id)}</p>
+            <p><strong>Section:</strong> ${escapeHtml(block.section)}</p>
+            <p>${escapeHtml(block.content.substring(0, 100))}...</p>
+          </div>
+          <div class="block-actions">
+            <button class="btn-secondary" onclick="editBlock('${block.id}')">Edit</button>
+            <button class="btn-danger" onclick="deleteBlock('${block.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function editBlock(id) {
+      const block = JSON.parse(localStorage.getItem('block_' + id));
+      document.getElementById('blockId').value = block.id;
+      document.getElementById('blockTitle').value = block.title;
+      document.getElementById('blockSection').value = block.section;
+      document.getElementById('blockContent').value = block.content;
+      updatePreview();
+      document.querySelector('.tab-btn').click();
+      window.scrollTo(0, 0);
+    }
+
+    function deleteBlock(id) {
+      if (confirm('Delete this block?')) {
+        localStorage.removeItem('block_' + id);
+        showStatus('Block deleted!', 'success', 'blocks');
+        loadBlocks();
+      }
+    }
+
+    function saveProduct() {
+      const name = document.getElementById('productName').value;
+      const sku = document.getElementById('productSku').value;
+      const price = document.getElementById('productPrice').value;
+      const description = document.getElementById('productDescription').value;
+      const image = document.getElementById('productImage').value;
+      const approved = document.getElementById('productApproved').value === 'true';
+
+      if (!name || !sku || !price) {
+        showStatus('Please fill required fields', 'error', 'products');
+        return;
+      }
+
+      const product = { sku, name, price: parseFloat(price), description, image, approved, popularity: 0, createdAt: new Date().toISOString() };
+      localStorage.setItem('product_' + sku, JSON.stringify(product));
+      showStatus('Product saved!', 'success', 'products');
+      clearProductForm();
+      loadProducts();
+    }
+
+    function clearProductForm() {
+      document.getElementById('productName').value = '';
+      document.getElementById('productSku').value = '';
+      document.getElementById('productPrice').value = '';
+      document.getElementById('productDescription').value = '';
+      document.getElementById('productImage').value = '';
+    }
+
+    function loadProducts() {
+      const listEl = document.getElementById('productList');
+      const products = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('product_')) {
+          products.push(JSON.parse(localStorage.getItem(key)));
+        }
+      }
+
+      // Sort: Approved first, then by popularity
+      products.sort((a, b) => {
+        if (a.approved !== b.approved) return b.approved - a.approved;
+        return b.popularity - a.popularity;
+      });
+
+      if (products.length === 0) {
+        listEl.innerHTML = '<p style="color: var(--ink-soft);">No products yet. Add one above!</p>';
+        return;
+      }
+
+      listEl.innerHTML = products.map((p, index) => `
+        <div class="product-card">
+          <div class="product-badge ${p.approved ? 'badge-approved' : 'badge-pending'}">
+            ${p.approved ? '✓ Approved' : '⏱ Pending'}
+          </div>
+          <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 0.5rem;">
+          <h3>${escapeHtml(p.name)}</h3>
+          <p>${escapeHtml(p.description.substring(0, 60))}...</p>
+          <div class="product-price">$${parseFloat(p.price).toFixed(2)}</div>
+          <div class="popularity-score">👁️ Views: ${p.popularity || 0}</div>
+          <div class="button-group">
+            <button class="btn-secondary" style="flex: 1;" onclick="editProduct('${p.sku}')">Edit</button>
+            <button class="btn-danger" style="flex: 1;" onclick="deleteProduct('${p.sku}')">Delete</button>
+            ${p.approved ? `<button class="btn-secondary" style="flex: 1;" onclick="toggleApproval('${p.sku}', false)">Reject</button>` : `<button class="btn-primary" style="flex: 1;" onclick="toggleApproval('${p.sku}', true)">Approve</button>`}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function editProduct(sku) {
+      const product = JSON.parse(localStorage.getItem('product_' + sku));
+      document.getElementById('productName').value = product.name;
+      document.getElementById('productSku').value = product.sku;
+      document.getElementById('productPrice').value = product.price;
+      document.getElementById('productDescription').value = product.description;
+      document.getElementById('productImage').value = product.image;
+      document.getElementById('productApproved').value = product.approved ? 'true' : 'false';
+      document.querySelectorAll('.tab-btn')[1].click();
+      window.scrollTo(0, 0);
+    }
+
+    function toggleApproval(sku, approved) {
+      const product = JSON.parse(localStorage.getItem('product_' + sku));
+      product.approved = approved;
+      product.updatedAt = new Date().toISOString();
+      localStorage.setItem('product_' + sku, JSON.stringify(product));
+      showStatus(approved ? 'Product approved!' : 'Product rejected', 'success', 'products');
+      loadProducts();
+    }
+
+    function deleteProduct(sku) {
+      if (confirm('Delete this product?')) {
+        localStorage.removeItem('product_' + sku);
+        showStatus('Product deleted!', 'success', 'products');
+        loadProducts();
+      }
+    }
+
+    function saveSettings() {
+      const settings = {
+        siteTitle: document.getElementById('siteTitle').value,
+        siteDescription: document.getElementById('siteDescription').value,
+        contactEmail: document.getElementById('contactEmail').value,
+        phoneNumber: document.getElementById('phoneNumber').value
+      };
+      localStorage.setItem('site_settings', JSON.stringify(settings));
+      showStatus('Settings saved!', 'success', 'settings');
+    }
+
+    function loadSettings() {
+      const settings = JSON.parse(localStorage.getItem('site_settings') || '{}');
+      document.getElementById('siteTitle').value = settings.siteTitle || '';
+      document.getElementById('siteDescription').value = settings.siteDescription || '';
+      document.getElementById('contactEmail').value = settings.contactEmail || '';
+      document.getElementById('phoneNumber').value = settings.phoneNumber || '';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function logout() {
+      if (confirm('Logout?')) {
+        window.location.href = '/';
+      }
+    }
+
+    // Update preview as user types
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('blockTitle')?.addEventListener('input', updatePreview);
+      document.getElementById('blockContent')?.addEventListener('input', updatePreview);
+      loadSettings();
+    });
+  </script>
+</body>
+</html>

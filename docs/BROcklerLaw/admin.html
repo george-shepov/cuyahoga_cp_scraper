@@ -516,15 +516,21 @@
     }
     .faq-card.is-editing p { display: none; }
     .faq-card.is-editing .faq-answer-editor,
-    body.review-mode .faq-editor-actions { display: block; }
-    body.review-mode .faq-editor-actions { display: flex; }
+    .faq-card.is-selected .faq-answer-editor { display: block; }
+    .faq-card.is-selected .faq-editor-actions { display: flex; }
     .faq-card.is-hidden-public { display: none; }
     body.review-mode .faq-card.is-hidden-public {
       display: block;
       opacity: 0.72;
     }
-    body.review-mode .faq-status-row,
-    body.review-mode .faq-visibility-controls { display: flex; }
+    body.review-mode .faq-card { cursor: pointer; }
+    body.review-mode .faq-card.is-selected {
+      border-color: rgba(181, 106, 52, 0.52);
+      box-shadow: 0 0 0 2px rgba(181, 106, 52, 0.2), var(--card-shadow);
+    }
+    body.review-mode .faq-card.is-selected .faq-status-row,
+    body.review-mode .faq-card.is-selected .faq-visibility-controls,
+    body.review-mode .faq-card.is-selected .faq-editor-actions { display: flex; }
     .contact-band {
       margin-top: 18px;
       padding: 20px 18px;
@@ -1252,26 +1258,37 @@
           resetButton.textContent = "Reset";
 
           approvedButton.addEventListener("click", function () {
+            card.classList.add("is-selected");
             savedVisibility[faqId] = Object.assign({}, getCardState(card), { approved: true });
             persistSavedVisibility();
             applyCardVisibility(card);
           });
           pendingButton.addEventListener("click", function () {
+            card.classList.add("is-selected");
             savedVisibility[faqId] = Object.assign({}, getCardState(card), { approved: false });
             persistSavedVisibility();
             applyCardVisibility(card);
           });
           showButton.addEventListener("click", function () {
+            card.classList.add("is-selected");
             savedVisibility[faqId] = Object.assign({}, getCardState(card), { visible: true });
             persistSavedVisibility();
             applyCardVisibility(card);
           });
           hideButton.addEventListener("click", function () {
+            card.classList.add("is-selected");
             savedVisibility[faqId] = Object.assign({}, getCardState(card), { visible: false });
             persistSavedVisibility();
             applyCardVisibility(card);
           });
           editButton.addEventListener("click", function () {
+            faqCards.forEach(function (otherCard) {
+              if (otherCard !== card) {
+                otherCard.classList.remove("is-selected");
+                otherCard.classList.remove("is-editing");
+              }
+            });
+            card.classList.add("is-selected");
             editor.value = answer.textContent.trim();
             card.classList.add("is-editing");
             editor.focus();
@@ -1308,6 +1325,18 @@
           card.appendChild(editor);
           card.appendChild(visibilityControls);
           card.appendChild(actions);
+
+          card.addEventListener("click", function (event) {
+            if (!body.classList.contains("review-mode")) { return; }
+            if (event.target.closest("button, textarea, input, select, a, label")) { return; }
+            faqCards.forEach(function (otherCard) {
+              if (otherCard !== card) {
+                otherCard.classList.remove("is-selected");
+                otherCard.classList.remove("is-editing");
+              }
+            });
+            card.classList.add("is-selected");
+          });
         });
       }
 
@@ -1331,7 +1360,10 @@
       function disableReviewMode() {
         body.classList.remove("review-mode");
         localStorage.removeItem(STORAGE_KEY);
-        faqCards.forEach(function (card) { card.classList.remove("is-editing"); });
+        faqCards.forEach(function (card) {
+          card.classList.remove("is-editing");
+          card.classList.remove("is-selected");
+        });
       }
 
       buildFaqEditors();
