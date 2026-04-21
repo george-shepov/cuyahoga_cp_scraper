@@ -518,6 +518,69 @@
       letter-spacing: -0.02em;
     }
 
+    .faq-answer-editor,
+    .faq-editor-actions {
+      display: none;
+    }
+
+    .faq-editor-actions {
+      position: relative;
+      z-index: 1;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .faq-editor-actions button {
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid rgba(22, 25, 29, 0.12);
+      border-radius: 999px;
+      background: rgba(38, 51, 66, 0.06);
+      color: var(--steel);
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .faq-editor-actions .editor-save {
+      background: linear-gradient(180deg, #d7874d, #b86532);
+      border-color: transparent;
+      color: #fffaf4;
+    }
+
+    .faq-answer-editor {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      min-height: 150px;
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid rgba(22, 25, 29, 0.14);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.94);
+      color: var(--ink);
+      font: inherit;
+      line-height: 1.65;
+      resize: vertical;
+    }
+
+    .faq-card.is-editing p {
+      display: none;
+    }
+
+    .faq-card.is-editing .faq-answer-editor,
+    body.review-mode .faq-editor-actions {
+      display: block;
+    }
+
+    body.review-mode .faq-editor-actions {
+      display: flex;
+    }
+
     .contact-band {
       margin-top: 18px;
       padding: 20px 18px;
@@ -1263,6 +1326,7 @@
       var REVIEW_USER = "Aaron";
       var REVIEW_PASSWORD = "AaronBROckler$$$";
       var STORAGE_KEY = "brockler-review-mode";
+      var FAQ_STORAGE_KEY = "brockler-faq-answer-edits";
       var body = document.body;
       var manageLink = document.querySelector("[data-manage-link]");
       var modal = document.querySelector("[data-login-modal]");
@@ -1272,6 +1336,105 @@
       var logoutButton = document.querySelector("[data-review-logout]");
       var usernameInput = form ? form.elements.username : null;
       var passwordInput = form ? form.elements.password : null;
+      var faqCards = Array.prototype.slice.call(document.querySelectorAll(".faq-card"));
+      var savedAnswers = loadSavedAnswers();
+
+      function loadSavedAnswers() {
+        try {
+          return JSON.parse(localStorage.getItem(FAQ_STORAGE_KEY) || "{}");
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function persistSavedAnswers() {
+        localStorage.setItem(FAQ_STORAGE_KEY, JSON.stringify(savedAnswers));
+      }
+
+      function buildFaqEditors() {
+        faqCards.forEach(function (card, index) {
+          var answer = card.querySelector("p");
+          if (!answer) {
+            return;
+          }
+
+          var faqId = card.getAttribute("data-faq-id") || "faq-" + index;
+          var originalAnswer = answer.textContent.trim();
+          var editor = document.createElement("textarea");
+          var actions = document.createElement("div");
+          var editButton = document.createElement("button");
+          var saveButton = document.createElement("button");
+          var cancelEditButton = document.createElement("button");
+          var resetButton = document.createElement("button");
+
+          card.setAttribute("data-faq-id", faqId);
+          card.setAttribute("data-original-answer", originalAnswer);
+
+          if (savedAnswers[faqId]) {
+            answer.textContent = savedAnswers[faqId];
+          }
+
+          editor.className = "faq-answer-editor";
+          editor.setAttribute("aria-label", "Edit FAQ answer");
+          editor.value = answer.textContent.trim();
+
+          actions.className = "faq-editor-actions";
+
+          editButton.type = "button";
+          editButton.className = "editor-edit";
+          editButton.textContent = "Edit";
+
+          saveButton.type = "button";
+          saveButton.className = "editor-save";
+          saveButton.textContent = "Save";
+
+          cancelEditButton.type = "button";
+          cancelEditButton.className = "editor-cancel";
+          cancelEditButton.textContent = "Cancel";
+
+          resetButton.type = "button";
+          resetButton.className = "editor-reset";
+          resetButton.textContent = "Reset";
+
+          editButton.addEventListener("click", function () {
+            editor.value = answer.textContent.trim();
+            card.classList.add("is-editing");
+            editor.focus();
+          });
+
+          saveButton.addEventListener("click", function () {
+            var nextValue = editor.value.trim();
+            if (!nextValue) {
+              return;
+            }
+            answer.textContent = nextValue;
+            savedAnswers[faqId] = nextValue;
+            persistSavedAnswers();
+            card.classList.remove("is-editing");
+          });
+
+          cancelEditButton.addEventListener("click", function () {
+            editor.value = answer.textContent.trim();
+            card.classList.remove("is-editing");
+          });
+
+          resetButton.addEventListener("click", function () {
+            var original = card.getAttribute("data-original-answer") || "";
+            answer.textContent = original;
+            editor.value = original;
+            delete savedAnswers[faqId];
+            persistSavedAnswers();
+            card.classList.remove("is-editing");
+          });
+
+          actions.appendChild(editButton);
+          actions.appendChild(saveButton);
+          actions.appendChild(cancelEditButton);
+          actions.appendChild(resetButton);
+          card.appendChild(editor);
+          card.appendChild(actions);
+        });
+      }
 
       function openModal() {
         if (!modal) {
@@ -1302,7 +1465,12 @@
       function disableReviewMode() {
         body.classList.remove("review-mode");
         localStorage.removeItem(STORAGE_KEY);
+        faqCards.forEach(function (card) {
+          card.classList.remove("is-editing");
+        });
       }
+
+      buildFaqEditors();
 
       if (localStorage.getItem(STORAGE_KEY) === "enabled") {
         enableReviewMode();
