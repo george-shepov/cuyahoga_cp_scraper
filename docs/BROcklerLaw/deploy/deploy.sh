@@ -44,6 +44,7 @@ fi
 SSH="ssh -i $SSH_KEY -o StrictHostKeyChecking=no"
 SCP="scp -i $SSH_KEY -o StrictHostKeyChecking=no"
 SITE_DIR="/var/www/foxxiie.com/brocklerlaw"
+SECONDARY_SITE_DIR="/var/www/prosecutordefense.com/brocklerlaw"
 API_DIR="/opt/brocklerlaw-save"
 
 # Helper to run sudo on remote (with optional password)
@@ -95,8 +96,9 @@ remote_sudo "mkdir -p $API_DIR"
 $SCP "$SCRIPT_DIR/save_api.py" "$VPS_HOST:/tmp/save_api.py"
 remote_sudo "mv /tmp/save_api.py $API_DIR/save_api.py && chmod 755 $API_DIR/save_api.py"
 
-# Set site root ownership so www-data can write index.html
+# Set site root ownership so save API can create backup/index files on both domains.
 remote_sudo "chown -R www-data:www-data $SITE_DIR"
+remote_sudo "if [ -d $SECONDARY_SITE_DIR ]; then chown -R www-data:www-data $SECONDARY_SITE_DIR; fi"
 remote_sudo "if [ -f /var/www/foxxiie.com/index.html ]; then chown www-data:www-data /var/www/foxxiie.com/index.html; fi"
 
 # ── 3. Install + start systemd service ──────────────────────────────────────
