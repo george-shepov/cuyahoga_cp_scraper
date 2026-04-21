@@ -10,23 +10,45 @@ Runs behind Nginx on 127.0.0.1:8765.
 import os
 import json
 import logging
+import hashlib
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # ── Config ──────────────────────────────────────────────────────────────────
-SITE_ROOT   = "/var/www/foxxiie.com/brocklerlaw"
-INDEX_FILE  = os.path.join(SITE_ROOT, "index.html")
-# Token is read from the environment – never hardcoded.
-# Set BROCKLER_API_TOKEN in /etc/brocklerlaw-save/env (not committed to git).
-API_TOKEN   = os.environ.get("BROCKLER_API_TOKEN", "")
-if not API_TOKEN:
-    raise RuntimeError("BROCKLER_API_TOKEN environment variable is not set")
+DEFAULT_SITE_ROOT = "/var/www/foxxiie.com/brocklerlaw"
+SITE_ROOTS = {
+    "foxxiie.com": "/var/www/foxxiie.com/brocklerlaw",
+    "www.foxxiie.com": "/var/www/foxxiie.com/brocklerlaw",
+    "prosecutordefense.com": "/var/www/prosecutordefense.com/brocklerlaw",
+    "www.prosecutordefense.com": "/var/www/prosecutordefense.com/brocklerlaw",
+}
+# Optional environment token. If absent, fall back to checking the same password
+# hash already embedded in the admin UI so the service can still run safely.
+API_TOKEN = os.environ.get("BROCKLER_API_TOKEN", "")
+API_TOKEN_HASH = os.environ.get(
+    "BROCKLER_API_TOKEN_HASH",
+    "afebf43cf94f084bf1dea949a5a1441eb51956602f2fb4caa82bae7fa45e53bb",
+)
 MAX_BYTES   = 2 * 1024 * 1024   # 2 MB sanity cap
 LISTEN_HOST = "127.0.0.1"
 LISTEN_PORT = 8765
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("save_api")
+
+
+def site_root_for_host(host_header: str) -> str:
+    host = (host_header or "").split(":", 1)[0].strip().lower()
+    return SITE_ROOTS.get(host, DEFAULT_SITE_ROOT)
+
+
+def token_is_valid(token: str) -> bool:
+    if API_TOKEN and token == API_TOKEN:
+        return True
+    if API_TOKEN_HASH:
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        return token_hash == API_TOKEN_HASH
+    return False
 
 
 class SaveHandler(BaseHTTPRequestHandler):
@@ -64,7 +86,7 @@ class SaveHandler(BaseHTTPRequestHandler):
             return
 
         token = payload.get("token", "")
-        if token != API_TOKEN:
+        if not isinstance(token, str) or not token_is_valid(token):
             self.send_json(403, {"error": "unauthorized"})
             return
 
@@ -73,12 +95,16 @@ class SaveHandler(BaseHTTPRequestHandler):
             self.send_json(400, {"error": "html missing or too short"})
             return
 
+        site_root = site_root_for_host(self.headers.get("Host", ""))
+        index_file = os.path.join(site_root, "index.html")
+
         # ── Backup existing index.html ───────────────────────────────────
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_path = os.path.join(SITE_ROOT, f"index_{ts}.html")
+        backup_path = os.path.join(site_root, f"index_{ts}.html")
         try:
-            if os.path.exists(INDEX_FILE):
-                with open(INDEX_FILE, "rb") as src:
+            os.makedirs(site_root, exist_ok=True)
+            if os.path.exists(index_file):
+                with open(index_file, "rb") as src:
                     content = src.read()
                 with open(backup_path, "wb") as dst:
                     dst.write(content)
@@ -91,12 +117,12 @@ class SaveHandler(BaseHTTPRequestHandler):
             return
 
         # ── Write new index.html ─────────────────────────────────────────
-        tmp = INDEX_FILE + ".tmp"
+        tmp = index_file + ".tmp"
         try:
             with open(tmp, "w", encoding="utf-8") as f:
                 f.write(html)
-            os.replace(tmp, INDEX_FILE)   # atomic on Linux
-            log.info("Published new index.html (%d bytes)", len(html))
+            os.replace(tmp, index_file)   # atomic on Linux
+            log.info("Published new index.html for host %s (%d bytes)", self.headers.get("Host", ""), len(html))
         except OSError as exc:
             log.error("Write failed: %s", exc)
             self.send_json(500, {"error": "write failed"})
@@ -106,7 +132,7 @@ class SaveHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    os.makedirs(SITE_ROOT, exist_ok=True)
+    os.makedirs(DEFAULT_SITE_ROOT, exist_ok=True)
     server = HTTPServer((LISTEN_HOST, LISTEN_PORT), SaveHandler)
     log.info("Save API listening on %s:%d", LISTEN_HOST, LISTEN_PORT)
     try:

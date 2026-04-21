@@ -413,7 +413,8 @@
     .faq-answer-editor,
     .faq-editor-actions,
     .faq-status-row,
-    .faq-visibility-controls {
+    .faq-visibility-controls,
+    .faq-meta-editor {
       display: none;
     }
     .faq-status-row {
@@ -514,6 +515,48 @@
       line-height: 1.65;
       resize: vertical;
     }
+    .faq-meta-editor {
+      position: relative;
+      z-index: 1;
+      margin-top: 12px;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .faq-meta-editor input,
+    .faq-meta-editor select {
+      min-height: 34px;
+      border: 1px solid rgba(22, 25, 29, 0.14);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.86rem;
+      padding: 0 10px;
+    }
+    .faq-meta-editor input {
+      min-width: min(340px, 100%);
+      flex: 1 1 240px;
+    }
+    .faq-meta-editor select {
+      width: 130px;
+      flex: 0 0 auto;
+    }
+    .add-faq-btn {
+      display: none;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(22, 25, 29, 0.12);
+      background: linear-gradient(180deg, #3d546f, #2c3d51);
+      color: #f7fbff;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
     .faq-card.is-editing p { display: none; }
     .faq-card.is-editing .faq-answer-editor,
     .faq-card.is-selected .faq-answer-editor { display: block; }
@@ -529,8 +572,10 @@
       box-shadow: 0 0 0 2px rgba(181, 106, 52, 0.2), var(--card-shadow);
     }
     body.review-mode .faq-card.is-selected .faq-status-row,
+    body.review-mode .faq-card.is-selected .faq-meta-editor,
     body.review-mode .faq-card.is-selected .faq-visibility-controls,
     body.review-mode .faq-card.is-selected .faq-editor-actions { display: flex; }
+    body.review-mode .add-faq-btn { display: inline-flex; align-items: center; }
     .contact-band {
       margin-top: 18px;
       padding: 20px 18px;
@@ -970,6 +1015,9 @@
           not ready for the live page.
         </p>
         <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+          <button id="add-faq-btn" class="add-faq-btn" type="button" title="Add a manual FAQ question">
+            Add Question
+          </button>
           <button id="export-btn" type="button" style="display:none;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#5f6d40,#404d28);border:0;color:#f4f8ed;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;">
             Download Public Page (approved only)
           </button>
@@ -1088,9 +1136,17 @@
       var REVIEW_USER = "Aaron";
       // SHA-256 of the admin password – plaintext never stored in source.
       var REVIEW_PASSWORD_HASH = "afebf43cf94f084bf1dea949a5a1441eb51956602f2fb4caa82bae7fa45e53bb";
+      var SESSION_TOKEN_KEY = "brockler-review-token";
       var _sessionToken = ""; // holds typed password in memory after login
+      try {
+        _sessionToken = sessionStorage.getItem(SESSION_TOKEN_KEY) || "";
+      } catch (error) {
+        _sessionToken = "";
+      }
       var STORAGE_KEY = "brockler-review-mode";
       var FAQ_STORAGE_KEY = "brockler-faq-answer-edits";
+      var FAQ_META_KEY = "brockler-faq-meta";
+      var FAQ_MANUAL_KEY = "brockler-faq-manual";
       var FAQ_VISIBILITY_KEY = "brockler-faq-visibility";
       var FAQ_VISIBILITY_VERSION_KEY = "brockler-faq-visibility-version";
       var FAQ_VISIBILITY_VERSION = "traffic-ovi-approved-v2-all-visible";
@@ -1112,10 +1168,15 @@
       var cancelButton = document.querySelector("[data-login-cancel]");
       var errorNode = document.querySelector("[data-login-error]");
       var logoutButton = document.querySelector("[data-review-logout]");
+      var addFaqButton = document.getElementById("add-faq-btn");
+      var faqGrid = document.querySelector(".faq-grid");
       var usernameInput = form ? form.elements.username : null;
       var passwordInput = form ? form.elements.password : null;
+      var savedManualQuestions = loadSavedManualQuestions();
+      renderManualQuestions();
       var faqCards = Array.prototype.slice.call(document.querySelectorAll(".faq-card"));
       var savedAnswers = loadSavedAnswers();
+      var savedMeta = loadSavedMeta();
       var savedVisibility = loadSavedVisibility();
 
       function loadSavedAnswers() {
@@ -1127,6 +1188,54 @@
         localStorage.setItem(FAQ_STORAGE_KEY, JSON.stringify(savedAnswers));
       }
 
+      function loadSavedMeta() {
+        try { return JSON.parse(localStorage.getItem(FAQ_META_KEY) || "{}"); }
+        catch (error) { return {}; }
+      }
+
+      function persistSavedMeta() {
+        localStorage.setItem(FAQ_META_KEY, JSON.stringify(savedMeta));
+      }
+
+      function loadSavedManualQuestions() {
+        try {
+          var value = JSON.parse(localStorage.getItem(FAQ_MANUAL_KEY) || "[]");
+          return Array.isArray(value) ? value : [];
+        } catch (error) {
+          return [];
+        }
+      }
+
+      function persistSavedManualQuestions() {
+        localStorage.setItem(FAQ_MANUAL_KEY, JSON.stringify(savedManualQuestions));
+      }
+
+      function renderManualQuestions() {
+        if (!faqGrid || !savedManualQuestions.length) { return; }
+        savedManualQuestions.forEach(function (item) {
+          if (!item || !item.id || !item.question || !item.answer) { return; }
+          if (faqGrid.querySelector('[data-faq-id="' + item.id + '"]')) { return; }
+          var card = document.createElement("article");
+          var title = document.createElement("h3");
+          var answer = document.createElement("p");
+          card.className = "faq-card";
+          card.setAttribute("data-faq-id", item.id);
+          card.setAttribute("data-manual", "true");
+          title.textContent = item.question;
+          answer.textContent = item.answer;
+          card.appendChild(title);
+          card.appendChild(answer);
+          faqGrid.insertBefore(card, faqGrid.firstChild);
+          if (!savedMeta[item.id]) {
+            savedMeta[item.id] = {
+              tags: item.tags || "",
+              rating: String(item.rating || "3")
+            };
+          }
+        });
+        persistSavedMeta();
+      }
+
       function loadSavedVisibility() {
         try { return JSON.parse(localStorage.getItem(FAQ_VISIBILITY_KEY) || "{}"); }
         catch (error) { return {}; }
@@ -1134,6 +1243,103 @@
 
       function persistSavedVisibility() {
         localStorage.setItem(FAQ_VISIBILITY_KEY, JSON.stringify(savedVisibility));
+      }
+
+      function fallbackSha256Hex(value) {
+        function rightRotate(number, amount) {
+          return (number >>> amount) | (number << (32 - amount));
+        }
+
+        var mathPow = Math.pow;
+        var maxWord = mathPow(2, 32);
+        var lengthProperty = "length";
+        var i;
+        var j;
+        var result = "";
+        var words = [];
+        var asciiBitLength = value[lengthProperty] * 8;
+        var hash = fallbackSha256Hex.h = fallbackSha256Hex.h || [];
+        var k = fallbackSha256Hex.k = fallbackSha256Hex.k || [];
+        var primeCounter = k[lengthProperty];
+        var isComposite = {};
+
+        for (var candidate = 2; primeCounter < 64; candidate += 1) {
+          if (!isComposite[candidate]) {
+            for (i = 0; i < 313; i += candidate) {
+              isComposite[i] = candidate;
+            }
+            hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+            k[primeCounter] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+            primeCounter += 1;
+          }
+        }
+
+        value += "\x80";
+        while ((value[lengthProperty] % 64) - 56) {
+          value += "\x00";
+        }
+
+        for (i = 0; i < value[lengthProperty]; i += 1) {
+          j = value.charCodeAt(i);
+          if (j >> 8) {
+            return "";
+          }
+          words[i >> 2] |= j << (((3 - i) % 4) * 8);
+        }
+        words[words[lengthProperty]] = (asciiBitLength / maxWord) | 0;
+        words[words[lengthProperty]] = asciiBitLength;
+
+        for (j = 0; j < words[lengthProperty];) {
+          var w = words.slice(j, j += 16);
+          var tempHash = hash.slice(0);
+
+          for (i = 0; i < 64; i += 1) {
+            var w15 = w[i - 15];
+            var w2 = w[i - 2];
+            var a = tempHash[0];
+            var e = tempHash[4];
+            var temp1 = tempHash[7]
+              + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+              + ((e & tempHash[5]) ^ ((~e) & tempHash[6]))
+              + k[i]
+              + (w[i] = i < 16 ? w[i] : (
+                w[i - 16]
+                + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
+                + w[i - 7]
+                + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+              ) | 0);
+            var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+              + ((a & tempHash[1]) ^ (a & tempHash[2]) ^ (tempHash[1] & tempHash[2]));
+
+            tempHash = [(temp1 + temp2) | 0].concat(tempHash);
+            tempHash[4] = (tempHash[4] + temp1) | 0;
+            tempHash.pop();
+          }
+
+          for (i = 0; i < 8; i += 1) {
+            hash[i] = (hash[i] + tempHash[i]) | 0;
+          }
+        }
+
+        for (i = 0; i < 8; i += 1) {
+          for (j = 3; j + 1; j -= 1) {
+            var b = (hash[i] >> (j * 8)) & 255;
+            result += ((b < 16) ? 0 : "") + b.toString(16);
+          }
+        }
+        return result;
+      }
+
+      function sha256Hex(value) {
+        var subtle = window.crypto && (window.crypto.subtle || window.crypto.webkitSubtle);
+        if (subtle && window.TextEncoder) {
+          return subtle.digest("SHA-256", new TextEncoder().encode(value)).then(function (buf) {
+            return Array.from(new Uint8Array(buf)).map(function (b) {
+              return b.toString(16).padStart(2, "0");
+            }).join("");
+          });
+        }
+        return Promise.resolve(fallbackSha256Hex(value));
       }
 
       function isDefaultVisibleQuestion(card) {
@@ -1209,6 +1415,9 @@
           var resetButton = document.createElement("button");
           var statusRow = document.createElement("div");
           var statusBadge = document.createElement("span");
+          var metaRow = document.createElement("div");
+          var tagsInput = document.createElement("input");
+          var ratingSelect = document.createElement("select");
           var visibilityControls = document.createElement("div");
           var approvedButton = document.createElement("button");
           var pendingButton = document.createElement("button");
@@ -1223,6 +1432,22 @@
           editor.className = "faq-answer-editor";
           editor.setAttribute("aria-label", "Edit FAQ answer");
           editor.value = answer.textContent.trim();
+          metaRow.className = "faq-meta-editor";
+          tagsInput.type = "text";
+          tagsInput.placeholder = "tags: ovi, arraignment, strategy";
+          tagsInput.setAttribute("aria-label", "Tags for question");
+          ["1", "2", "3", "4", "5"].forEach(function (value) {
+            var option = document.createElement("option");
+            option.value = value;
+            option.textContent = "Rating " + value + "/5";
+            ratingSelect.appendChild(option);
+          });
+          ratingSelect.setAttribute("aria-label", "Rating for question");
+
+          var metaState = savedMeta[faqId] || { tags: "", rating: "3" };
+          tagsInput.value = metaState.tags || "";
+          ratingSelect.value = String(metaState.rating || "3");
+
           statusRow.className = "faq-status-row";
           statusBadge.className = "faq-status-badge";
           statusBadge.setAttribute("data-faq-status", "");
@@ -1310,6 +1535,19 @@
             persistSavedAnswers();
             card.classList.remove("is-editing");
           });
+          tagsInput.addEventListener("change", function () {
+            savedMeta[faqId] = savedMeta[faqId] || { tags: "", rating: "3" };
+            savedMeta[faqId].tags = tagsInput.value.trim();
+            persistSavedMeta();
+          });
+          ratingSelect.addEventListener("change", function () {
+            savedMeta[faqId] = savedMeta[faqId] || { tags: "", rating: "3" };
+            savedMeta[faqId].rating = ratingSelect.value;
+            persistSavedMeta();
+          });
+
+          metaRow.appendChild(tagsInput);
+          metaRow.appendChild(ratingSelect);
           visibilityControls.appendChild(approvedButton);
           visibilityControls.appendChild(pendingButton);
           visibilityControls.appendChild(showButton);
@@ -1319,6 +1557,7 @@
           actions.appendChild(cancelEditButton);
           actions.appendChild(resetButton);
           card.insertBefore(statusRow, card.firstChild);
+          card.appendChild(metaRow);
           card.appendChild(editor);
           card.appendChild(visibilityControls);
           card.appendChild(actions);
@@ -1357,6 +1596,12 @@
       function disableReviewMode() {
         body.classList.remove("review-mode");
         localStorage.removeItem(STORAGE_KEY);
+        _sessionToken = "";
+        try {
+          sessionStorage.removeItem(SESSION_TOKEN_KEY);
+        } catch (error) {
+          // Ignore browser storage restrictions.
+        }
         faqCards.forEach(function (card) {
           card.classList.remove("is-editing");
           card.classList.remove("is-selected");
@@ -1367,8 +1612,10 @@
       migrateVisibilityState();
       faqCards.forEach(function (card) { applyCardVisibility(card); });
 
-      if (localStorage.getItem(STORAGE_KEY) === "enabled") {
+      if (localStorage.getItem(STORAGE_KEY) === "enabled" && _sessionToken) {
         enableReviewMode();
+      } else {
+        openModal();
       }
       if (manageLink) {
         manageLink.addEventListener("click", function (event) {
@@ -1393,20 +1640,58 @@
         form.addEventListener("submit", function (event) {
           event.preventDefault();
           var typed = passwordInput.value;
-          crypto.subtle.digest("SHA-256", new TextEncoder().encode(typed)).then(function (buf) {
-            var hash = Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+          sha256Hex(typed).then(function (hash) {
             if (usernameInput.value === REVIEW_USER && hash === REVIEW_PASSWORD_HASH) {
               _sessionToken = typed;
+              try {
+                sessionStorage.setItem(SESSION_TOKEN_KEY, typed);
+              } catch (error) {
+                // Ignore browser storage restrictions.
+              }
               enableReviewMode();
               closeModal();
               return;
             }
             errorNode.textContent = "Incorrect login or password.";
+          }).catch(function () {
+            errorNode.textContent = "Unable to verify login in this browser.";
           });
         });
       }
       if (logoutButton) {
         logoutButton.addEventListener("click", function () { disableReviewMode(); });
+      }
+
+      if (addFaqButton) {
+        addFaqButton.addEventListener("click", function () {
+          if (!body.classList.contains("review-mode")) {
+            openModal();
+            return;
+          }
+          var question = window.prompt("Enter a new FAQ question:");
+          if (!question || !question.trim()) { return; }
+          var answer = window.prompt("Enter the answer for this question:");
+          if (!answer || !answer.trim()) { return; }
+          var tags = window.prompt("Optional tags (comma-separated):", "") || "";
+          var rating = window.prompt("Optional rating 1-5:", "3") || "3";
+          var normalizedRating = String(Math.max(1, Math.min(5, parseInt(rating, 10) || 3)));
+          var id = "manual-" + Date.now() + "-" + Math.floor(Math.random() * 100000);
+          savedManualQuestions.unshift({
+            id: id,
+            question: question.trim(),
+            answer: answer.trim(),
+            tags: tags.trim(),
+            rating: normalizedRating
+          });
+          savedMeta[id] = {
+            tags: tags.trim(),
+            rating: normalizedRating
+          };
+          persistSavedManualQuestions();
+          persistSavedMeta();
+          localStorage.removeItem(FAQ_VISIBILITY_VERSION_KEY);
+          window.location.reload();
+        });
       }
 
       /* ── Export: generate and download a clean public index.html ── */
@@ -1494,6 +1779,14 @@
       /* ── Publish to Live Site ─────────────────────────────────────────── */
       if (publishBtn) {
         publishBtn.addEventListener("click", function () {
+          if (!_sessionToken) {
+            if (publishStatus) {
+              publishStatus.style.color = "#c0392b";
+              publishStatus.textContent = "Session expired. Please sign in again.";
+            }
+            openModal();
+            return;
+          }
           var items = getApprovedFaqs();
           if (items.length === 0) {
             alert("No approved questions found. Approve at least one FAQ before publishing.");
@@ -1522,6 +1815,14 @@
                 publishStatus.textContent = "Published! Backup: " + (result.data.backup || "saved");
               }
             } else {
+              if (result.data && result.data.error === "unauthorized") {
+                _sessionToken = "";
+                try {
+                  sessionStorage.removeItem(SESSION_TOKEN_KEY);
+                } catch (error) {
+                  // Ignore browser storage restrictions.
+                }
+              }
               if (publishStatus) {
                 publishStatus.style.color = "#c0392b";
                 publishStatus.textContent = "Error: " + (result.data.error || "unknown error");
