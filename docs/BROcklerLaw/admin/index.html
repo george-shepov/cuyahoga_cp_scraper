@@ -732,7 +732,7 @@
   <main class="shell">
     <div class="topline">
       <span><strong>Admin mode</strong> | Review, approve, and refine public FAQ content</span>
-      <a href="./index.html">View live page</a>
+      <a href="../index.html">View live page</a>
     </div>
 
     <section class="hero" id="top">
@@ -747,7 +747,7 @@
           <a href="#faq">FAQ</a>
           <a href="#contact">Contact</a>
         </nav>
-        <a class="phone-link" href="./index.html">Open live page</a>
+        <a class="phone-link" href="../index.html">Open live page</a>
       </header>
 
       <span class="eyebrow">Internal Review | SEO Approval | Cleveland, Ohio</span>
@@ -763,7 +763,7 @@
           <div class="hero-actions">
             <div class="cta-row">
               <a class="cta cta-primary" href="#faq">Manage FAQ Bank</a>
-              <a class="cta cta-secondary" href="./index.html">Preview Public Page</a>
+              <a class="cta cta-secondary" href="../index.html">Preview Public Page</a>
             </div>
           </div>
           <div class="trust-row" aria-label="Admin highlights">
@@ -1340,6 +1340,8 @@
 
       if (localStorage.getItem(STORAGE_KEY) === "enabled") {
         enableReviewMode();
+      } else {
+        openModal();
       }
       if (manageLink) {
         manageLink.addEventListener("click", function (event) {
@@ -1377,7 +1379,7 @@
         });
       }
       if (logoutButton) {
-        logoutButton.addEventListener("click", function () { disableReviewMode(); });
+        logoutButton.addEventListener("click", function () { disableReviewMode(); openModal(); });
       }
 
       /* ── Export: generate and download a clean public index.html ── */

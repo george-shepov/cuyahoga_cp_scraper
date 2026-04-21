@@ -1,0 +1,19 @@
+[Unit]
+Description=Brockler Law save API (index.html publish endpoint)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+# Create /etc/brocklerlaw-save/env on the server with: BROCKLER_API_TOKEN=<token>
+# This file is NOT committed to git.
+EnvironmentFile=/etc/brocklerlaw-save/env
+ExecStart=/usr/bin/python3 /opt/brocklerlaw-save/save_api.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+# Brockler Law Deploy – Credentials & Secrets
+# This directory contains deployment scripts.
+# IMPORTANT: Credentials are NEVER committed. Set via environment variables.
+
+# Credentials (never commit)
+.env
+.env.local
+*.key
+*.pem
+~/.ssh/*
+credentials.json
+
+# Deployment artifacts
+*.log
