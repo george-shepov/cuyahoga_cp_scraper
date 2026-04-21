@@ -1,0 +1,1099 @@
+{
+    "total": 45,
+    "freq": {
+        "Probation/Community Control Violation": 2,
+        "Assault/Violence": 18,
+        "Obstruction/Resisting": 7,
+        "Weapons": 5,
+        "Drug": 4,
+        "Traffic/Vehicle": 2,
+        "Theft/Property": 10
+    },
+    "rows": [
+        {
+            "case": "2023-684826",
+            "year": 2023,
+            "case_id": "CR-23-684826-A",
+            "path": "out/2023/2023-684826_20260421_043028.json",
+            "charges": [
+                [
+                    "FELONIOUS ASSAULT",
+                    "2903.11.A(1)",
+                    "INDICT"
+                ],
+                [
+                    "NEGLIGENT ASSAULT",
+                    "2903.14.A",
+                    "INDICT"
+                ],
+                [
+                    "OBSTRUCTING OFFICIAL BUSINESS",
+                    "2921.31.A",
+                    "INDICT"
+                ],
+                [
+                    "USING WEAPONS WHILE INTOXICATED",
+                    "2923.15.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence",
+                "Probation/Community Control Violation",
+                "Weapons",
+                "Obstruction/Resisting"
+            ],
+            "severity": [
+                "felony-indicated"
+            ]
+        },
+        {
+            "case": "2023-678510",
+            "year": 2023,
+            "case_id": "CR-23-678510-A",
+            "path": "out/2023/2023-678510_20251116_182037.json",
+            "charges": [
+                [
+                    "DRUG POSSESSION",
+                    "2925.11.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Drug"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2023-678720",
+            "year": 2023,
+            "case_id": "CR-23-678720-A",
+            "path": "out/2023/2023-678720_20251116_200844.json",
+            "charges": [
+                [
+                    "CARRYING CONCEALED WEAPONS",
+                    "2923.12.(A)(2)",
+                    "INDICT"
+                ],
+                [
+                    "ATTEMPTED, IMPROPERLY HANDLING FIREARMS IN A MOTOR VEHICLE",
+                    "2923.16.B",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Traffic/Vehicle",
+                "Weapons"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2023-679600",
+            "year": 2023,
+            "case_id": "CR-23-679600-A",
+            "path": "out/2023/2023-679600_20251110_195828.json",
+            "charges": [],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2023-687210",
+            "year": 2023,
+            "case_id": "CR-23-687210-A",
+            "path": "out/2023/2023-687210_20251111_142547.json",
+            "charges": [],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2023-686358",
+            "year": 2023,
+            "case_id": "CR-23-686358-A",
+            "path": "out/2023/2023-686358_20251118_214312.json",
+            "charges": [
+                [
+                    "ATTEMPTED, ABDUCTION",
+                    "2905.02.A(2)",
+                    "INDICT"
+                ],
+                [
+                    "ABDUCTION",
+                    "2905.02.A(2)",
+                    "INDICT"
+                ],
+                [
+                    "DOMESTIC VIOLENCE",
+                    "2919.25.A",
+                    "INDICT"
+                ],
+                [
+                    "ENDANGERING CHILDREN",
+                    "2919.22.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2023-684333",
+            "year": 2023,
+            "case_id": "CR-23-684333-A",
+            "path": "out/2023/2023-684333_20251118_155111.json",
+            "charges": [
+                [
+                    "BURGLARY",
+                    "2911.12.B",
+                    "INDICT"
+                ],
+                [
+                    "UNLAWFUL RESTRAINT",
+                    "2905.03.A",
+                    "INDICT"
+                ],
+                [
+                    "ASSAULT",
+                    "2903.13.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence",
+                "Theft/Property"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2023-679542",
+            "year": 2023,
+            "case_id": "CR-23-679542-A",
+            "path": "out/2023/2023-679542_20251110_195018.json",
+            "charges": [],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2023-681379",
+            "year": 2023,
+            "case_id": "CR-23-681379-A",
+            "path": "out/2023/2023-681379_20251111_055706.json",
+            "charges": [],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2023-681908",
+            "year": 2023,
+            "case_id": "CR-23-681908-A",
+            "path": "out/2023/2023-681908_20251117_132039.json",
+            "charges": [
+                [
+                    "AGGRAVATED ASSAULT",
+                    "2903.12.A(1)",
+                    "INDICT"
+                ],
+                [
+                    "FELONIOUS ASSAULT",
+                    "2903.11.A(2)",
+                    "INDICT"
+                ],
+                [
+                    "TELECOMMUNICATIONS HARASSMENT",
+                    "2917.21.A(3)",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence"
+            ],
+            "severity": [
+                "felony-indicated"
+            ]
+        },
+        {
+            "case": "2023-687172",
+            "year": 2023,
+            "case_id": "CR-23-687172-A",
+            "path": "out/2023/2023-687172_20251119_000913.json",
+            "charges": [
+                [
+                    "RSP - MV",
+                    "2913.51.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2023-683262",
+            "year": 2023,
+            "case_id": "CR-23-683262-A",
+            "path": "out/2023/2023-683262_20251111_083931.json",
+            "charges": [],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2023-684948",
+            "year": 2023,
+            "case_id": "CR-23-684948-A",
+            "path": "out/obstructing_cases/archived_jsons_aggressive_20260101_084154/out/2023/2023-684948_20251116_080826.json",
+            "charges": [
+                [
+                    "ATTEMPTED, DOMESTIC VIOLENCE",
+                    "2919.25.A",
+                    "INDICT"
+                ],
+                [
+                    "RESISTING ARREST",
+                    "2921.33.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence",
+                "Probation/Community Control Violation",
+                "Obstruction/Resisting"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2025-704033",
+            "year": 2025,
+            "case_id": "CR-25-704033-A",
+            "path": "out/obstructing_cases/archived_jsons_aggressive_20260101_084154/out/2025/2025-704033_20251121_052029.json",
+            "charges": [
+                [
+                    "RECEIVING STOLEN PROPERTY",
+                    "2913.51.A",
+                    "INDICT"
+                ],
+                [
+                    "OBSTRUCTING OFFICIAL BUSINESS",
+                    "2921.31.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Theft/Property",
+                "Obstruction/Resisting"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2025-706278",
+            "year": 2025,
+            "case_id": "CR-25-706278-A",
+            "path": "out/obstructing_cases/out/2025/2025-706278_20251121_134656.json",
+            "charges": [
+                [
+                    "RECEIVING STOLEN PROPERTY",
+                    "2913.51.A",
+                    "INDICT"
+                ],
+                [
+                    "IDENTITY FRAUD",
+                    "2913.49.B(1)",
+                    "INDICT"
+                ],
+                [
+                    "IDENTITY FRAUD",
+                    "2913.49.B(2)",
+                    "INDICT"
+                ],
+                [
+                    "OBSTRUCTING OFFICIAL BUSINESS",
+                    "2921.31.A",
+                    "INDICT"
+                ],
+                [
+                    "RESISTING ARREST",
+                    "2921.33.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Theft/Property",
+                "Obstruction/Resisting"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2025-698459",
+            "year": 2025,
+            "case_id": "CR-25-698459-A",
+            "path": "out/obstructing_cases/out/2025/2025-698459_20251120_071457.json",
+            "charges": [
+                [
+                    "BREAKING AND ENTERING",
+                    "2911.13.A",
+                    "INDICT"
+                ],
+                [
+                    "POSSESSING CRIMINAL TOOLS",
+                    "2923.24.A",
+                    "INDICT"
+                ],
+                [
+                    "THEFT; AGGRAVATED THEFT",
+                    "2913.02.A(1)",
+                    "INDICT"
+                ],
+                [
+                    "FALSIFICATION",
+                    "2921.13.A(03)",
+                    "INDICT"
+                ],
+                [
+                    "OBSTRUCTING OFFICIAL BUSINESS",
+                    "2921.31.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Theft/Property",
+                "Obstruction/Resisting"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2025-698617",
+            "year": 2025,
+            "case_id": "CR-25-698617-A",
+            "path": "out/obstructing_cases/out/2025/2025-698617_20251120_074204.json",
+            "charges": [
+                [
+                    "OBSTRUCTING OFFICIAL BUSINESS (PO)",
+                    "2921.31.A",
+                    "INDICT"
+                ],
+                [
+                    "ASSAULT (PO)",
+                    "2903.13.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence",
+                "Obstruction/Resisting"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2024-697280",
+            "year": 2024,
+            "case_id": "CR-24-697280-B",
+            "path": "out/2024/2024-697280_20251120_032542.json",
+            "charges": [
+                [
+                    "AGGRAVATED TRESPASS",
+                    "2911.211.(A)(1)",
+                    "INDICT"
+                ]
+            ],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2024-689444",
+            "year": 2024,
+            "case_id": "CR-24-689444-A",
+            "path": "out/2024/2024-689444_20251119_073034.json",
+            "charges": [
+                [
+                    "DRUG POSSESSION",
+                    "2925.11.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Drug"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2024-697772",
+            "year": 2024,
+            "case_id": "CR-24-697772-A",
+            "path": "out/2024/2024-697772_20251120_051110.json",
+            "charges": [
+                [
+                    "BURGLARY",
+                    "2911.12.A(3)",
+                    "INDICT"
+                ],
+                [
+                    "BURGLARY",
+                    "2911.12.B",
+                    "INDICT"
+                ],
+                [
+                    "MENACING BY STALKING",
+                    "2903.211.A(1)",
+                    "INDICT"
+                ],
+                [
+                    "AGGRAVATED MENACING",
+                    "2903.21.A",
+                    "INDICT"
+                ],
+                [
+                    "VIOLATING PROTECTION ORDER, CONSENT AGREEMENT, ANTI-STALKING",
+                    "2919.27.A(2)",
+                    "INDICT"
+                ],
+                [
+                    "ATTEMPTED, BURGLARY",
+                    "2911.12.A(3)",
+                    "INDICT"
+                ],
+                [
+                    "CRIMINAL DAMAGING",
+                    "2909.06.A(1)",
+                    "INDICT"
+                ],
+                [
+                    "FAILURE TO COMPLY WITH ORDER,SIGNAL OF POLICE OFFICER",
+                    "2921.331.B",
+                    "INDICT"
+                ],
+                [
+                    "ATTEMPTED, VANDALISM",
+                    "2909.05.B(2)",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence",
+                "Theft/Property"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2024-697829",
+            "year": 2024,
+            "case_id": "CR-24-697829-A",
+            "path": "out/2024/2024-697829_20251120_052323.json",
+            "charges": [
+                [
+                    "ATTEMPTED, AGGRAVATED VEHICULAR ASSAULT; VEHICULAR ASSAULT",
+                    "2903.08.A(2)(B)",
+                    "INDICT"
+                ],
+                [
+                    "DOMESTIC VIOLENCE",
+                    "2919.25.A",
+                    "INDICT"
+                ],
+                [
+                    "ENDANGERING CHILDREN",
+                    "2919.22.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2024-695579",
+            "year": 2024,
+            "case_id": "CR-24-695579-A",
+            "path": "out/2024/2024-695579_20251119_230124.json",
+            "charges": [
+                [
+                    "AGGRAVATED MENACING",
+                    "2903.21.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2026-709169",
+            "year": 2026,
+            "case_id": "CR-26-709169-A",
+            "path": "out/2026/2026-709169_20260414_055843.json",
+            "charges": [
+                [
+                    "DOMESTIC VIOLENCE (PC)",
+                    "2919.25.A",
+                    "INDICT"
+                ],
+                [
+                    "DOMESTIC VIOLENCE (PC)",
+                    "2919.25.C",
+                    "INDICT"
+                ],
+                [
+                    "ENDANGERING CHILDREN",
+                    "2919.22.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2026-709538",
+            "year": 2026,
+            "case_id": "CR-26-709538-A",
+            "path": "out/2026/2026-709538_20260417_063625.json",
+            "charges": [
+                [
+                    "RECEIVING STOLEN PROPERTY",
+                    "2913.51.A",
+                    "INDICT"
+                ],
+                [
+                    "OBSTRUCTING OFFICIAL BUSINESS",
+                    "2921.31.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Theft/Property",
+                "Obstruction/Resisting"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2026-709807",
+            "year": 2026,
+            "case_id": "CR-26-709807-A",
+            "path": "out/2026/2026-709807_20260414_105024.json",
+            "charges": [
+                [
+                    "STRANGULATION",
+                    "2903.18.(B)(2)",
+                    "INDICT"
+                ],
+                [
+                    "STRANGULATION",
+                    "2903.18.(B)(3)",
+                    "INDICT"
+                ],
+                [
+                    "DOMESTIC VIOLENCE",
+                    "2919.25.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2026-709509",
+            "year": 2026,
+            "case_id": "CR-26-709509-A",
+            "path": "out/2026/2026-709509_20260414_223529.json",
+            "charges": [
+                [
+                    "FELONIOUS ASSAULT",
+                    "2903.11.A(2)",
+                    "INDICT"
+                ],
+                [
+                    "IMPROPERLY HANDLING FIREARMS IN A MOTOR VEHICLE",
+                    "2923.16.B",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence",
+                "Traffic/Vehicle",
+                "Weapons"
+            ],
+            "severity": [
+                "felony-indicated"
+            ]
+        },
+        {
+            "case": "2026-709351",
+            "year": 2026,
+            "case_id": "CR-26-709351-A",
+            "path": "out/2026/2026-709351_20260414_145833.json",
+            "charges": [
+                [
+                    "ENDANGERING CHILDREN",
+                    "2919.22.B(3)",
+                    "INDICT"
+                ],
+                [
+                    "ENDANGERING CHILDREN",
+                    "2919.22.A",
+                    "INDICT"
+                ],
+                [
+                    "DOMESTIC VIOLENCE",
+                    "2919.25.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2026-711000",
+            "year": 2026,
+            "case_id": "CR-26-711000-A",
+            "path": "out/2026/2026-711000_20260415_010624.json",
+            "charges": [
+                [
+                    "ROBBERY",
+                    "2911.02.A(2)",
+                    "INDICT"
+                ],
+                [
+                    "DOMESTIC VIOLENCE",
+                    "2919.25.A",
+                    "INDICT"
+                ],
+                [
+                    "ENDANGERING CHILDREN",
+                    "2919.22.A",
+                    "INDICT"
+                ],
+                [
+                    "MISDEMEANOR THEFT",
+                    "2913.02.A(1)",
+                    "INDICT"
+                ],
+                [
+                    "CRIMINAL DAMAGING",
+                    "2909.06.A(1)",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence",
+                "Theft/Property"
+            ],
+            "severity": [
+                "misdemeanor-indicated"
+            ]
+        },
+        {
+            "case": "2026-709494",
+            "year": 2026,
+            "case_id": "CR-26-709494-A",
+            "path": "out/2026/2026-709494_20260414_215537.json",
+            "charges": [
+                [
+                    "GRAND THEFT",
+                    "2913.02.A(1)",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Theft/Property"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2026-709987",
+            "year": 2026,
+            "case_id": "CR-26-709987-A",
+            "path": "out/2026/2026-709987_20260414_125956.json",
+            "charges": [
+                [
+                    "CRUELTY AGAINST COMPANION ANIMAL",
+                    "0959.131.C",
+                    "INDICT"
+                ],
+                [
+                    "CRUELTY AGAINST COMPANION ANIMAL",
+                    "0959.131.E",
+                    "INDICT"
+                ],
+                [
+                    "CRUELTY AGAINST COMPANION ANIMAL",
+                    "0959.131.(D)(3)",
+                    "INDICT"
+                ],
+                [
+                    "CRUELTY AGAINST COMPANION ANIMAL",
+                    "0959.131.(D)(2)",
+                    "INDICT"
+                ]
+            ],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2025-706402",
+            "year": 2025,
+            "case_id": "CR-25-706402-A",
+            "path": "out/2025/2025-706402_20260421_043154.json",
+            "charges": [
+                [
+                    "DRUG POSSESSION",
+                    "2925.11.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Drug"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2025-704609",
+            "year": 2025,
+            "case_id": "CR-25-704609-A",
+            "path": "out/2025/2025-704609_20251121_073742.json",
+            "charges": [
+                [
+                    "FELONIOUS ASSAULT",
+                    "2903.11.A(2)",
+                    "INDICT"
+                ],
+                [
+                    "STRANGULATION",
+                    "2903.18.(B)(3)",
+                    "INDICT"
+                ],
+                [
+                    "AGGRAVATED MENACING",
+                    "2903.21.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence"
+            ],
+            "severity": [
+                "felony-indicated"
+            ]
+        },
+        {
+            "case": "2025-706091",
+            "year": 2025,
+            "case_id": "CR-25-706091-A",
+            "path": "out/2025/2025-706091_20251121_130848.json",
+            "charges": [
+                [
+                    "GROSS SEXUAL IMPOSITION",
+                    "2907.05.A(4)",
+                    "INDICT"
+                ],
+                [
+                    "ABDUCTION",
+                    "2905.02.B",
+                    "INDICT"
+                ],
+                [
+                    "IMPORTUNING",
+                    "2907.07.B(1)",
+                    "INDICT"
+                ],
+                [
+                    "GROSS SEXUAL IMPOSITION",
+                    "2907.05.A(1)",
+                    "INDICT"
+                ],
+                [
+                    "DISSEMINATING MATTER HARMFUL TO JUVENILES",
+                    "2907.31.A(3)",
+                    "INDICT"
+                ],
+                [
+                    "GROSS SEXUAL IMPOSITION",
+                    "2907.05.A(5)",
+                    "INDICT"
+                ]
+            ],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2025-704328",
+            "year": 2025,
+            "case_id": "CR-25-704328-A",
+            "path": "out/2025/2025-704328_20251121_062857.json",
+            "charges": [
+                [
+                    "VIOLATING PROTECTION ORDER, CONSENT AGREEMENT, ANTI-STALKING",
+                    "2919.27.A(1)",
+                    "INDICT"
+                ]
+            ],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2025-699236",
+            "year": 2025,
+            "case_id": "CR-25-699236-A",
+            "path": "out/2025/2025-699236_20251120_100634.json",
+            "charges": [
+                [
+                    "RECEIVING STOLEN PROPERTY",
+                    "2913.51.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Theft/Property"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2025-703190",
+            "year": 2025,
+            "case_id": "CR-25-703190-A",
+            "path": "out/2025/2025-703190_20251121_024011.json",
+            "charges": [
+                [
+                    "DISRUPTING PUBLIC SERVICE",
+                    "2909.04.A(2)",
+                    "INDICT"
+                ],
+                [
+                    "VANDALISM",
+                    "2909.05.B(2)",
+                    "INDICT"
+                ],
+                [
+                    "HARRASSMENT BY INMATE",
+                    "2921.38.B",
+                    "INDICT"
+                ],
+                [
+                    "ASSAULT",
+                    "2903.13.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence",
+                "Theft/Property"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2025-704487",
+            "year": 2025,
+            "case_id": "CR-25-704487-A",
+            "path": "out/2025/2025-704487_20251121_070359.json",
+            "charges": [
+                [
+                    "ATTEMPTED, UNLAWFUL SEXUAL CONDUCT WITH MINOR",
+                    "2907.04.A",
+                    "INDICT"
+                ],
+                [
+                    "IMPORTUNING",
+                    "2907.07.(E)(2)",
+                    "INDICT"
+                ],
+                [
+                    "POSSESSING CRIMINAL TOOLS",
+                    "2923.24.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2025-708358",
+            "year": 2025,
+            "case_id": "CR-25-708358-A",
+            "path": "out/2025/2025-708358_20260416_052355.json",
+            "charges": [
+                [
+                    "DRUG POSSESSION",
+                    "2925.11.A",
+                    "INDICT"
+                ],
+                [
+                    "ENDANGERING CHILDREN",
+                    "2919.22.A",
+                    "INDICT"
+                ],
+                [
+                    "D.U.I. (PC)",
+                    "4511.19.A(1)(A)",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Drug"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2025-708085",
+            "year": 2025,
+            "case_id": "CR-25-708085-A",
+            "path": "out/2025/2025-708085_20260414_220813.json",
+            "charges": [
+                [
+                    "FELONIOUS ASSAULT",
+                    "2903.11.A(2)",
+                    "INDICT"
+                ],
+                [
+                    "HAVING WEAPONS WHILE UNDER DISABILITY",
+                    "2923.13.A(2)",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence",
+                "Weapons"
+            ],
+            "severity": [
+                "felony-indicated"
+            ]
+        },
+        {
+            "case": "2025-703538",
+            "year": 2025,
+            "case_id": "CR-25-703538-A",
+            "path": "out/2025/2025-703538_20251121_034244.json",
+            "charges": [
+                [
+                    "MANNER OF REGISTERING",
+                    "2950.04.E",
+                    "INDICT"
+                ]
+            ],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2025-704678",
+            "year": 2025,
+            "case_id": "CR-25-704678-A",
+            "path": "out/2025/2025-704678_20251121_074731.json",
+            "charges": [
+                [
+                    "FAILURE TO COMPLY WITH ORDER,SIGNAL OF POLICE OFFICER",
+                    "2921.331.B",
+                    "INDICT"
+                ]
+            ],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2025-703362",
+            "year": 2025,
+            "case_id": "CR-25-703362-A",
+            "path": "out/2025/2025-703362_20251121_030937.json",
+            "charges": [
+                [
+                    "ATTEMPTED, ASSAULT (CORRECTIONAL FACILITY EMPLOYEE)",
+                    "2903.13.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Assault/Violence"
+            ],
+            "severity": []
+        },
+        {
+            "case": "2025-699009",
+            "year": 2025,
+            "case_id": "CR-25-699009-A",
+            "path": "out/2025/2025-699009_20251120_091843.json",
+            "charges": [
+                [
+                    "ATTEMPTED, GROSS SEXUAL IMPOSITION",
+                    "2907.05.A(1)",
+                    "INDICT"
+                ],
+                [
+                    "GROSS SEXUAL IMPOSITION",
+                    "2907.05.A(1)",
+                    "INDICT"
+                ],
+                [
+                    "UNLAWFUL RESTRAINT",
+                    "2905.03.A",
+                    "INDICT"
+                ],
+                [
+                    "DISSEMINATING MATTER HARMFUL TO JUVENILES",
+                    "2907.31.A(1)",
+                    "INDICT"
+                ],
+                [
+                    "ATTEMPTED, PANDERING SEXUALLY ORIENTED MATTER INVOLVING A MINOR",
+                    "2907.322.A(1)",
+                    "INDICT"
+                ],
+                [
+                    "ATTEMPTED, DISSEMINATING MATTER HARMFUL TO JUVENILES",
+                    "2907.31.A(1)",
+                    "INDICT"
+                ],
+                [
+                    "POSSESSING CRIMINAL TOOLS",
+                    "2923.24.A",
+                    "INDICT"
+                ]
+            ],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2025-704803",
+            "year": 2025,
+            "case_id": "CR-25-704803-A",
+            "path": "out/2025/2025-704803_20251121_081912.json",
+            "charges": [
+                [
+                    "AGGRAVATED ARSON",
+                    "2909.02.A(1)",
+                    "INDICT"
+                ],
+                [
+                    "ARSON",
+                    "2909.03.A(1)",
+                    "INDICT"
+                ]
+            ],
+            "labels": [],
+            "severity": []
+        },
+        {
+            "case": "2025-708070",
+            "year": 2025,
+            "case_id": "CR-25-708070-A",
+            "path": "out/2025/2025-708070_20260414_202949.json",
+            "charges": [
+                [
+                    "HAVING WEAPONS WHILE UNDER DISABILITY",
+                    "2923.13.A(2)",
+                    "INDICT"
+                ],
+                [
+                    "CARRYING CONCEALED WEAPONS",
+                    "2923.12.A(2)",
+                    "INDICT"
+                ]
+            ],
+            "labels": [
+                "Weapons"
+            ],
+            "severity": []
+        }
+    ]
+}
