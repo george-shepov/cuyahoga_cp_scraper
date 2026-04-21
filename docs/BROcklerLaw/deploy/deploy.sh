@@ -60,10 +60,6 @@ remote_sudo() {
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HTML_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 ROOT_HTML_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)/foxxiie"
-HTTP_ONLY_CONF="/tmp/nginx-foxxiie-http.conf"
-
-# Extract only the HTTP server block so first deploy works before SSL certs exist.
-awk '/^# ── HTTPS/{exit} {print}' "$SCRIPT_DIR/nginx-foxxiie.conf" > "$HTTP_ONLY_CONF"
 
 echo "==> Deploying BrocklerLaw to $VPS_HOST"
 echo "    SSH key: $SSH_KEY"
@@ -112,45 +108,33 @@ $SSH "$VPS_HOST" "systemctl is-active brocklerlaw-save" || true
 
 # ── 4. Install Nginx config ──────────────────────────────────────────────────
 echo "--- Installing Nginx config"
-if $SSH "$VPS_HOST" "test -f /etc/letsencrypt/live/foxxiie.com/fullchain.pem"; then
-    $SCP "$SCRIPT_DIR/nginx-foxxiie.conf" "$VPS_HOST:/tmp/nginx-foxxiie.conf"
-else
-    echo "    SSL cert not found yet, installing HTTP-only config first"
-    $SCP "$HTTP_ONLY_CONF" "$VPS_HOST:/tmp/nginx-foxxiie.conf"
-fi
+$SCP "$SCRIPT_DIR/nginx-foxxiie.conf" "$VPS_HOST:/tmp/nginx-foxxiie.conf"
 remote_sudo "mv /tmp/nginx-foxxiie.conf /etc/nginx/sites-available/foxxiie.com"
 remote_sudo "ln -sf /etc/nginx/sites-available/foxxiie.com /etc/nginx/sites-enabled/foxxiie.com"
-remote_sudo "nginx -t && nginx -s reload"
-
-# ── 5. Create certbot webroot dir ────────────────────────────────────────────
 remote_sudo "mkdir -p /var/www/certbot"
 
-# ── 6. Obtain SSL cert (Let's Encrypt) ──────────────────────────────────────
-echo "--- Obtaining SSL certificate (Let's Encrypt)"
-echo "    This requires port 80 to be reachable from the internet."
-echo "    certbot will modify the Nginx config automatically."
+# If cert files are missing, load HTTP-only first so certbot can validate.
+if ! $SSH "$VPS_HOST" "test -f /etc/letsencrypt/live/foxxiie.com/fullchain.pem"; then
+        echo "--- Bootstrapping HTTP-only config for first-time cert issuance"
+        $SSH "$VPS_HOST" "awk '/^# ── HTTPS/{exit} {print}' /etc/nginx/sites-available/foxxiie.com | sudo tee /etc/nginx/sites-available/foxxiie.com >/dev/null"
+fi
+remote_sudo "nginx -t && nginx -s reload"
 
+# ── 5. Obtain SSL cert (Let's Encrypt) ───────────────────────────────────────
+echo "--- Ensuring SSL certificate (Let's Encrypt)"
 remote_sudo "
-  if ! command -v certbot &>/dev/null; then
-    apt-get update -qq && apt-get install -y certbot python3-certbot-nginx
-  fi
-  # Only request cert if it doesn't already exist
-  if [ ! -f /etc/letsencrypt/live/foxxiie.com/fullchain.pem ]; then
-    certbot --nginx \
-      --non-interactive \
-      --agree-tos \
-      -m admin@foxxiie.com \
-      -d foxxiie.com \
-      -d www.foxxiie.com
-  else
-    echo 'Cert already exists, skipping issuance.'
-    certbot renew --dry-run || true
-  fi
+    if ! command -v certbot >/dev/null 2>&1; then
+        apt-get update -qq && apt-get install -y certbot python3-certbot-nginx
+    fi
+    if [ ! -f /etc/letsencrypt/live/foxxiie.com/fullchain.pem ]; then
+        certbot --nginx --non-interactive --agree-tos -m admin@foxxiie.com -d foxxiie.com -d www.foxxiie.com
+    else
+        certbot renew --nginx || true
+    fi
 "
 
-# ── 7. Final Nginx reload ────────────────────────────────────────────────────
-echo "--- Reloading Nginx"
-# Install full HTTPS+HTTP config now that certificate exists.
+# ── 6. Restore full config + reload ──────────────────────────────────────────
+echo "--- Restoring full Nginx config and reloading"
 $SCP "$SCRIPT_DIR/nginx-foxxiie.conf" "$VPS_HOST:/tmp/nginx-foxxiie.conf"
 remote_sudo "mv /tmp/nginx-foxxiie.conf /etc/nginx/sites-available/foxxiie.com"
 remote_sudo "nginx -t && nginx -s reload"
