@@ -570,6 +570,154 @@
       line-height: 1.65;
     }
 
+    .review-entry {
+      margin-top: 10px;
+      text-align: right;
+    }
+
+    .manage-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(249, 245, 238, 0.42);
+      font-size: 0.74rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: color 180ms ease, opacity 180ms ease;
+    }
+
+    .manage-link:hover,
+    .manage-link:focus-visible {
+      color: rgba(249, 245, 238, 0.75);
+      opacity: 1;
+    }
+
+    .review-pill {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(19, 24, 31, 0.92);
+      color: #fff5e8;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: var(--card-shadow);
+      font-size: 0.8rem;
+    }
+
+    .review-pill button {
+      border: 0;
+      background: transparent;
+      color: #ffddb9;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    body.review-mode .review-pill {
+      display: inline-flex;
+    }
+
+    .modal-shell {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(10, 13, 18, 0.56);
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-shell.is-open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(100%, 420px);
+      padding: 22px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255, 252, 247, 0.97), rgba(247, 239, 228, 0.98));
+      border: 1px solid rgba(22, 25, 29, 0.1);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-card h3 {
+      margin: 0 0 10px;
+      font-size: 1.5rem;
+    }
+
+    .modal-card p {
+      margin: 0;
+      color: var(--ink-soft);
+      line-height: 1.6;
+    }
+
+    .login-form {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .login-form label {
+      display: grid;
+      gap: 6px;
+      color: var(--steel);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .login-form input {
+      min-height: 46px;
+      width: 100%;
+      padding: 0 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(22, 25, 29, 0.14);
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--ink);
+      font: inherit;
+    }
+
+    .login-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .login-actions button {
+      min-height: 44px;
+      padding: 0 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(22, 25, 29, 0.12);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .login-cancel {
+      background: rgba(38, 51, 66, 0.06);
+      color: var(--steel);
+    }
+
+    .login-submit {
+      background: linear-gradient(180deg, #d7874d, #b86532);
+      color: #fffaf4;
+      border-color: transparent;
+    }
+
+    .login-error {
+      min-height: 1.2em;
+      color: #a24625;
+      font-size: 0.84rem;
+    }
+
     .footer {
       margin-top: 14px;
       padding: 0 6px;
@@ -1071,6 +1219,9 @@
         Hablamos Espanol. This website is for general informational purposes only and does not
         create an attorney-client relationship. Prior results do not guarantee a similar outcome.
       </p>
+      <div class="review-entry">
+        <a class="manage-link" href="#" data-manage-link>Manage</a>
+      </div>
     </section>
 
     <footer class="footer">
@@ -1079,5 +1230,127 @@
       traffic-related criminal defense.
     </footer>
   </main>
+
+  <div class="review-pill" aria-live="polite">
+    <span>Review mode enabled</span>
+    <button type="button" data-review-logout>Log out</button>
+  </div>
+
+  <div class="modal-shell" data-login-modal aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="login-title">
+      <h3 id="login-title">Manage FAQ</h3>
+      <p>Enter review credentials to open management mode.</p>
+      <form class="login-form" data-login-form>
+        <label>
+          Login
+          <input type="text" name="username" autocomplete="username" required>
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <div class="login-error" data-login-error></div>
+        <div class="login-actions">
+          <button class="login-cancel" type="button" data-login-cancel>Cancel</button>
+          <button class="login-submit" type="submit">Sign in</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var REVIEW_USER = "Aaron";
+      var REVIEW_PASSWORD = "AaronBROckler$$$";
+      var STORAGE_KEY = "brockler-review-mode";
+      var body = document.body;
+      var manageLink = document.querySelector("[data-manage-link]");
+      var modal = document.querySelector("[data-login-modal]");
+      var form = document.querySelector("[data-login-form]");
+      var cancelButton = document.querySelector("[data-login-cancel]");
+      var errorNode = document.querySelector("[data-login-error]");
+      var logoutButton = document.querySelector("[data-review-logout]");
+      var usernameInput = form ? form.elements.username : null;
+      var passwordInput = form ? form.elements.password : null;
+
+      function openModal() {
+        if (!modal) {
+          return;
+        }
+        modal.classList.add("is-open");
+        modal.setAttribute("aria-hidden", "false");
+        errorNode.textContent = "";
+        form.reset();
+        window.setTimeout(function () {
+          usernameInput.focus();
+        }, 0);
+      }
+
+      function closeModal() {
+        if (!modal) {
+          return;
+        }
+        modal.classList.remove("is-open");
+        modal.setAttribute("aria-hidden", "true");
+      }
+
+      function enableReviewMode() {
+        body.classList.add("review-mode");
+        localStorage.setItem(STORAGE_KEY, "enabled");
+      }
+
+      function disableReviewMode() {
+        body.classList.remove("review-mode");
+        localStorage.removeItem(STORAGE_KEY);
+      }
+
+      if (localStorage.getItem(STORAGE_KEY) === "enabled") {
+        enableReviewMode();
+      }
+
+      if (manageLink) {
+        manageLink.addEventListener("click", function (event) {
+          event.preventDefault();
+          openModal();
+        });
+      }
+
+      if (cancelButton) {
+        cancelButton.addEventListener("click", closeModal);
+      }
+
+      if (modal) {
+        modal.addEventListener("click", function (event) {
+          if (event.target === modal) {
+            closeModal();
+          }
+        });
+      }
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && modal && modal.classList.contains("is-open")) {
+          closeModal();
+        }
+      });
+
+      if (form) {
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+          if (usernameInput.value === REVIEW_USER && passwordInput.value === REVIEW_PASSWORD) {
+            enableReviewMode();
+            closeModal();
+            return;
+          }
+          errorNode.textContent = "Incorrect login or password.";
+        });
+      }
+
+      if (logoutButton) {
+        logoutButton.addEventListener("click", function () {
+          disableReviewMode();
+        });
+      }
+    }());
+  </script>
 </body>
 </html>
