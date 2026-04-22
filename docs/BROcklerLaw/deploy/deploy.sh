@@ -46,6 +46,7 @@ SCP="scp -i $SSH_KEY -o StrictHostKeyChecking=no"
 SITE_DIR="/var/www/foxxiie.com/brocklerlaw"
 SECONDARY_SITE_DIR="/var/www/prosecutordefense.com/brocklerlaw"
 API_DIR="/opt/brocklerlaw-save"
+SECONDARY_DOMAIN_ROOT="/var/www/prosecutordefense.com"
 
 # Helper to run sudo on remote (with optional password)
 remote_sudo() {
@@ -73,6 +74,7 @@ fi
 # ── 1. Upload site files ─────────────────────────────────────────────────────
 echo "--- Uploading Brockler site + admin pages"
 remote_sudo "mkdir -p $SITE_DIR/admin $SITE_DIR/seo"
+remote_sudo "mkdir -p $SECONDARY_SITE_DIR/admin $SECONDARY_SITE_DIR/seo"
 $SCP "$HTML_DIR/index.html" "$VPS_HOST:/tmp/brockler_index.html"
 $SCP "$HTML_DIR/admin.html" "$VPS_HOST:/tmp/brockler_admin.html"
 if [[ -f "$HTML_DIR/admin/index.html" ]]; then
@@ -80,10 +82,14 @@ if [[ -f "$HTML_DIR/admin/index.html" ]]; then
 fi
 remote_sudo "mv /tmp/brockler_index.html $SITE_DIR/index.html && mv /tmp/brockler_admin.html $SITE_DIR/admin.html"
 remote_sudo "if [ -f /tmp/brockler_admin_index.html ]; then mv /tmp/brockler_admin_index.html $SITE_DIR/admin/index.html; fi"
+remote_sudo "cp $SITE_DIR/index.html $SECONDARY_SITE_DIR/index.html && cp $SITE_DIR/admin.html $SECONDARY_SITE_DIR/admin.html"
+remote_sudo "if [ -f $SITE_DIR/admin/index.html ]; then cp $SITE_DIR/admin/index.html $SECONDARY_SITE_DIR/admin/index.html; fi"
 if [[ -d "$HTML_DIR/seo" ]]; then
     echo "--- Uploading SEO pages"
+    $SSH "$VPS_HOST" "mkdir -p /tmp/brockler_seo"
     $SCP -r "$HTML_DIR/seo"/* "$VPS_HOST:/tmp/brockler_seo/"
     remote_sudo "mkdir -p $SITE_DIR/seo && cp -a /tmp/brockler_seo/. $SITE_DIR/seo/ && rm -rf /tmp/brockler_seo"
+    remote_sudo "mkdir -p $SECONDARY_SITE_DIR/seo && cp -a $SITE_DIR/seo/. $SECONDARY_SITE_DIR/seo/"
 fi
 
 echo "--- Uploading foxxiie.com homepage"
@@ -118,12 +124,23 @@ echo "--- Installing Nginx config"
 $SCP "$SCRIPT_DIR/nginx-foxxiie.conf" "$VPS_HOST:/tmp/nginx-foxxiie.conf"
 remote_sudo "mv /tmp/nginx-foxxiie.conf /etc/nginx/sites-available/foxxiie.com"
 remote_sudo "ln -sf /etc/nginx/sites-available/foxxiie.com /etc/nginx/sites-enabled/foxxiie.com"
+$SCP "$SCRIPT_DIR/nginx-prosecutordefense.conf" "$VPS_HOST:/tmp/nginx-prosecutordefense.conf"
+remote_sudo "mv /tmp/nginx-prosecutordefense.conf /etc/nginx/sites-available/prosecutordefense.com"
+remote_sudo "ln -sf /etc/nginx/sites-available/prosecutordefense.com /etc/nginx/sites-enabled/prosecutordefense.com"
 remote_sudo "mkdir -p /var/www/certbot"
 
 # If cert files are missing, load HTTP-only first so certbot can validate.
 if ! $SSH "$VPS_HOST" "test -f /etc/letsencrypt/live/foxxiie.com/fullchain.pem"; then
         echo "--- Bootstrapping HTTP-only config for first-time cert issuance"
-        $SSH "$VPS_HOST" "awk '/^# ── HTTPS/{exit} {print}' /etc/nginx/sites-available/foxxiie.com | sudo tee /etc/nginx/sites-available/foxxiie.com >/dev/null"
+    awk '/^# ── HTTPS/{exit} {print}' "$SCRIPT_DIR/nginx-foxxiie.conf" > /tmp/nginx-foxxiie-http.conf
+    $SCP /tmp/nginx-foxxiie-http.conf "$VPS_HOST:/tmp/nginx-foxxiie-http.conf"
+    remote_sudo "mv /tmp/nginx-foxxiie-http.conf /etc/nginx/sites-available/foxxiie.com"
+fi
+if ! $SSH "$VPS_HOST" "test -f /etc/letsencrypt/live/prosecutordefense.com/fullchain.pem"; then
+    echo "--- Bootstrapping HTTP-only config for prosecutordefense first-time cert issuance"
+    awk 'BEGIN { c=0 } /^server \{/ { c++ } c < 2 { print }' "$SCRIPT_DIR/nginx-prosecutordefense.conf" > /tmp/nginx-prosecutordefense-http.conf
+    $SCP /tmp/nginx-prosecutordefense-http.conf "$VPS_HOST:/tmp/nginx-prosecutordefense-http.conf"
+    remote_sudo "mv /tmp/nginx-prosecutordefense-http.conf /etc/nginx/sites-available/prosecutordefense.com"
 fi
 remote_sudo "nginx -t && nginx -s reload"
 
@@ -138,15 +155,22 @@ remote_sudo "
     else
         certbot renew --nginx || true
     fi
+    if [ ! -f /etc/letsencrypt/live/prosecutordefense.com/fullchain.pem ]; then
+        certbot --nginx --non-interactive --agree-tos -m admin@foxxiie.com -d prosecutordefense.com -d www.prosecutordefense.com || true
+    fi
 "
 
 # ── 6. Restore full config + reload ──────────────────────────────────────────
 echo "--- Restoring full Nginx config and reloading"
 $SCP "$SCRIPT_DIR/nginx-foxxiie.conf" "$VPS_HOST:/tmp/nginx-foxxiie.conf"
 remote_sudo "mv /tmp/nginx-foxxiie.conf /etc/nginx/sites-available/foxxiie.com"
+$SCP "$SCRIPT_DIR/nginx-prosecutordefense.conf" "$VPS_HOST:/tmp/nginx-prosecutordefense.conf"
+remote_sudo "mv /tmp/nginx-prosecutordefense.conf /etc/nginx/sites-available/prosecutordefense.com"
 remote_sudo "nginx -t && nginx -s reload"
 
 echo ""
 echo "==> Done!"
 echo "    https://foxxiie.com/brocklerlaw/"
 echo "    Admin: https://foxxiie.com/brocklerlaw/admin/"
+echo "    https://prosecutordefense.com/brocklerlaw/"
+echo "    Admin: https://prosecutordefense.com/brocklerlaw/admin/"
