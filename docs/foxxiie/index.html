@@ -169,6 +169,33 @@
       background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,250,243,0.9));
       box-shadow: var(--card-shadow);
     }
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 16px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .cta-primary {
+      background: linear-gradient(180deg, #d7874d, #b86532);
+      color: #fffaf4;
+      box-shadow: 0 10px 24px rgba(181,106,52,0.22);
+    }
+    .cta-secondary {
+      background: rgba(255,255,255,0.85);
+      border-color: var(--line);
+      color: var(--ink);
+    }
     .section.hidden { display: none; }
     .kicker {
       display: inline-block; margin-bottom: 8px;
@@ -305,6 +332,35 @@
       <button class="tab-btn active" data-tab="attorneys">Defense Attorneys</button>
       <button class="tab-btn" data-tab="judges">Judges</button>
       <button class="tab-btn" data-tab="prosecutors">Prosecutors</button>
+    </div>
+  </section>
+
+  <!-- ── LAW FIRM TRIAL ─────────────────────────────────────── -->
+  <section class="section" id="law-firms">
+    <div class="kicker">For Law Firms</div>
+    <h2>Start a free trial for case monitoring alerts.</h2>
+    <p class="section-desc">
+      If you are a defense lawyer, test automated case and docket monitoring for your active
+      matters. We can set up your trial and alert rules quickly so your team does not miss
+      filings, hearings, or case status changes.
+    </p>
+    <div class="card-grid">
+      <article class="card">
+        <div class="card-name">Daily alert feed</div>
+        <p class="section-desc">Track updates across assigned cases without manual docket checking.</p>
+      </article>
+      <article class="card">
+        <div class="card-name">Custom watchlists</div>
+        <p class="section-desc">Monitor by case number, judge, and prosecutor with configurable thresholds.</p>
+      </article>
+      <article class="card">
+        <div class="card-name">Rapid onboarding</div>
+        <p class="section-desc">Trial setup is handled for your team with practical defaults and support.</p>
+      </article>
+    </div>
+    <div class="cta-row">
+      <a class="cta cta-primary" href="/brocklerlaw/#contact">Request lawyer free trial setup</a>
+      <a class="cta cta-secondary" href="/brocklerlaw/seo/">Browse SEO topic pages</a>
     </div>
   </section>
 
