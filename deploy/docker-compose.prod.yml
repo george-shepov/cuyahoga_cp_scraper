@@ -1,0 +1,22 @@
+services:
+  postgres:
+    ports: []
+
+  mongodb:
+    ports: []
+
+  redis:
+    ports: []
+
+  ollama:
+    ports: []
+
+  scraper:
+    restart: unless-stopped
+
+  api:
+    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+    restart: unless-stopped
+
+  worker:
+    restart: unless-stopped

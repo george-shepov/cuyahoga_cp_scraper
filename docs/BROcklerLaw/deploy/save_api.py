@@ -21,6 +21,8 @@ SITE_ROOTS = {
     "www.foxxiie.com": "/var/www/foxxiie.com/brocklerlaw",
     "prosecutordefense.com": "/var/www/prosecutordefense.com/brocklerlaw",
     "www.prosecutordefense.com": "/var/www/prosecutordefense.com/brocklerlaw",
+    "procecutordefense.com": "/var/www/prosecutordefense.com/brocklerlaw",
+    "www.procecutordefense.com": "/var/www/prosecutordefense.com/brocklerlaw",
 }
 # Optional environment token. If absent, fall back to checking the same password
 # hash already embedded in the admin UI so the service can still run safely.

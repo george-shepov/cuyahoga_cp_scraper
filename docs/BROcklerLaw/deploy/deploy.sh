@@ -72,7 +72,7 @@ fi
 
 # ── 1. Upload site files ─────────────────────────────────────────────────────
 echo "--- Uploading Brockler site + admin pages"
-remote_sudo "mkdir -p $SITE_DIR/admin"
+remote_sudo "mkdir -p $SITE_DIR/admin $SITE_DIR/seo"
 $SCP "$HTML_DIR/index.html" "$VPS_HOST:/tmp/brockler_index.html"
 $SCP "$HTML_DIR/admin.html" "$VPS_HOST:/tmp/brockler_admin.html"
 if [[ -f "$HTML_DIR/admin/index.html" ]]; then
@@ -80,6 +80,11 @@ if [[ -f "$HTML_DIR/admin/index.html" ]]; then
 fi
 remote_sudo "mv /tmp/brockler_index.html $SITE_DIR/index.html && mv /tmp/brockler_admin.html $SITE_DIR/admin.html"
 remote_sudo "if [ -f /tmp/brockler_admin_index.html ]; then mv /tmp/brockler_admin_index.html $SITE_DIR/admin/index.html; fi"
+if [[ -d "$HTML_DIR/seo" ]]; then
+    echo "--- Uploading SEO pages"
+    $SCP -r "$HTML_DIR/seo"/* "$VPS_HOST:/tmp/brockler_seo/"
+    remote_sudo "mkdir -p $SITE_DIR/seo && cp -a /tmp/brockler_seo/. $SITE_DIR/seo/ && rm -rf /tmp/brockler_seo"
+fi
 
 echo "--- Uploading foxxiie.com homepage"
 if [[ -f "$ROOT_HTML_DIR/index.html" ]]; then

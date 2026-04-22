@@ -390,3 +390,33 @@ class RecommendationExplanationSnapshot(Base):
         ),
     )
 
+
+class BillingAccount(Base):
+    __tablename__ = "billing_accounts"
+
+    id = Column(Integer, primary_key=True)
+    account_id = Column(String(120), unique=True, nullable=False, index=True)
+    plan_code = Column(String(50), nullable=False, default="basic")
+    stripe_customer_id = Column(String(120), nullable=True)
+    active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class UsageLedger(Base):
+    __tablename__ = "usage_ledger"
+
+    id = Column(Integer, primary_key=True)
+    account_id = Column(String(120), nullable=False, index=True)
+    meter_key = Column(String(80), nullable=False, index=True)
+    value = Column(Integer, nullable=False, default=0)
+    source = Column(String(80), nullable=False, default="app")
+    case_number = Column(String(50), nullable=True)
+    event_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    metadata_json = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        Index("idx_usage_ledger_account_meter_event", "account_id", "meter_key", "event_at"),
+    )
+
