@@ -1244,11 +1244,11 @@
       var usernameInput = form ? form.elements.username : null;
       var passwordInput = form ? form.elements.password : null;
       var savedManualQuestions = loadSavedManualQuestions();
-      renderManualQuestions();
-      var faqCards = Array.prototype.slice.call(document.querySelectorAll(".faq-card"));
       var savedAnswers = loadSavedAnswers();
       var savedMeta = loadSavedMeta();
       var savedVisibility = loadSavedVisibility();
+      renderManualQuestions();
+      var faqCards = Array.prototype.slice.call(document.querySelectorAll(".faq-card"));
 
       function loadSavedAnswers() {
         try { return JSON.parse(localStorage.getItem(FAQ_STORAGE_KEY) || "{}"); }
