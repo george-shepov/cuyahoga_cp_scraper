@@ -1281,22 +1281,27 @@
         localStorage.setItem(FAQ_MANUAL_KEY, JSON.stringify(savedManualQuestions));
       }
 
+      function createManualFaqCard(item) {
+        if (!faqGrid || !item || !item.id || !item.question || !item.answer) { return null; }
+        if (faqGrid.querySelector('[data-faq-id="' + item.id + '"]')) { return null; }
+        var card = document.createElement("article");
+        var title = document.createElement("h3");
+        var answer = document.createElement("p");
+        card.className = "faq-card";
+        card.setAttribute("data-faq-id", item.id);
+        card.setAttribute("data-manual", "true");
+        title.textContent = item.question;
+        answer.textContent = item.answer;
+        card.appendChild(title);
+        card.appendChild(answer);
+        faqGrid.insertBefore(card, faqGrid.firstChild);
+        return card;
+      }
+
       function renderManualQuestions() {
         if (!faqGrid || !savedManualQuestions.length) { return; }
         savedManualQuestions.forEach(function (item) {
-          if (!item || !item.id || !item.question || !item.answer) { return; }
-          if (faqGrid.querySelector('[data-faq-id="' + item.id + '"]')) { return; }
-          var card = document.createElement("article");
-          var title = document.createElement("h3");
-          var answer = document.createElement("p");
-          card.className = "faq-card";
-          card.setAttribute("data-faq-id", item.id);
-          card.setAttribute("data-manual", "true");
-          title.textContent = item.question;
-          answer.textContent = item.answer;
-          card.appendChild(title);
-          card.appendChild(answer);
-          faqGrid.insertBefore(card, faqGrid.firstChild);
+          if (!createManualFaqCard(item)) { return; }
           if (!savedMeta[item.id]) {
             savedMeta[item.id] = {
               tags: item.tags || "",
@@ -1475,6 +1480,7 @@
 
       function buildFaqEditors() {
         faqCards.forEach(function (card, index) {
+          if (card.getAttribute("data-editor-ready") === "true") { return; }
           var answer = card.querySelector("p");
           if (!answer) { return; }
           var faqId = card.getAttribute("data-faq-id") || "faq-" + index;
@@ -1645,6 +1651,7 @@
             });
             card.classList.add("is-selected");
           });
+          card.setAttribute("data-editor-ready", "true");
         });
       }
 
@@ -1784,8 +1791,27 @@
           };
           persistSavedManualQuestions();
           persistSavedMeta();
-          localStorage.removeItem(FAQ_VISIBILITY_VERSION_KEY);
-          window.location.reload();
+
+          var newCard = createManualFaqCard({
+            id: id,
+            question: question,
+            answer: answer
+          });
+          faqCards = Array.prototype.slice.call(document.querySelectorAll(".faq-card"));
+          buildFaqEditors();
+          if (newCard) {
+            applyCardVisibility(newCard);
+            faqCards.forEach(function (otherCard) {
+              if (otherCard !== newCard) {
+                otherCard.classList.remove("is-selected");
+                otherCard.classList.remove("is-editing");
+              }
+            });
+            newCard.classList.add("is-selected");
+          }
+
+          addFaqForm.classList.remove("is-open");
+          addFaqForm.reset();
         });
       }
 
