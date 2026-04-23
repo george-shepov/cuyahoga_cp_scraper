@@ -13,6 +13,7 @@ import logging
 import hashlib
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse, parse_qs
 
 # ── Config ──────────────────────────────────────────────────────────────────
 DEFAULT_SITE_ROOT = "/var/www/foxxiie.com/brocklerlaw"
@@ -34,6 +35,7 @@ API_TOKEN_HASH = os.environ.get(
 MAX_BYTES   = 2 * 1024 * 1024   # 2 MB sanity cap
 LISTEN_HOST = "127.0.0.1"
 LISTEN_PORT = 8765
+CASES_FILE  = "/opt/brocklerlaw-save/cases_data.json"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("save_api")
@@ -70,8 +72,29 @@ class SaveHandler(BaseHTTPRequestHandler):
         self.send_response(204)
         self.end_headers()
 
+    def do_GET(self):
+        parsed = urlparse(self.path)
+        if parsed.path.rstrip("/") != "/cases":
+            self.send_json(404, {"error": "not found"})
+            return
+        qs = parse_qs(parsed.query)
+        token = qs.get("token", [""])[0]
+        if not isinstance(token, str) or not token_is_valid(token):
+            self.send_json(403, {"error": "unauthorized"})
+            return
+        try:
+            with open(CASES_FILE, "r", encoding="utf-8") as fh:
+                data = json.load(fh)
+            self.send_json(200, data)
+        except FileNotFoundError:
+            self.send_json(200, {"brockler_cases": [], "vacant_cases": [], "synced_at": None})
+        except (OSError, ValueError) as exc:
+            log.error("cases read error: %s", exc)
+            self.send_json(500, {"error": "read failed"})
+
     def do_POST(self):
-        if self.path.rstrip("/") != "/save":
+        path = self.path.rstrip("/")
+        if path not in ("/save", "/cases-sync"):
             self.send_json(404, {"error": "not found"})
             return
 
@@ -90,6 +113,29 @@ class SaveHandler(BaseHTTPRequestHandler):
         token = payload.get("token", "")
         if not isinstance(token, str) or not token_is_valid(token):
             self.send_json(403, {"error": "unauthorized"})
+            return
+
+        # ── /cases-sync branch ───────────────────────────────────────────
+        if path == "/cases-sync":
+            cases_data = payload.get("data")
+            if not isinstance(cases_data, dict):
+                self.send_json(400, {"error": "data must be an object"})
+                return
+            ts = datetime.now().isoformat()
+            cases_data["synced_at"] = ts
+            try:
+                os.makedirs(os.path.dirname(CASES_FILE), exist_ok=True)
+                tmp = CASES_FILE + ".tmp"
+                with open(tmp, "w", encoding="utf-8") as fh:
+                    json.dump(cases_data, fh, indent=2)
+                os.replace(tmp, CASES_FILE)
+                log.info("cases_data.json synced (%d brockler / %d vacant)",
+                         len(cases_data.get("brockler_cases", [])),
+                         len(cases_data.get("vacant_cases", [])))
+                self.send_json(200, {"ok": True, "synced_at": ts})
+            except OSError as exc:
+                log.error("cases write error: %s", exc)
+                self.send_json(500, {"error": "write failed"})
             return
 
         html = payload.get("html", "")
