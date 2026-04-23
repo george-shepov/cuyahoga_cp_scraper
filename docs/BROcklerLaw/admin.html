@@ -1377,7 +1377,7 @@
             Open CMS
           </a>
           <span id="export-count" style="display:none;margin-left:4px;color:var(--ink-soft);font-size:0.85rem;"></span>
-          <span id="publish-status" style="display:none;margin-left:4px;font-size:0.85rem;font-weight:600;"></span>
+          <span id="publish-status" style="margin-left:4px;font-size:0.85rem;font-weight:600;"></span>
         </div>
       </div>
       <div class="faq-grid">
@@ -2281,14 +2281,15 @@
             alert("No approved questions found. Approve at least one FAQ before publishing.");
             return;
           }
-          // If no session token, prompt for password inline before publishing
-          var tokenToUse = _sessionToken;
-          if (!tokenToUse) {
-            tokenToUse = window.prompt("Enter publish password to send to live site:");
-            if (!tokenToUse) { return; }
-            _sessionToken = tokenToUse;
-            window._brocklerSessionToken = tokenToUse;
-            try { sessionStorage.setItem(SESSION_TOKEN_KEY, tokenToUse); } catch (e) {}
+          // If no session token, open login modal first
+          if (!_sessionToken) {
+            if (publishStatus) {
+              publishStatus.style.display = "inline";
+              publishStatus.style.color = "var(--ink-soft)";
+              publishStatus.textContent = "Sign in to publish.";
+            }
+            openModal();
+            return;
           }
           if (!confirm("Publish " + items.length + " approved FAQ" + (items.length === 1 ? "" : "s") + " to the live site?\n\nThe current index.html will be backed up with today's timestamp.")) {
             return;
@@ -2318,13 +2319,16 @@
                 window._brocklerSessionToken = "";
                 try { sessionStorage.removeItem(SESSION_TOKEN_KEY); } catch (error) {}
                 if (publishStatus) {
+                  publishStatus.style.display = "inline";
                   publishStatus.style.color = "#c0392b";
-                  publishStatus.textContent = "Wrong password – click Publish again to retry.";
+                  publishStatus.textContent = "Wrong password – sign in again.";
                 }
+                openModal();
               } else {
                 if (publishStatus) {
+                  publishStatus.style.display = "inline";
                   publishStatus.style.color = "#c0392b";
-                  publishStatus.textContent = "Error: " + (result.data.error || "unknown error");
+                  publishStatus.textContent = "Error: " + (result.data && result.data.error ? result.data.error : "unknown error");
                 }
               }
             }
