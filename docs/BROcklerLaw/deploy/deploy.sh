@@ -97,6 +97,17 @@ if [[ -f "$ROOT_HTML_DIR/index.html" ]]; then
     remote_sudo "mkdir -p /var/www/foxxiie.com"
     $SCP "$ROOT_HTML_DIR/index.html" "$VPS_HOST:/tmp/foxxiie_root_index.html"
     remote_sudo "mv /tmp/foxxiie_root_index.html /var/www/foxxiie.com/index.html"
+    # Also sync to prosecutordefense.com root
+    remote_sudo "cp /var/www/foxxiie.com/index.html /var/www/prosecutordefense.com/index.html"
+
+    # Upload pre-built data.json if available (no on-page computation)
+    if [[ -f "$ROOT_HTML_DIR/data.json" ]]; then
+        echo "--- Uploading data.json (pre-built attorney/judge/prosecutor cache)"
+        $SCP "$ROOT_HTML_DIR/data.json" "$VPS_HOST:/tmp/foxxiie_data.json"
+        remote_sudo "mv /tmp/foxxiie_data.json /var/www/foxxiie.com/data.json && cp /var/www/foxxiie.com/data.json /var/www/prosecutordefense.com/data.json && chown www-data:www-data /var/www/foxxiie.com/data.json /var/www/prosecutordefense.com/data.json"
+    else
+        echo "WARN: docs/foxxiie/data.json not found. Run: python3 scripts/fetch_sc_attorneys.py"
+    fi
 else
     echo "WARN: $ROOT_HTML_DIR/index.html not found. Root homepage will not be updated."
 fi
