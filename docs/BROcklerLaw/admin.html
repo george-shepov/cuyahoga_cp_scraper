@@ -1367,6 +1367,9 @@
           <button id="export-btn" type="button" style="display:none;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#5f6d40,#404d28);border:0;color:#f4f8ed;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;">
             Download Public Page (approved only)
           </button>
+          <button id="sync-live-btn" type="button" title="Fetch and merge FAQs from the live site" style="display:none;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#2b87b5,#1f5f86);border:0;color:#f5fbff;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;margin-left:8px;">
+            Sync from Live Site
+          </button>
           <button id="publish-btn" type="button" style="display:none;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#b56a34,#8c4e23);border:0;color:#fff8ef;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;">
             Publish to Live Site
           </button>
@@ -2069,6 +2072,69 @@
       migrateVisibilityState();
       faqCards.forEach(function (card) { applyCardVisibility(card); });
 
+      // Sync FAQs from the live site and merge into local admin state
+      function fetchLiveFaqs() {
+        return fetch('https://prosecutordefense.com/index.html', { cache: 'no-store' })
+          .then(function (res) { if (!res.ok) { throw new Error('fetch failed: ' + res.status); } return res.text(); })
+          .then(function (html) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+            var cards = Array.prototype.slice.call(doc.querySelectorAll('.faq-card'));
+            return cards.map(function (card) {
+              var q = card.querySelector('h3');
+              var a = card.querySelector('p');
+              return { question: q ? q.textContent.trim() : '', answer: a ? a.textContent.trim() : '' };
+            }).filter(function (it) { return it.question && it.answer; });
+          });
+      }
+
+      function syncFromLive() {
+        var syncBtn = document.getElementById('sync-live-btn');
+        if (syncBtn) { syncBtn.disabled = true; syncBtn.textContent = 'Syncing…'; }
+        fetchLiveFaqs()
+          .then(function (items) {
+            var existingQs = {};
+            // collect existing questions (from DOM and savedManualQuestions)
+            Array.prototype.slice.call(document.querySelectorAll('.faq-card h3')).forEach(function (h) {
+              existingQs[h.textContent.trim()] = true;
+            });
+            savedManualQuestions.forEach(function (m) { existingQs[m.question] = true; });
+            var added = 0;
+            items.forEach(function (it, idx) {
+              if (existingQs[it.question]) { return; }
+              var id = 'live-' + Date.now().toString(36) + '-' + idx;
+              var obj = { id: id, question: it.question, answer: it.answer, tags: '', rating: '3' };
+              savedManualQuestions.push(obj);
+              savedMeta[id] = { tags: '', rating: '3' };
+              persistSavedManualQuestions();
+              persistSavedMeta();
+              var card = createManualFaqCard(obj);
+              if (card) { added++; }
+            });
+            // Rebuild editors for new cards
+            faqCards = Array.prototype.slice.call(document.querySelectorAll('.faq-card'));
+            buildFaqEditors();
+            faqCards.forEach(function (card) { applyCardVisibility(card); });
+            updateExportButton();
+            if (publishStatus) {
+              publishStatus.style.display = 'inline';
+              publishStatus.style.color = '#2b87b5';
+              publishStatus.textContent = 'Synced ' + added + ' new question' + (added === 1 ? '' : 's') + ' from live site.';
+            }
+          })
+          .catch(function (err) {
+            if (publishStatus) {
+              publishStatus.style.display = 'inline';
+              publishStatus.style.color = '#c0392b';
+              publishStatus.textContent = 'Sync failed: ' + (err && err.message ? err.message : 'network error');
+            }
+          })
+          .finally(function () { if (syncBtn) { syncBtn.disabled = false; syncBtn.textContent = 'Sync from Live Site'; } });
+      }
+
+      var syncBtnEl = document.getElementById('sync-live-btn');
+      if (syncBtnEl) { syncBtnEl.addEventListener('click', function () { syncFromLive(); }); }
+
       // Admin page always starts in review mode — controls visible immediately.
       // Login modal is used only for Publish action which needs server auth.
       enableReviewMode();
@@ -2244,6 +2310,8 @@
         var active = body.classList.contains("review-mode");
         exportBtn.style.display  = active ? "inline-flex" : "none";
         exportBtn.style.alignItems = "center";
+        var syncBtn = document.getElementById("sync-live-btn");
+        if (syncBtn) { syncBtn.style.display = active ? "inline-flex" : "none"; syncBtn.style.alignItems = "center"; }
         if (publishBtn)  { publishBtn.style.display  = active ? "inline-flex" : "none"; publishBtn.style.alignItems = "center"; }
         if (seoLiveLink) { seoLiveLink.style.display = active ? "inline-flex" : "none"; seoLiveLink.style.alignItems = "center"; }
         if (cmsLink) { cmsLink.style.display = active ? "inline-flex" : "none"; cmsLink.style.alignItems = "center"; }
