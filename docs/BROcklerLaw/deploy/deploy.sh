@@ -80,10 +80,15 @@ $SCP "$HTML_DIR/admin.html" "$VPS_HOST:/tmp/brockler_admin.html"
 if [[ -f "$HTML_DIR/admin/index.html" ]]; then
     $SCP "$HTML_DIR/admin/index.html" "$VPS_HOST:/tmp/brockler_admin_index.html"
 fi
+if [[ -f "$HTML_DIR/admin/cms.html" ]]; then
+    $SCP "$HTML_DIR/admin/cms.html" "$VPS_HOST:/tmp/brockler_admin_cms.html"
+fi
 remote_sudo "mv /tmp/brockler_index.html $SITE_DIR/index.html && mv /tmp/brockler_admin.html $SITE_DIR/admin.html"
 remote_sudo "if [ -f /tmp/brockler_admin_index.html ]; then mv /tmp/brockler_admin_index.html $SITE_DIR/admin/index.html; fi"
+remote_sudo "if [ -f /tmp/brockler_admin_cms.html ]; then mv /tmp/brockler_admin_cms.html $SITE_DIR/admin/cms.html; fi"
 remote_sudo "cp $SITE_DIR/index.html $SECONDARY_SITE_DIR/index.html && cp $SITE_DIR/admin.html $SECONDARY_SITE_DIR/admin.html"
 remote_sudo "if [ -f $SITE_DIR/admin/index.html ]; then cp $SITE_DIR/admin/index.html $SECONDARY_SITE_DIR/admin/index.html; fi"
+remote_sudo "if [ -f $SITE_DIR/admin/cms.html ]; then cp $SITE_DIR/admin/cms.html $SECONDARY_SITE_DIR/admin/cms.html; fi"
 if [[ -d "$HTML_DIR/seo" ]]; then
     echo "--- Uploading SEO pages"
     $SSH "$VPS_HOST" "mkdir -p /tmp/brockler_seo"
