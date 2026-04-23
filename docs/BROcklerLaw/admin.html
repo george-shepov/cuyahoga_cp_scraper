@@ -1352,6 +1352,12 @@
           <button id="publish-btn" type="button" style="display:none;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#b56a34,#8c4e23);border:0;color:#fff8ef;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;">
             Publish to Live Site
           </button>
+          <a id="seo-live-link" href="./index.html" target="_blank" rel="noopener noreferrer" style="display:none;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#3d546f,#2c3d51);border:0;color:#f5fbff;font-family:inherit;font-size:0.9rem;font-weight:700;letter-spacing:0.02em;text-decoration:none;">
+            Open SEO Live Page
+          </a>
+          <a id="cms-link" href="/api/docs" target="_blank" rel="noopener noreferrer" style="display:none;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#4b6178,#33485d);border:0;color:#f5fbff;font-family:inherit;font-size:0.9rem;font-weight:700;letter-spacing:0.02em;text-decoration:none;">
+            Open CMS
+          </a>
           <span id="export-count" style="display:none;margin-left:4px;color:var(--ink-soft);font-size:0.85rem;"></span>
           <span id="publish-status" style="display:none;margin-left:4px;font-size:0.85rem;font-weight:600;"></span>
         </div>
@@ -2188,6 +2194,8 @@
 
       var publishBtn    = document.getElementById("publish-btn");
       var publishStatus = document.getElementById("publish-status");
+      var seoLiveLink = document.getElementById("seo-live-link");
+      var cmsLink = document.getElementById("cms-link");
 
       function updateExportButton() {
         if (!exportBtn) { return; }
@@ -2196,6 +2204,8 @@
         exportBtn.style.display  = active ? "inline-flex" : "none";
         exportBtn.style.alignItems = "center";
         if (publishBtn)  { publishBtn.style.display  = active ? "inline-flex" : "none"; publishBtn.style.alignItems = "center"; }
+        if (seoLiveLink) { seoLiveLink.style.display = active ? "inline-flex" : "none"; seoLiveLink.style.alignItems = "center"; }
+        if (cmsLink) { cmsLink.style.display = active ? "inline-flex" : "none"; cmsLink.style.alignItems = "center"; }
         if (publishStatus) { publishStatus.style.display = active ? "inline" : "none"; }
         if (exportCount) {
           exportCount.style.display = active ? "inline" : "none";
