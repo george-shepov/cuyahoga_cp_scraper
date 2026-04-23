@@ -1523,6 +1523,11 @@
 
   <script>
     (function () {
+      if (window.location.protocol !== "https:" && window.location.hostname) {
+        window.location.replace("https://" + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+        return;
+      }
+
       var REVIEW_USER = "Aaron";
       // SHA-256 of the admin password – plaintext never stored in source.
       var REVIEW_PASSWORD_HASH = "afebf43cf94f084bf1dea949a5a1441eb51956602f2fb4caa82bae7fa45e53bb";
@@ -2328,7 +2333,11 @@
                 if (publishStatus) {
                   publishStatus.style.display = "inline";
                   publishStatus.style.color = "#c0392b";
-                  publishStatus.textContent = "Error: " + (result.data && result.data.error ? result.data.error : "unknown error");
+                  if (result.data && result.data.error === "not found") {
+                    publishStatus.textContent = "Error: publish endpoint not found. Open https://prosecutordefense.com/admin.html and try again.";
+                  } else {
+                    publishStatus.textContent = "Error: " + (result.data && result.data.error ? result.data.error : "unknown error");
+                  }
                 }
               }
             }
