@@ -312,6 +312,9 @@
     .intro-copy { max-width: 66ch; }
 
     .signal-grid,
+    .feature-grid,
+    .practice-grid,
+    .steps,
     .faq-grid,
     .contact-grid {
       display: grid;
@@ -319,6 +322,9 @@
     }
 
     .signal-card,
+    .feature-card,
+    .practice,
+    .step,
     .faq-card,
     .contact-card {
       position: relative;
@@ -327,6 +333,8 @@
     }
 
     .signal-card::after,
+    .feature-card::after,
+    .practice::after,
     .faq-card::after {
       content: "";
       position: absolute;
@@ -342,6 +350,65 @@
       margin-bottom: 8px;
       font-size: 1.05rem;
       color: var(--steel);
+    }
+
+    .feature-card h3,
+    .practice h3 {
+      margin: 0 0 10px;
+      font-size: 1.45rem;
+      line-height: 1.04;
+    }
+
+    .feature-card p,
+    .practice p,
+    .step p {
+      color: var(--ink-soft);
+      line-height: 1.65;
+      margin: 0;
+      font-style: normal;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: rgba(38, 51, 66, 0.08);
+      color: var(--steel);
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 12px;
+    }
+
+    .practice-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .steps { counter-reset: process; }
+    .step { padding-top: 64px; }
+    .step::before {
+      counter-increment: process;
+      content: "0" counter(process);
+      position: absolute;
+      left: 18px;
+      top: 18px;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, var(--steel), #32465d);
+      color: #fff6ea;
+      font-weight: 800;
     }
 
     .faq-card h3,
@@ -438,6 +505,10 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
 
+      .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .practice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .steps { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
       .faq-grid {
         grid-template-columns: 1fr;
       }
@@ -445,6 +516,10 @@
       .contact-grid {
         grid-template-columns: 1.05fr 0.95fr 0.9fr;
       }
+    }
+
+    @media (min-width: 1040px) {
+      .practice-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     }
   </style>
   <script type="application/ld+json">
@@ -629,27 +704,114 @@
 
     <section class="section" id="services">
       <div class="section-head">
-        <span class="kicker">Cleveland OVI Defense</span>
-        <h2>Why drivers charged with OVI in Cleveland call Brockler Law first.</h2>
-        <p class="intro-copy">
-          As a Cleveland OVI lawyer, Aaron Brockler focuses on the questions drivers actually need
-          answered: whether a license suspension can be avoided, whether a breath test can be
-          challenged, whether a ticket is worth fighting, and what happens at each court date.
+        <span class="kicker">Why Brockler Law</span>
+        <h2>Why former prosecutor experience matters on defense.</h2>
+        <p>
+          Aaron Brockler understands how the state builds criminal cases, where assumptions creep
+          in, and which parts of a file deserve immediate pressure. That perspective helps clients
+          move faster from uncertainty to a defined defense plan.
         </p>
       </div>
-      <div class="signal-grid">
-        <article class="signal-card">
-          <strong>License risk</strong>
-          <p>Get clear answers on suspensions, refusals, and limited driving privileges.</p>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <span class="badge">Charge review</span>
+          <h3>See the exposure early.</h3>
+          <p>
+            Defense starts with charging language, factual weakness, procedural issues, and what
+            the state will likely try to prove first.
+          </p>
         </article>
-        <article class="signal-card">
-          <strong>Ticket strategy</strong>
-          <p>Understand when a citation can be reduced, dismissed, or worth fighting.</p>
+        <article class="feature-card">
+          <span class="badge">Negotiation leverage</span>
+          <h3>Know when pressure changes the outcome.</h3>
+          <p>
+            Cases should not drift. Early analysis can change plea posture, motion timing, and how
+            the prosecution values risk.
+          </p>
         </article>
-        <article class="signal-card">
-          <strong>Court exposure</strong>
-          <p>Know what happens if you have to appear or if you miss a court date.</p>
+        <article class="feature-card">
+          <span class="badge">Trial readiness</span>
+          <h3>Prepare as if the case may have to be tried.</h3>
+          <p>
+            Even when a case resolves without trial, serious preparation can strengthen positioning
+            and protect better options.
+          </p>
         </article>
+        <article class="feature-card">
+          <span class="badge">Direct communication</span>
+          <h3>Clear answers under pressure.</h3>
+          <p>
+            Clients need realistic guidance, not vague reassurance. The goal is a strategy you can
+            understand before the next hearing arrives.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="practice">
+      <div class="section-head">
+        <span class="kicker">Practice Areas</span>
+        <h2>Defense for the charges that escalate quickly.</h2>
+        <p>
+          The site is structured around the matters Brockler Law handles most often in Cleveland
+          and across Cuyahoga County.
+        </p>
+      </div>
+      <div class="practice-grid">
+        <article class="practice">
+          <span class="badge">Felony defense</span>
+          <h3>Felonies</h3>
+          <p>
+            Felony allegations require immediate action on evidence reliability, sentencing
+            exposure, and case positioning for negotiation or trial.
+          </p>
+          <a class="practice-link" href="tel:+12162995946">Call for felony defense</a>
+        </article>
+        <article class="practice">
+          <span class="badge">Misdemeanor defense</span>
+          <h3>Misdemeanors</h3>
+          <p>
+            Even lower-level charges can damage your record, employment, and future options. Fast,
+            efficient strategy matters here too.
+          </p>
+          <a class="practice-link" href="tel:+12162995946">Call for misdemeanor defense</a>
+        </article>
+        <article class="practice">
+          <span class="badge">OVI / DUI defense</span>
+          <h3>OVI and DUI</h3>
+          <p>
+            Stops, testing procedures, officer observations, and evidentiary foundations all need a
+            technical review if you want the strongest defense position.
+          </p>
+          <a class="practice-link" href="tel:+12162995946">Call for OVI defense</a>
+        </article>
+        <article class="practice">
+          <span class="badge">Traffic-related charges</span>
+          <h3>Traffic cases with criminal exposure</h3>
+          <p>
+            Some traffic incidents carry consequences far beyond a routine citation. Control the
+            immediate court risk before it expands.
+          </p>
+          <a class="practice-link" href="tel:+12162995946">Call for traffic defense</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="process">
+      <div class="section-head">
+        <span class="kicker">What To Expect</span>
+        <h2>A defense process that starts with control, not delay.</h2>
+        <p>
+          Brockler Law uses a straightforward intake and strategy sequence so the case gets shaped
+          early instead of reacting late.
+        </p>
+      </div>
+      <div class="steps">
+        <article class="step"><p>Immediate intake, timeline review, and identification of the next critical court date.</p></article>
+        <article class="step"><p>Evidence stress-test, procedural review, and exposure analysis based on the charges.</p></article>
+        <article class="step"><p>Decision on strategy path: challenge the case, negotiate from strength, or prepare for trial.</p></article>
+        <article class="step"><p>Ongoing hearing preparation so nothing important gets improvised in court.</p></article>
+        <article class="step"><p>Resolution planning focused on the immediate result and the long-term consequences.</p></article>
       </div>
     </section>
 
