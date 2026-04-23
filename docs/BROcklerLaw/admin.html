@@ -511,11 +511,29 @@
       color: #fffaf4;
     }
     .faq-editor-actions .editor-delete {
-      background: linear-gradient(180deg, #c0392b, #962d22);
-      border-color: transparent;
-      color: #fff;
-      margin-left: auto;
+      display: none; /* moved to standalone corner button */
     }
+    /* Standalone persistent delete button — always visible on card corner in review mode */
+    .faq-card-delete-btn {
+      display: none;
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 10;
+      min-height: 30px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 0;
+      background: linear-gradient(180deg, #c0392b, #962d22);
+      color: #fff;
+      font: inherit;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    body.review-mode .faq-card .faq-card-delete-btn { display: inline-flex; align-items: center; }
     .faq-answer-editor {
       position: relative;
       z-index: 1;
@@ -636,11 +654,11 @@
       border-color: rgba(181, 106, 52, 0.52);
       box-shadow: 0 0 0 2px rgba(181, 106, 52, 0.2), var(--card-shadow);
     }
-    body.review-mode .faq-card .faq-status-row,
-    body.review-mode .faq-card .faq-meta-editor,
-    body.review-mode .faq-card .faq-visibility-controls,
-    body.review-mode .faq-card .faq-editor-actions { display: flex; }
-    body.review-mode .add-faq-btn { display: inline-flex; align-items: center; }
+    .faq-card .faq-status-row,
+    .faq-card .faq-meta-editor,
+    .faq-card .faq-visibility-controls,
+    .faq-card .faq-editor-actions { display: flex; }
+    .add-faq-btn { display: inline-flex; align-items: center; }
     .contact-band {
       margin-top: 18px;
       padding: 20px 18px;
@@ -1964,11 +1982,31 @@
           visibilityControls.appendChild(pendingButton);
           visibilityControls.appendChild(showButton);
           visibilityControls.appendChild(hideButton);
+          var standalonDeleteBtn = document.createElement("button");
+          standalonDeleteBtn.type = "button";
+          standalonDeleteBtn.className = "faq-card-delete-btn";
+          standalonDeleteBtn.textContent = "Delete";
+          standalonDeleteBtn.title = "Permanently delete this question";
+          standalonDeleteBtn.addEventListener("click", function (event) {
+            event.stopPropagation();
+            var q = card.querySelector("h3");
+            var label = q ? q.textContent.trim() : "this question";
+            if (!confirm('Permanently delete:\n\n"' + label + '"\n\nThis cannot be undone.')) { return; }
+            var deletedIds;
+            try { deletedIds = JSON.parse(localStorage.getItem(FAQ_DELETED_KEY) || "{}"); } catch (e) { deletedIds = {}; }
+            deletedIds[faqId] = true;
+            try { localStorage.setItem(FAQ_DELETED_KEY, JSON.stringify(deletedIds)); } catch (e) {}
+            var idx = faqCards.indexOf(card);
+            if (idx !== -1) { faqCards.splice(idx, 1); }
+            if (card.parentNode) { card.parentNode.removeChild(card); }
+            updateExportButton();
+          });
           actions.appendChild(editButton);
           actions.appendChild(saveButton);
           actions.appendChild(cancelEditButton);
           actions.appendChild(resetButton);
           actions.appendChild(deleteButton);
+          card.insertBefore(standalonDeleteBtn, card.firstChild);
           card.insertBefore(statusRow, card.firstChild);
           card.appendChild(metaRow);
           card.appendChild(editor);
@@ -2026,11 +2064,9 @@
       migrateVisibilityState();
       faqCards.forEach(function (card) { applyCardVisibility(card); });
 
-      if (localStorage.getItem(STORAGE_KEY) === "enabled" && _sessionToken) {
-        enableReviewMode();
-      } else {
-        openModal();
-      }
+      // Admin page always starts in review mode — controls visible immediately.
+      // Login modal is used only for Publish action which needs server auth.
+      enableReviewMode();
       if (manageLink) {
         manageLink.addEventListener("click", function (event) {
           event.preventDefault();
@@ -2240,18 +2276,19 @@
       /* ── Publish to Live Site ─────────────────────────────────────────── */
       if (publishBtn) {
         publishBtn.addEventListener("click", function () {
-          if (!_sessionToken) {
-            if (publishStatus) {
-              publishStatus.style.color = "#c0392b";
-              publishStatus.textContent = "Session expired. Please sign in again.";
-            }
-            openModal();
-            return;
-          }
           var items = getApprovedFaqs();
           if (items.length === 0) {
             alert("No approved questions found. Approve at least one FAQ before publishing.");
             return;
+          }
+          // If no session token, prompt for password inline before publishing
+          var tokenToUse = _sessionToken;
+          if (!tokenToUse) {
+            tokenToUse = window.prompt("Enter publish password to send to live site:");
+            if (!tokenToUse) { return; }
+            _sessionToken = tokenToUse;
+            window._brocklerSessionToken = tokenToUse;
+            try { sessionStorage.setItem(SESSION_TOKEN_KEY, tokenToUse); } catch (e) {}
           }
           if (!confirm("Publish " + items.length + " approved FAQ" + (items.length === 1 ? "" : "s") + " to the live site?\n\nThe current index.html will be backed up with today's timestamp.")) {
             return;
@@ -2278,15 +2315,17 @@
             } else {
               if (result.data && result.data.error === "unauthorized") {
                 _sessionToken = "";
-                try {
-                  sessionStorage.removeItem(SESSION_TOKEN_KEY);
-                } catch (error) {
-                  // Ignore browser storage restrictions.
+                window._brocklerSessionToken = "";
+                try { sessionStorage.removeItem(SESSION_TOKEN_KEY); } catch (error) {}
+                if (publishStatus) {
+                  publishStatus.style.color = "#c0392b";
+                  publishStatus.textContent = "Wrong password – click Publish again to retry.";
                 }
-              }
-              if (publishStatus) {
-                publishStatus.style.color = "#c0392b";
-                publishStatus.textContent = "Error: " + (result.data.error || "unknown error");
+              } else {
+                if (publishStatus) {
+                  publishStatus.style.color = "#c0392b";
+                  publishStatus.textContent = "Error: " + (result.data.error || "unknown error");
+                }
               }
             }
           })
