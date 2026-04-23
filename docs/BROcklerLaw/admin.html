@@ -1935,7 +1935,7 @@
           publishBtn.textContent = "Publishing…";
           if (publishStatus) { publishStatus.style.color = "var(--ink-soft)"; publishStatus.textContent = ""; }
 
-          fetch("/brocklerlaw/save", {
+          fetch("/save", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ html: html, token: _sessionToken })
