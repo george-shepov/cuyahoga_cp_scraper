@@ -65,6 +65,53 @@ python3 scan_brad_davis.py
 python3 repair_incomplete_cases.py
 ```
 
+## Cloud Or Hybrid Worker Deployment
+
+If you want scraping off your laptop, run three dedicated workers on a VPS:
+
+1. Forward miner: continuously mines newer case numbers.
+2. Backward miner: continuously mines older history.
+3. Targeted worker: continuously refreshes specific case IDs (for example your own active matters).
+
+### New Worker Files
+
+- `scripts/cloud_range_worker.py`: persistent forward or backward numeric miner using a cursor file.
+- `scripts/cloud_targeted_worker.py`: periodic targeted refresh based on `my_cases.json`.
+- `deploy/docker-compose.workers.yml`: 3-worker VPS stack.
+
+### VPS Quick Start
+
+```bash
+# 1) Copy repo to VPS
+git clone <your-repo-url> cuyahoga_cp_scraper
+cd cuyahoga_cp_scraper
+
+# 2) Start workers
+docker-compose -f deploy/docker-compose.workers.yml up -d --build
+
+# 3) Watch logs
+docker-compose -f deploy/docker-compose.workers.yml logs -f scraper-forward
+docker-compose -f deploy/docker-compose.workers.yml logs -f scraper-backward
+docker-compose -f deploy/docker-compose.workers.yml logs -f scraper-targeted
+```
+
+### Hybrid Mode
+
+- VPS runs the heavy miners (`scraper-forward`, `scraper-backward`).
+- Your local machine runs only analytics, review, or one-off scrape/repair commands.
+- Keep shared output in object storage (S3/Backblaze) or rsync it nightly:
+
+```bash
+rsync -az --delete user@your-vps:/path/to/cuyahoga_cp_scraper/out/ ./out/
+```
+
+### Adjusting Worker Strategy
+
+- Change `--start`, `--limit`, and `--workers` in `deploy/docker-compose.workers.yml`.
+- Backward floor is set by `--min-case`.
+- Targeted cases come from `my_cases.json` (`cases[].case_id`).
+- Cursor state is persisted in `cloud_state/forward.cursor` and `cloud_state/backward.cursor`.
+
 ## Directory Structure
 
 ```text
