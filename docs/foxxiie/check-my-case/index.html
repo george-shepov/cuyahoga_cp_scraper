@@ -251,17 +251,7 @@
 </div>
 
 <script>
-  // Load data.json from the root (same location as foxxiie homepage)
-  let caseData = null;
-
-  async function loadData() {
-    try {
-      const res = await fetch('/data.json');
-      if (!res.ok) return;
-      caseData = await res.json();
-    } catch (_) { /* no data.json yet */ }
-  }
-  loadData();
+  // This page builds direct docket links and does not require a startup JSON fetch.
 
   function parseCaseNumber(raw) {
     // Accept "CR-25-706402-A", "cr25706402", "706402" etc.
