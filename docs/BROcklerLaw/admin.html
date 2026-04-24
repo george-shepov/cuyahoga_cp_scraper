@@ -1165,6 +1165,12 @@
   </style>
 </head>
 <body>
+  <script>
+    // Admin visit beacon — fires once on load, no auth required
+    (function() {
+      try { fetch('/ping?page=admin', { method: 'GET', cache: 'no-store' }); } catch(e) {}
+    })();
+  </script>
   <main class="shell">
     <div class="topline">
       <span><strong>Admin mode</strong> | Review, approve, and refine public FAQ content</span>

@@ -37,7 +37,8 @@ API_TOKEN_HASH = os.environ.get(
 MAX_BYTES   = 2 * 1024 * 1024   # 2 MB sanity cap
 LISTEN_HOST = "127.0.0.1"
 LISTEN_PORT = 8765
-CASES_FILE  = "/opt/brocklerlaw-save/cases_data.json"
+CASES_FILE   = "/opt/brocklerlaw-save/cases_data.json"
+VISITS_FILE  = "/opt/brocklerlaw-save/visits.log"
 
 # ── Stripe config (set via environment variables) ────────────────────────────
 STRIPE_SECRET_KEY   = os.environ.get("STRIPE_SECRET_KEY", "")          # sk_live_... or sk_test_...
@@ -84,8 +85,31 @@ class SaveHandler(BaseHTTPRequestHandler):
         self.send_response(204)
         self.end_headers()
 
+    def _log_visit(self, page: str):
+        """Append one visit record to VISITS_FILE."""
+        try:
+            os.makedirs(os.path.dirname(VISITS_FILE), exist_ok=True)
+            ip = self.headers.get("X-Forwarded-For", self.client_address[0]).split(",")[0].strip()
+            ua = self.headers.get("User-Agent", "")[:200]
+            ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            line = f"{ts}  page={page}  ip={ip}  ua={ua}\n"
+            with open(VISITS_FILE, "a", encoding="utf-8") as fh:
+                fh.write(line)
+            log.info("VISIT  page=%s  ip=%s", page, ip)
+        except OSError as exc:
+            log.warning("visits log write failed: %s", exc)
+
     def do_GET(self):
         parsed = urlparse(self.path)
+        # ── /ping – lightweight visit beacon (no auth) ───────────────────
+        if parsed.path.rstrip("/") == "/ping":
+            qs = parse_qs(parsed.query)
+            page = (qs.get("page", ["unknown"])[0])[:64]
+            self._log_visit(page)
+            self.send_response(204)
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            return
         if parsed.path.rstrip("/") != "/cases":
             self.send_json(404, {"error": "not found"})
             return
@@ -110,6 +134,21 @@ class SaveHandler(BaseHTTPRequestHandler):
         # ── /stripe-checkout – public, no token required ─────────────────
         if path == "/stripe-checkout":
             self._handle_stripe_checkout()
+            return
+
+        # ── /ping – visit beacon (no auth) ───────────────────────────────
+        if path == "/ping":
+            length = int(self.headers.get("Content-Length", 0))
+            raw = self.rfile.read(min(length, 512)) if length else b""
+            try:
+                body = json.loads(raw.decode("utf-8")) if raw.strip() else {}
+            except (ValueError, UnicodeDecodeError):
+                body = {}
+            page = str(body.get("page", "unknown"))[:64]
+            self._log_visit(page)
+            self.send_response(204)
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
             return
 
         if path not in ("/save", "/cases-sync"):
