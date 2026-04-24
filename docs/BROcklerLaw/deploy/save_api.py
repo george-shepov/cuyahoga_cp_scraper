@@ -11,6 +11,8 @@ import os
 import json
 import logging
 import hashlib
+import urllib.request
+import urllib.error
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
@@ -36,6 +38,16 @@ MAX_BYTES   = 2 * 1024 * 1024   # 2 MB sanity cap
 LISTEN_HOST = "127.0.0.1"
 LISTEN_PORT = 8765
 CASES_FILE  = "/opt/brocklerlaw-save/cases_data.json"
+
+# ── Stripe config (set via environment variables) ────────────────────────────
+STRIPE_SECRET_KEY   = os.environ.get("STRIPE_SECRET_KEY", "")          # sk_live_... or sk_test_...
+STRIPE_PRICE_ID     = os.environ.get("STRIPE_PRICE_ID", "")             # price_... from Stripe dashboard
+STRIPE_TRIAL_DAYS   = int(os.environ.get("STRIPE_TRIAL_DAYS", "14"))
+STRIPE_SUCCESS_URL  = os.environ.get("STRIPE_SUCCESS_URL",
+                                     "https://foxxiie.com/?trial=success")
+STRIPE_CANCEL_URL   = os.environ.get("STRIPE_CANCEL_URL",
+                                     "https://foxxiie.com/?trial=cancelled")
+STRIPE_API_BASE     = "https://api.stripe.com/v1"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("save_api")
@@ -94,6 +106,12 @@ class SaveHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = self.path.rstrip("/")
+
+        # ── /stripe-checkout – public, no token required ─────────────────
+        if path == "/stripe-checkout":
+            self._handle_stripe_checkout()
+            return
+
         if path not in ("/save", "/cases-sync"):
             self.send_json(404, {"error": "not found"})
             return
@@ -177,6 +195,62 @@ class SaveHandler(BaseHTTPRequestHandler):
             return
 
         self.send_json(200, {"ok": True, "backup": os.path.basename(backup_path), "ts": ts})
+
+    def _handle_stripe_checkout(self):
+        """Create a Stripe Checkout Session for a subscription with trial period."""
+        if not STRIPE_SECRET_KEY or not STRIPE_PRICE_ID:
+            log.error("Stripe not configured: STRIPE_SECRET_KEY or STRIPE_PRICE_ID missing")
+            self.send_json(503, {"error": "Stripe not configured on server"})
+            return
+
+        length = int(self.headers.get("Content-Length", 0))
+        raw = self.rfile.read(min(length, 4096))
+        try:
+            body = json.loads(raw.decode("utf-8")) if raw.strip() else {}
+        except (ValueError, UnicodeDecodeError):
+            body = {}
+
+        email = (body.get("email") or "").strip()[:254]
+        firm  = (body.get("firm") or "").strip()[:200]
+
+        import urllib.parse as _urlparse
+        params = {
+            "mode": "subscription",
+            "line_items[0][price]": STRIPE_PRICE_ID,
+            "line_items[0][quantity]": "1",
+            "subscription_data[trial_period_days]": str(STRIPE_TRIAL_DAYS),
+            "success_url": STRIPE_SUCCESS_URL,
+            "cancel_url": STRIPE_CANCEL_URL,
+            "allow_promotion_codes": "true",
+        }
+        if email:
+            params["customer_email"] = email
+        if firm:
+            params["metadata[firm_name]"] = firm
+
+        encoded = _urlparse.urlencode(params).encode("utf-8")
+        req = urllib.request.Request(
+            f"{STRIPE_API_BASE}/checkout/sessions",
+            data=encoded,
+            method="POST",
+        )
+        req.add_header("Authorization", f"Bearer {STRIPE_SECRET_KEY}")
+        req.add_header("Content-Type", "application/x-www-form-urlencoded")
+        req.add_header("Stripe-Version", "2024-04-10")
+
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                session = json.loads(resp.read().decode("utf-8"))
+            checkout_url = session.get("url", "")
+            log.info("Stripe Checkout Session created: %s (email=%s)", session.get("id"), email or "-")
+            self.send_json(200, {"url": checkout_url})
+        except urllib.error.HTTPError as exc:
+            err_body = exc.read().decode("utf-8", errors="replace")
+            log.error("Stripe API error %d: %s", exc.code, err_body[:400])
+            self.send_json(502, {"error": "Stripe API error"})
+        except urllib.error.URLError as exc:
+            log.error("Stripe network error: %s", exc)
+            self.send_json(502, {"error": "Stripe network error"})
 
 
 if __name__ == "__main__":
