@@ -11,9 +11,13 @@ class CaseRow(BaseModel):
     defendant_name: Optional[str] = None
     judge_name: Optional[str] = None
     charges: List[str] = []
+    case_date: Optional[str] = None  # ISO date string
     filed_date: Optional[str] = None  # ISO date string
+    last_changed_at: Optional[str] = None  # ISO datetime string
+    last_updated_at: Optional[str] = None  # ISO datetime string
     has_defense_attorney: bool = False
     defense_attorneys: List[str] = []
+    candidate_case_ids: List[str] = []
 
 
 class CaseIntelligenceResponse(BaseModel):

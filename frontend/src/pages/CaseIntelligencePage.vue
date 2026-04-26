@@ -50,6 +50,35 @@ function statusClass(status: string) {
   return "bg-blue-100 text-blue-700";
 }
 
+function hasCaseSuffix(caseNumber?: string) {
+  return /^CR-\d{2}-\d{6}-[A-Z]+$/i.test(caseNumber || "");
+}
+
+function primaryCaseRef(row: any) {
+  if (hasCaseSuffix(row?.case_number)) return row.case_number;
+  const candidates = Array.isArray(row?.candidate_case_ids) ? row.candidate_case_ids : [];
+  if (candidates.length > 0) return candidates[0];
+  return row?.case_number || "";
+}
+
+function docketUrl(caseRef?: string) {
+  return `https://cpdocket.cp.cuyahogacounty.gov/CR_CaseInformation.aspx?q=${encodeURIComponent(caseRef || "")}`;
+}
+
+function fmtDate(value?: string | null) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString();
+}
+
+function fmtDateTime(value?: string | null) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleString();
+}
+
 // Auto-sync if already signed in
 onMounted(() => {
   if (isSignedIn.value) sync();
@@ -141,7 +170,51 @@ onMounted(() => {
         No active cases found. Sync or check the attorney name spelling.
       </div>
 
-      <div v-else class="space-y-3">
+      <div v-else class="space-y-4">
+        <div class="hidden overflow-x-auto rounded-xl border border-stone-200 bg-white md:block">
+          <table class="min-w-full text-sm">
+            <thead class="bg-stone-50 text-left text-xs font-semibold uppercase tracking-wide text-stone-500">
+              <tr>
+                <th class="px-4 py-3">Case</th>
+                <th class="px-4 py-3">Defendant</th>
+                <th class="px-4 py-3">Judge</th>
+                <th class="px-4 py-3">Case Date</th>
+                <th class="px-4 py-3">Changed Last</th>
+                <th class="px-4 py-3">Updated Last</th>
+                <th class="px-4 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in myCases" :key="`my-${row.case_number}`" class="border-t border-stone-100 align-top">
+                <td class="px-4 py-3">
+                  <a :href="docketUrl(primaryCaseRef(row))" target="_blank" rel="noopener" class="font-mono font-semibold text-steel hover:underline">
+                    {{ row.case_number }}
+                  </a>
+                  <div v-if="row.candidate_case_ids?.length > 1" class="mt-1 flex flex-wrap gap-1">
+                    <a
+                      v-for="cid in row.candidate_case_ids"
+                      :key="cid"
+                      :href="docketUrl(cid)"
+                      target="_blank"
+                      rel="noopener"
+                      class="rounded border border-stone-300 px-1.5 py-0.5 text-[10px] font-medium text-stone-700 hover:bg-stone-100"
+                    >{{ cid.split('-').slice(-1)[0] }}</a>
+                  </div>
+                </td>
+                <td class="px-4 py-3 font-medium text-stone-800">{{ row.defendant_name || "Unknown Defendant" }}</td>
+                <td class="px-4 py-3 text-stone-600">{{ row.judge_name || "—" }}</td>
+                <td class="px-4 py-3 text-stone-600">{{ fmtDate(row.case_date || row.filed_date) }}</td>
+                <td class="px-4 py-3 text-stone-600">{{ fmtDateTime(row.last_changed_at) }}</td>
+                <td class="px-4 py-3 text-stone-600">{{ fmtDateTime(row.last_updated_at) }}</td>
+                <td class="px-4 py-3">
+                  <span :class="['rounded-full px-2 py-0.5 text-xs font-semibold', statusClass(row.status)]">{{ row.status }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="space-y-3 md:hidden">
         <div
           v-for="row in myCases"
           :key="row.case_number"
@@ -150,13 +223,23 @@ onMounted(() => {
           <div class="flex flex-wrap items-start justify-between gap-2">
             <div>
               <a
-                :href="`https://cpdocket.cp.cuyahogacounty.gov/CR_CaseInformation.aspx?q=${encodeURIComponent(row.case_number)}`"
+                :href="docketUrl(primaryCaseRef(row))"
                 target="_blank"
                 rel="noopener"
                 class="font-mono text-sm font-bold text-steel hover:underline"
               >
                 {{ row.case_number }}
               </a>
+              <div v-if="row.candidate_case_ids?.length > 1" class="mt-1 flex flex-wrap gap-1">
+                <a
+                  v-for="cid in row.candidate_case_ids"
+                  :key="cid"
+                  :href="docketUrl(cid)"
+                  target="_blank"
+                  rel="noopener"
+                  class="rounded border border-stone-300 px-1.5 py-0.5 text-[10px] font-medium text-stone-700 hover:bg-stone-100"
+                >{{ cid.split('-').slice(-1)[0] }}</a>
+              </div>
               <p v-if="row.defendant_name" class="mt-0.5 text-base font-semibold text-stone-800">
                 {{ row.defendant_name }}
               </p>
@@ -170,8 +253,14 @@ onMounted(() => {
             <span v-if="row.judge_name">
               <span class="font-medium text-stone-700">Judge:</span> {{ row.judge_name }}
             </span>
-            <span v-if="row.filed_date">
-              <span class="font-medium text-stone-700">Filed:</span> {{ row.filed_date }}
+            <span>
+              <span class="font-medium text-stone-700">Case Date:</span> {{ fmtDate(row.case_date || row.filed_date) }}
+            </span>
+            <span>
+              <span class="font-medium text-stone-700">Changed:</span> {{ fmtDateTime(row.last_changed_at) }}
+            </span>
+            <span>
+              <span class="font-medium text-stone-700">Updated:</span> {{ fmtDateTime(row.last_updated_at) }}
             </span>
           </div>
 
@@ -184,6 +273,7 @@ onMounted(() => {
               {{ charge }}
             </span>
           </div>
+        </div>
         </div>
       </div>
     </section>
@@ -209,7 +299,51 @@ onMounted(() => {
         No unassigned filings in the last {{ daysBack }} days.
       </div>
 
-      <div v-else class="space-y-3">
+      <div v-else class="space-y-4">
+        <div class="hidden overflow-x-auto rounded-xl border border-amber-200 bg-white md:block">
+          <table class="min-w-full text-sm">
+            <thead class="bg-amber-50 text-left text-xs font-semibold uppercase tracking-wide text-amber-800">
+              <tr>
+                <th class="px-4 py-3">Case</th>
+                <th class="px-4 py-3">Defendant</th>
+                <th class="px-4 py-3">Judge</th>
+                <th class="px-4 py-3">Case Date</th>
+                <th class="px-4 py-3">Changed Last</th>
+                <th class="px-4 py-3">Updated Last</th>
+                <th class="px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in unassigned" :key="`vac-${row.case_number}`" class="border-t border-amber-100 align-top">
+                <td class="px-4 py-3">
+                  <a :href="docketUrl(primaryCaseRef(row))" target="_blank" rel="noopener" class="font-mono font-semibold text-steel hover:underline">
+                    {{ row.case_number }}
+                  </a>
+                  <div v-if="row.candidate_case_ids?.length > 1" class="mt-1 flex flex-wrap gap-1">
+                    <a
+                      v-for="cid in row.candidate_case_ids"
+                      :key="cid"
+                      :href="docketUrl(cid)"
+                      target="_blank"
+                      rel="noopener"
+                      class="rounded border border-amber-300 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 hover:bg-amber-100"
+                    >{{ cid.split('-').slice(-1)[0] }}</a>
+                  </div>
+                </td>
+                <td class="px-4 py-3 font-medium text-stone-800">{{ row.defendant_name || "Unknown Defendant" }}</td>
+                <td class="px-4 py-3 text-stone-600">{{ row.judge_name || "—" }}</td>
+                <td class="px-4 py-3 text-stone-600">{{ fmtDate(row.case_date || row.filed_date) }}</td>
+                <td class="px-4 py-3 text-stone-600">{{ fmtDateTime(row.last_changed_at) }}</td>
+                <td class="px-4 py-3 text-stone-600">{{ fmtDateTime(row.last_updated_at) }}</td>
+                <td class="px-4 py-3">
+                  <a href="/check-my-case" class="text-xs font-medium text-accent hover:underline">Analyze</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="space-y-3 md:hidden">
         <div
           v-for="row in unassigned"
           :key="row.case_number"
@@ -218,13 +352,23 @@ onMounted(() => {
           <div class="flex flex-wrap items-start justify-between gap-2">
             <div>
               <a
-                :href="`https://cpdocket.cp.cuyahogacounty.gov/CR_CaseInformation.aspx?q=${encodeURIComponent(row.case_number)}`"
+                :href="docketUrl(primaryCaseRef(row))"
                 target="_blank"
                 rel="noopener"
                 class="font-mono text-sm font-bold text-steel hover:underline"
               >
                 {{ row.case_number }}
               </a>
+              <div v-if="row.candidate_case_ids?.length > 1" class="mt-1 flex flex-wrap gap-1">
+                <a
+                  v-for="cid in row.candidate_case_ids"
+                  :key="cid"
+                  :href="docketUrl(cid)"
+                  target="_blank"
+                  rel="noopener"
+                  class="rounded border border-amber-300 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 hover:bg-amber-100"
+                >{{ cid.split('-').slice(-1)[0] }}</a>
+              </div>
               <p v-if="row.defendant_name" class="mt-0.5 text-base font-semibold text-stone-800">
                 {{ row.defendant_name }}
               </p>
@@ -238,8 +382,14 @@ onMounted(() => {
             <span v-if="row.judge_name">
               <span class="font-medium text-stone-700">Judge:</span> {{ row.judge_name }}
             </span>
-            <span v-if="row.filed_date">
-              <span class="font-medium text-stone-700">Filed:</span> {{ row.filed_date }}
+            <span>
+              <span class="font-medium text-stone-700">Case Date:</span> {{ fmtDate(row.case_date || row.filed_date) }}
+            </span>
+            <span>
+              <span class="font-medium text-stone-700">Changed:</span> {{ fmtDateTime(row.last_changed_at) }}
+            </span>
+            <span>
+              <span class="font-medium text-stone-700">Updated:</span> {{ fmtDateTime(row.last_updated_at) }}
             </span>
           </div>
 
@@ -261,6 +411,7 @@ onMounted(() => {
               Analyze this case →
             </a>
           </div>
+        </div>
         </div>
       </div>
     </section>

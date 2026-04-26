@@ -10,20 +10,40 @@ from app.schemas.case_intelligence import CaseIntelligenceResponse, CaseRow
 from database.models_postgres import Case, CaseAttorney, Attorney, Defendant, Judge, Charge
 
 
-def _case_to_row(case: Case, defense_attorneys: list[str]) -> CaseRow:
+def _case_to_row(case: Case, defense_attorneys: list[str], candidate_case_ids: list[str] | None = None) -> CaseRow:
+    case_date = case.indictment_date or case.arrest_date
     return CaseRow(
         case_number=case.case_id or case.case_number,
         year=case.year,
         status=case.status.value if case.status else "UNKNOWN",
-        defendant_name=case.defendant.name if case.defendant else None,
+        defendant_name=case.defendant.name if case.defendant else "Unknown Defendant",
         judge_name=case.judge.name if case.judge else None,
         charges=[c.description for c in (case.charges or [])[:3]],
+        case_date=case_date.isoformat() if case_date else None,
         filed_date=case.indictment_date.isoformat() if case.indictment_date else (
             case.arrest_date.isoformat() if case.arrest_date else None
         ),
+        last_changed_at=case.updated_at.isoformat() if case.updated_at else None,
+        last_updated_at=case.scraped_at.isoformat() if case.scraped_at else None,
         has_defense_attorney=len(defense_attorneys) > 0,
         defense_attorneys=defense_attorneys,
+        candidate_case_ids=candidate_case_ids or [],
     )
+
+
+def _candidate_case_ids(db: Session, case: Case) -> list[str]:
+    """Return full case IDs for the same year/number, including suffix variants (A/B/C/...)."""
+    rows = (
+        db.query(Case.case_id)
+        .filter(
+            Case.year == case.year,
+            Case.number == case.number,
+            Case.case_id.is_not(None),
+        )
+        .order_by(Case.case_id.asc())
+        .all()
+    )
+    return [r[0] for r in rows if r and r[0]]
 
 
 def get_case_intelligence(
@@ -64,7 +84,7 @@ def get_case_intelligence(
                 for ca in case.case_attorneys
                 if ca.party and ca.party.upper() in ("DEFENSE", "DEFENDANT") and ca.attorney
             ]
-            my_cases.append(_case_to_row(case, def_attys))
+            my_cases.append(_case_to_row(case, def_attys, _candidate_case_ids(db, case)))
 
     # ── Unassigned recent filings ─────────────────────────────────────────────
     cutoff = date.today() - timedelta(days=days_back)
@@ -93,7 +113,7 @@ def get_case_intelligence(
 
     unassigned: list[CaseRow] = []
     for case in unassigned_q.all():
-        unassigned.append(_case_to_row(case, []))
+        unassigned.append(_case_to_row(case, [], _candidate_case_ids(db, case)))
 
     return CaseIntelligenceResponse(
         attorney_name=attorney_name,
