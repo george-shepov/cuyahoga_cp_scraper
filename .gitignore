@@ -96,7 +96,6 @@ other/*.zip
 # Runtime state and temp files
 state/
 tmp_*.json
-*_cache.json
 
 # Analysis output files (one-off reports)
 sep_*.csv
