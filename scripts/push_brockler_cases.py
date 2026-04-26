@@ -221,12 +221,15 @@ def collect_cases(days: int) -> tuple[list[dict], list[dict]]:
                 pass
             vacant_cases.append(c)
 
-    # sort: brockler by next_event (soonest first), vacant by scraped_at (newest first)
-    def _sort_next(x):
-        d = _days_until(x.get("next_event", ""))
-        return d if d is not None else 9999
+    # sort: brockler by case number desc (highest/newest first), vacant by scraped_at newest first
+    def _case_num(x):
+        """Extract numeric portion from case_id like CR-25-706402-A → 706402."""
+        try:
+            return int(x.get("case_id", "").split("-")[2])
+        except (IndexError, ValueError):
+            return 0
 
-    brockler_cases.sort(key=_sort_next)
+    brockler_cases.sort(key=_case_num, reverse=True)
     vacant_cases.sort(key=lambda x: x.get("scraped_at", ""), reverse=True)
 
     return brockler_cases, vacant_cases
