@@ -1,0 +1,14 @@
+[Unit]
+Description=Push Brockler and vacant case snapshot to save API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/brocklerlaw-scraper
+EnvironmentFile=-/etc/brocklerlaw-save/env
+ExecStart=/opt/brocklerlaw-scraper/.venv/bin/python /opt/brocklerlaw-scraper/scripts/push_brockler_cases.py --days 365 --host https://prosecutordefense.com
+StandardOutput=journal
+StandardError=journal

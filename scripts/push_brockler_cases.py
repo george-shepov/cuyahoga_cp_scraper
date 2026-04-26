@@ -34,7 +34,7 @@ OVI_KEYWORDS    = [
     "OVI", "DUI", "IMPAIRED", "REFUSAL", "PHYSICAL CONTROL",
     "ALCOHOL", "BREATHALYZER", "CHEMICAL TEST", "INTOXICATED", "DRUNK DRIVING",
 ]
-RECENT_DAYS_DEFAULT = 90
+RECENT_DAYS_DEFAULT = 365
 OUT_DIR         = os.path.join(os.path.dirname(__file__), "..", "out")
 
 
@@ -185,12 +185,14 @@ def process_file(path: str) -> dict | None:
 
 
 def collect_cases(days: int) -> tuple[list[dict], list[dict]]:
-    cutoff = datetime.now(tz=timezone.utc) - timedelta(days=days)
+    # For vacant cases, filter by case year (derived from case_id) rather than scraped_at.
+    # --days controls how far back: e.g. 365 days → cases filed in 2024 or later.
+    min_case_year = (datetime.now(tz=timezone.utc) - timedelta(days=days)).year
     brockler_cases: list[dict] = []
     vacant_cases:   list[dict] = []
 
     pattern = os.path.join(OUT_DIR, "*", "*.json")
-    files   = sorted(glob.glob(pattern))
+    files   = sorted(glob.glob(pattern), reverse=True)  # newest file first — ensures latest scrape wins dedup
     seen_ids: set[str] = set()
 
     for path in files:
@@ -206,14 +208,16 @@ def collect_cases(days: int) -> tuple[list[dict], list[dict]]:
             brockler_cases.append(c)
             continue
 
-        # vacant / recent filings
+        # vacant / recent filings — filter by case year from case_id (e.g. CR-25-NNNNNN-A → 2025)
         if not c["defense_attorney"]:
-            sa = c.get("scraped_at", "")
+            cid = c.get("case_id", "")
             try:
-                ts = datetime.fromisoformat(sa.replace("Z", "+00:00"))
-                if ts < cutoff:
+                parts = cid.split("-")
+                raw = parts[1] if len(parts) >= 2 else ""
+                case_year = int(raw) + 2000 if len(raw) == 2 else int(raw)
+                if case_year < min_case_year:
                     continue
-            except (ValueError, AttributeError):
+            except (ValueError, IndexError, AttributeError):
                 pass
             vacant_cases.append(c)
 

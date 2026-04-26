@@ -1444,12 +1444,13 @@
           <button id="publish-btn" type="button" style="display:none;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#b56a34,#8c4e23);border:0;color:#fff8ef;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;">
             Publish to Live Site
           </button>
+          <button id="restore-btn" type="button" style="display:none;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#5c4ea1,#3d3270);border:0;color:#f7f1ff;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;">
+            Restore Backup
+          </button>
           <a id="seo-live-link" href="./index.html" target="_blank" rel="noopener noreferrer" style="display:none;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#3d546f,#2c3d51);border:0;color:#f5fbff;font-family:inherit;font-size:0.9rem;font-weight:700;letter-spacing:0.02em;text-decoration:none;">
             Open SEO Live Page
           </a>
-          <a id="cms-link" href="/admin/cms.html" target="_blank" rel="noopener noreferrer" style="display:none;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#4b6178,#33485d);border:0;color:#f5fbff;font-family:inherit;font-size:0.9rem;font-weight:700;letter-spacing:0.02em;text-decoration:none;">
-            Open CMS
-          </a>
+
           <span id="export-count" style="display:none;margin-left:4px;color:var(--ink-soft);font-size:0.85rem;"></span>
           <span id="publish-status" style="margin-left:4px;font-size:0.85rem;font-weight:600;"></span>
         </div>
@@ -1624,7 +1625,7 @@
   <div class="modal-shell" data-login-modal aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="login-title">
       <h3 id="login-title">Manage FAQ</h3>
-      <p>Enter review credentials to open management mode.</p>
+      <p>Enter your credentials and authenticator code.</p>
       <form class="login-form" data-login-form>
         <label>
           Login
@@ -1634,7 +1635,14 @@
           Password
           <input type="password" name="password" autocomplete="current-password" required>
         </label>
-        <div class="login-error" data-login-error></div>
+        <label>
+          Authenticator Code
+          <input type="text" name="totp_code" autocomplete="one-time-code"
+                 inputmode="numeric" maxlength="6" pattern="[0-9]{6}"
+                 placeholder="6-digit code" required
+                 style="letter-spacing:0.25em">
+        </label>
+          <div class="login-error" data-login-error aria-live="polite"></div>
         <div class="login-actions">
           <button class="login-cancel" type="button" data-login-cancel>Cancel</button>
           <button class="login-submit" type="submit">Sign in</button>
@@ -1650,16 +1658,58 @@
         return;
       }
 
-      var REVIEW_USER = "Aaron";
-      // SHA-256 of the admin password – plaintext never stored in source.
-      var REVIEW_PASSWORD_HASH = "afebf43cf94f084bf1dea949a5a1441eb51956602f2fb4caa82bae7fa45e53bb";
       var SESSION_TOKEN_KEY = "brockler-review-token";
-      var _sessionToken = ""; // holds typed password in memory after login
+      var _sessionToken = "";
       try {
-        _sessionToken = sessionStorage.getItem(SESSION_TOKEN_KEY) || "";
+        // Force re-authentication on every page load.
+        sessionStorage.removeItem(SESSION_TOKEN_KEY);
+        _sessionToken = "";
         window._brocklerSessionToken = _sessionToken;
+        // Show TOTP field — client-side TOTP is supported
+        var _totpRow = form ? form.querySelector('label:has([name="totp_code"])') : null;
+        if (_totpRow) { _totpRow.style.display = ""; }
+        var totpInput2 = form && form.elements.totp_code;
+        if (totpInput2) { totpInput2.required = true; }
       } catch (error) {
         _sessionToken = "";
+      }
+
+      // ── Client-side TOTP (RFC 6238) — no backend required ─────────────
+      var _TOTP_SECRET = "J7ZELJBTCXZ3RCAN5QN75EVV5UHC7IWE";
+      function _b32decode(s) {
+        var alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        s = s.toUpperCase().replace(/=+$/, "");
+        var bits = "";
+        for (var i = 0; i < s.length; i++) {
+          var v = alpha.indexOf(s[i]);
+          if (v < 0) throw new Error("bad b32");
+          bits += v.toString(2).padStart(5, "0");
+        }
+        var bytes = [];
+        for (var i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
+        return new Uint8Array(bytes);
+      }
+      function _validateTOTP(code) {
+        if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) return Promise.resolve(false);
+        var userCode = parseInt(code, 10);
+        var secretBytes = _b32decode(_TOTP_SECRET);
+        var now = Math.floor(Date.now() / 1000);
+        var windows = [Math.floor(now / 30) - 1, Math.floor(now / 30), Math.floor(now / 30) + 1];
+        return crypto.subtle.importKey("raw", secretBytes, { name: "HMAC", hash: "SHA-1" }, false, ["sign"])
+          .then(function (key) {
+            return Promise.all(windows.map(function (ctr) {
+              var buf = new ArrayBuffer(8);
+              var dv = new DataView(buf);
+              dv.setUint32(4, ctr, false);
+              return crypto.subtle.sign("HMAC", key, buf).then(function (sig) {
+                var h = new Uint8Array(sig);
+                var off = h[19] & 0xf;
+                var num = (((h[off] & 0x7f) << 24) | ((h[off+1] & 0xff) << 16) | ((h[off+2] & 0xff) << 8) | (h[off+3] & 0xff)) % 1000000;
+                return num === userCode;
+              });
+            }));
+          })
+          .then(function (results) { return results.some(Boolean); });
       }
       var STORAGE_KEY = "brockler-review-mode";
       var FAQ_STORAGE_KEY = "brockler-faq-answer-edits";
@@ -2262,6 +2312,8 @@
       }
       function closeModal() {
         if (!modal) { return; }
+        // Keep modal open when user is not authenticated yet.
+        if (!body.classList.contains("review-mode")) { return; }
         modal.classList.remove("is-open");
         modal.setAttribute("aria-hidden", "true");
       }
@@ -2282,6 +2334,14 @@
           card.classList.remove("is-editing");
           card.classList.remove("is-selected");
         });
+      }
+
+      function hasValidSessionToken(token) {
+        if (!token) { return Promise.resolve(false); }
+        return fetch("/cases?token=" + encodeURIComponent(token), { cache: "no-store" })
+          .then(function (res) { return res.json(); })
+          .then(function (data) { return !(data && data.error); })
+          .catch(function () { return false; });
       }
 
       buildFaqEditors();
@@ -2352,9 +2412,9 @@
       var syncBtnEl = document.getElementById('sync-live-btn');
       if (syncBtnEl) { syncBtnEl.addEventListener('click', function () { syncFromLive(); }); }
 
-      // Admin page always starts in review mode — controls visible immediately.
-      // Login modal is used only for Publish action which needs server auth.
-      enableReviewMode();
+      // Login-first behavior for /admin/: require auth on every load.
+      disableReviewMode();
+      openModal();
       if (manageLink) {
         manageLink.addEventListener("click", function (event) {
           event.preventDefault();
@@ -2362,43 +2422,71 @@
         });
       }
       if (cancelButton) {
-        cancelButton.addEventListener("click", closeModal);
+        cancelButton.addEventListener("click", function () {
+          if (body.classList.contains("review-mode")) {
+            closeModal();
+            return;
+          }
+          window.location.href = "/";
+        });
       }
       if (modal) {
         modal.addEventListener("click", function (event) {
-          if (event.target === modal) { closeModal(); }
+          if (event.target === modal && body.classList.contains("review-mode")) { closeModal(); }
         });
       }
       document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape" && modal && modal.classList.contains("is-open")) {
+        if (event.key === "Escape" && modal && modal.classList.contains("is-open") && body.classList.contains("review-mode")) {
           closeModal();
         }
       });
       if (form) {
         form.addEventListener("submit", function (event) {
           event.preventDefault();
-          var typed = passwordInput.value;
-          sha256Hex(typed).then(function (hash) {
-            if (usernameInput.value === REVIEW_USER && hash === REVIEW_PASSWORD_HASH) {
-              _sessionToken = typed;
-              window._brocklerSessionToken = typed;
-              try {
-                sessionStorage.setItem(SESSION_TOKEN_KEY, typed);
-              } catch (error) {
-                // Ignore browser storage restrictions.
+          var submitBtn = form.querySelector('[type="submit"]');
+          if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Verifying…"; }
+          var totpInput = form.elements.totp_code;
+          var username = usernameInput.value.trim().toLowerCase();
+          var password = passwordInput.value;
+          var totpCode = totpInput ? totpInput.value.trim() : "";
+          // Client-side auth: validate username, SHA-256 password, then TOTP
+          var validUser = (username === "aaron" || username === "brockler");
+          if (!validUser) {
+            errorNode.textContent = "Invalid credentials.";
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Sign in"; }
+            return;
+          }
+          crypto.subtle.digest("SHA-256", new TextEncoder().encode(password))
+            .then(function (hashBuf) {
+              var hex = Array.from(new Uint8Array(hashBuf)).map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+              if (hex !== "afebf43cf94f084bf1dea949a5a1441eb51956602f2fb4caa82bae7fa45e53bb") {
+                throw Object.assign(new Error("bad_creds"), { isCreds: true });
               }
-              enableReviewMode();
-              closeModal();
-              return;
-            }
-            errorNode.textContent = "Incorrect login or password.";
-          }).catch(function () {
-            errorNode.textContent = "Unable to verify login in this browser.";
-          });
+              return _validateTOTP(totpCode);
+            })
+            .then(function (valid) {
+              if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Sign in"; }
+              if (valid) {
+                _sessionToken = password;
+                window._brocklerSessionToken = _sessionToken;
+                try { sessionStorage.setItem(SESSION_TOKEN_KEY, _sessionToken); } catch (e) {}
+                enableReviewMode();
+                closeModal();
+              } else {
+                errorNode.textContent = "Invalid authenticator code. Check your app and try again.";
+              }
+            })
+            .catch(function (err) {
+              if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Sign in"; }
+              errorNode.textContent = (err && err.isCreds) ? "Invalid credentials." : "Verification error — try again.";
+            });
         });
       }
       if (logoutButton) {
-        logoutButton.addEventListener("click", function () { disableReviewMode(); });
+        logoutButton.addEventListener("click", function () {
+          disableReviewMode();
+          window.location.href = "/";
+        });
       }
 
       if (addFaqButton) {
@@ -2538,9 +2626,10 @@
       }
 
       var publishBtn    = document.getElementById("publish-btn");
+      var restoreBtn    = document.getElementById("restore-btn");
       var publishStatus = document.getElementById("publish-status");
       var seoLiveLink = document.getElementById("seo-live-link");
-      var cmsLink = document.getElementById("cms-link");
+
 
       function updateExportButton() {
         if (!exportBtn) { return; }
@@ -2551,8 +2640,9 @@
         var syncBtn = document.getElementById("sync-live-btn");
         if (syncBtn) { syncBtn.style.display = active ? "inline-flex" : "none"; syncBtn.style.alignItems = "center"; }
         if (publishBtn)  { publishBtn.style.display  = active ? "inline-flex" : "none"; publishBtn.style.alignItems = "center"; }
+        if (restoreBtn)  { restoreBtn.style.display  = active ? "inline-flex" : "none"; restoreBtn.style.alignItems = "center"; }
         if (seoLiveLink) { seoLiveLink.style.display = active ? "inline-flex" : "none"; seoLiveLink.style.alignItems = "center"; }
-        if (cmsLink) { cmsLink.style.display = active ? "inline-flex" : "none"; cmsLink.style.alignItems = "center"; }
+
         if (publishStatus) { publishStatus.style.display = active ? "inline" : "none"; }
         if (exportCount) {
           exportCount.style.display = active ? "inline" : "none";
@@ -2656,6 +2746,143 @@
               publishStatus.textContent = "Network error – is the save API running?";
             }
           });
+        });
+      }
+
+      /* ── Restore Previous Backup ─────────────────────────────────────── */
+      if (restoreBtn) {
+        restoreBtn.addEventListener("click", function () {
+          if (!_sessionToken) {
+            if (publishStatus) {
+              publishStatus.style.display = "inline";
+              publishStatus.style.color = "var(--ink-soft)";
+              publishStatus.textContent = "Sign in to restore backups.";
+            }
+            openModal();
+            return;
+          }
+
+          restoreBtn.disabled = true;
+          restoreBtn.textContent = "Loading Backups…";
+          if (publishStatus) {
+            publishStatus.style.display = "inline";
+            publishStatus.style.color = "var(--ink-soft)";
+            publishStatus.textContent = "Fetching backup list…";
+          }
+
+          fetch("/backups?limit=20&token=" + encodeURIComponent(_sessionToken))
+            .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+            .then(function (result) {
+              restoreBtn.disabled = false;
+              restoreBtn.textContent = "Restore Backup";
+
+              if (!result.ok || !result.data || !Array.isArray(result.data.backups)) {
+                if (result.data && result.data.error === "unauthorized") {
+                  _sessionToken = "";
+                  window._brocklerSessionToken = "";
+                  try { sessionStorage.removeItem(SESSION_TOKEN_KEY); } catch (error) {}
+                  if (publishStatus) {
+                    publishStatus.style.color = "#c0392b";
+                    publishStatus.textContent = "Session expired. Sign in again.";
+                  }
+                  openModal();
+                  return;
+                }
+                if (publishStatus) {
+                  publishStatus.style.color = "#c0392b";
+                  publishStatus.textContent = "Could not load backups.";
+                }
+                return;
+              }
+
+              var backups = result.data.backups;
+              if (!backups.length) {
+                if (publishStatus) {
+                  publishStatus.style.color = "var(--ink-soft)";
+                  publishStatus.textContent = "No backups available yet.";
+                }
+                return;
+              }
+
+              var options = backups.map(function (entry, idx) {
+                return (idx + 1) + ". " + entry.name;
+              }).join("\n");
+
+              var pick = prompt("Select a backup to restore by number:\n\n" + options, "1");
+              if (!pick) {
+                if (publishStatus) {
+                  publishStatus.style.color = "var(--ink-soft)";
+                  publishStatus.textContent = "Restore canceled.";
+                }
+                return;
+              }
+
+              var index = parseInt(pick, 10) - 1;
+              if (isNaN(index) || index < 0 || index >= backups.length) {
+                if (publishStatus) {
+                  publishStatus.style.color = "#c0392b";
+                  publishStatus.textContent = "Invalid backup selection.";
+                }
+                return;
+              }
+
+              var backupName = backups[index].name;
+              if (!confirm("Restore " + backupName + " as live index.html?\n\nCurrent live page will be backed up first.")) {
+                if (publishStatus) {
+                  publishStatus.style.color = "var(--ink-soft)";
+                  publishStatus.textContent = "Restore canceled.";
+                }
+                return;
+              }
+
+              restoreBtn.disabled = true;
+              restoreBtn.textContent = "Restoring…";
+              if (publishStatus) {
+                publishStatus.style.color = "var(--ink-soft)";
+                publishStatus.textContent = "Restoring backup…";
+              }
+
+              return fetch("/restore", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ backup: backupName, token: _sessionToken })
+              })
+              .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+              .then(function (restoreResult) {
+                restoreBtn.disabled = false;
+                restoreBtn.textContent = "Restore Backup";
+                if (restoreResult.ok && restoreResult.data && restoreResult.data.ok) {
+                  if (publishStatus) {
+                    publishStatus.style.color = "#5f6d40";
+                    publishStatus.textContent = "Restored from " + backupName + (restoreResult.data.backup ? " (live page backed up as " + restoreResult.data.backup + ")" : "");
+                  }
+                } else {
+                  if (restoreResult.data && restoreResult.data.error === "unauthorized") {
+                    _sessionToken = "";
+                    window._brocklerSessionToken = "";
+                    try { sessionStorage.removeItem(SESSION_TOKEN_KEY); } catch (error) {}
+                    if (publishStatus) {
+                      publishStatus.style.color = "#c0392b";
+                      publishStatus.textContent = "Session expired. Sign in again.";
+                    }
+                    openModal();
+                    return;
+                  }
+                  if (publishStatus) {
+                    publishStatus.style.color = "#c0392b";
+                    publishStatus.textContent = "Restore failed: " + (restoreResult.data && restoreResult.data.error ? restoreResult.data.error : "unknown error");
+                  }
+                }
+              });
+            })
+            .catch(function () {
+              restoreBtn.disabled = false;
+              restoreBtn.textContent = "Restore Backup";
+              if (publishStatus) {
+                publishStatus.style.color = "#c0392b";
+                publishStatus.textContent = "Network error while restoring backup.";
+              }
+            });
         });
       }
 
@@ -2902,7 +3129,19 @@
           .then(function (r) { return r.json(); })
           .then(function (data) {
             syncStatus.textContent = "";
-            if (data.error) { syncStatus.style.color="#c0392b"; syncStatus.textContent = "Error: " + data.error; return; }
+            if (data.error) {
+              if (data.error === "unauthorized") {
+                syncStatus.style.color = "#c0392b";
+                syncStatus.textContent = "Session expired. Sign in again.";
+                syncInfo.textContent = "Last sync: —";
+                disableReviewMode();
+                openModal();
+                return;
+              }
+              syncStatus.style.color = "#c0392b";
+              syncStatus.textContent = "Error: " + data.error;
+              return;
+            }
             renderGrid(myGrid, data.brockler_cases, "No active cases found. Run push_brockler_cases.py to sync.");
             renderGrid(vacantGrid, data.vacant_cases, "No new unrepresented filings found.");
             updateStats(data);

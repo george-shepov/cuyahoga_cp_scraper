@@ -92,4 +92,18 @@ archived_jsons*/
 analysis_output/
 pdf_images/
 other/*.zip
+
+# Runtime state and temp files
+state/
+tmp_*.json
+*_cache.json
+
+# Analysis output files (one-off reports)
+sep_*.csv
+term_extraction_results.txt
+mandamus_*.txt
+all_cases_comprehensive.csv
+attorneys_analysis.csv
+judges_analysis.csv
+prosecutors_analysis.csv
 other/*.tar.gz

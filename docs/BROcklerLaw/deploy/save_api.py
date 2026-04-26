@@ -11,6 +11,7 @@ import os
 import json
 import logging
 import hashlib
+import re
 import urllib.request
 import urllib.error
 from datetime import datetime
@@ -18,14 +19,10 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 
 # ── Config ──────────────────────────────────────────────────────────────────
-DEFAULT_SITE_ROOT = "/var/www/foxxiie.com/brocklerlaw"
+DEFAULT_SITE_ROOT = "/var/www/prosecutordefense.com/brocklerlaw"
 SITE_ROOTS = {
-    "foxxiie.com": "/var/www/foxxiie.com/brocklerlaw",
-    "www.foxxiie.com": "/var/www/foxxiie.com/brocklerlaw",
     "prosecutordefense.com": "/var/www/prosecutordefense.com/brocklerlaw",
     "www.prosecutordefense.com": "/var/www/prosecutordefense.com/brocklerlaw",
-    "procecutordefense.com": "/var/www/prosecutordefense.com/brocklerlaw",
-    "www.procecutordefense.com": "/var/www/prosecutordefense.com/brocklerlaw",
 }
 # Optional environment token. If absent, fall back to checking the same password
 # hash already embedded in the admin UI so the service can still run safely.
@@ -37,17 +34,19 @@ API_TOKEN_HASH = os.environ.get(
 MAX_BYTES   = 2 * 1024 * 1024   # 2 MB sanity cap
 LISTEN_HOST = "127.0.0.1"
 LISTEN_PORT = 8765
-CASES_FILE   = "/opt/brocklerlaw-save/cases_data.json"
-VISITS_FILE  = "/opt/brocklerlaw-save/visits.log"
+CASES_FILE        = "/opt/brocklerlaw-save/cases_data.json"
+VISITS_FILE       = "/opt/brocklerlaw-save/visits.log"
+SCRAPE_TRIGGER_FILE = "/opt/brocklerlaw-save/scrape_trigger.json"
+BACKUP_NAME_RE = re.compile(r"^index_\d{8}_\d{6}\.html$")
 
 # ── Stripe config (set via environment variables) ────────────────────────────
 STRIPE_SECRET_KEY   = os.environ.get("STRIPE_SECRET_KEY", "")          # sk_live_... or sk_test_...
 STRIPE_PRICE_ID     = os.environ.get("STRIPE_PRICE_ID", "")             # price_... from Stripe dashboard
 STRIPE_TRIAL_DAYS   = int(os.environ.get("STRIPE_TRIAL_DAYS", "14"))
 STRIPE_SUCCESS_URL  = os.environ.get("STRIPE_SUCCESS_URL",
-                                     "https://foxxiie.com/?trial=success")
+                                     "https://prosecutordefense.com/?trial=success")
 STRIPE_CANCEL_URL   = os.environ.get("STRIPE_CANCEL_URL",
-                                     "https://foxxiie.com/?trial=cancelled")
+                                     "https://prosecutordefense.com/?trial=cancelled")
 STRIPE_API_BASE     = "https://api.stripe.com/v1"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -66,6 +65,53 @@ def token_is_valid(token: str) -> bool:
         token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
         return token_hash == API_TOKEN_HASH
     return False
+
+
+def list_backups(site_root: str, limit: int = 50) -> list[dict]:
+    try:
+        names = os.listdir(site_root)
+    except OSError:
+        return []
+
+    backups = []
+    for name in names:
+        if not BACKUP_NAME_RE.match(name):
+            continue
+        full = os.path.join(site_root, name)
+        try:
+            stat = os.stat(full)
+        except OSError:
+            continue
+        backups.append(
+            {
+                "name": name,
+                "size": stat.st_size,
+                "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+            }
+        )
+
+    backups.sort(key=lambda item: item["name"], reverse=True)
+    return backups[: max(1, min(limit, 200))]
+
+
+def write_atomic_text(path: str, content: str):
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        fh.write(content)
+    os.replace(tmp, path)
+
+
+def backup_current_index(index_file: str, site_root: str) -> str | None:
+    if not os.path.exists(index_file):
+        return None
+
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = os.path.join(site_root, f"index_{ts}.html")
+    with open(index_file, "rb") as src:
+        content = src.read()
+    with open(backup_path, "wb") as dst:
+        dst.write(content)
+    return os.path.basename(backup_path)
 
 
 class SaveHandler(BaseHTTPRequestHandler):
@@ -110,6 +156,24 @@ class SaveHandler(BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
             return
+        if parsed.path.rstrip("/") == "/backups":
+            qs = parse_qs(parsed.query)
+            token = qs.get("token", [""])[0]
+            if not isinstance(token, str) or not token_is_valid(token):
+                self.send_json(403, {"error": "unauthorized"})
+                return
+
+            host = self.headers.get("Host", "")
+            site_root = site_root_for_host(host)
+            limit_raw = qs.get("limit", ["50"])[0]
+            try:
+                limit = int(limit_raw)
+            except ValueError:
+                limit = 50
+
+            self.send_json(200, {"ok": True, "backups": list_backups(site_root, limit=limit)})
+            return
+
         if parsed.path.rstrip("/") != "/cases":
             self.send_json(404, {"error": "not found"})
             return
@@ -151,7 +215,35 @@ class SaveHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
 
-        if path not in ("/save", "/cases-sync"):
+        # ── /scrape-trigger – queue a real-time scrape on the mining node ──
+        if path == "/scrape-trigger":
+            length = int(self.headers.get("Content-Length", 0))
+            raw = self.rfile.read(min(length, MAX_BYTES)) if length else b""
+            try:
+                body = json.loads(raw.decode("utf-8")) if raw.strip() else {}
+            except (ValueError, UnicodeDecodeError):
+                self.send_json(400, {"error": "invalid JSON"})
+                return
+            token = body.get("token", "")
+            if not isinstance(token, str) or not token_is_valid(token):
+                self.send_json(403, {"error": "unauthorized"})
+                return
+            ts = datetime.now().isoformat()
+            trigger = {"requested": True, "requested_at": ts, "requested_by": "admin"}
+            try:
+                os.makedirs(os.path.dirname(SCRAPE_TRIGGER_FILE), exist_ok=True)
+                tmp = SCRAPE_TRIGGER_FILE + ".tmp"
+                with open(tmp, "w", encoding="utf-8") as fh:
+                    json.dump(trigger, fh)
+                os.replace(tmp, SCRAPE_TRIGGER_FILE)
+                log.info("scrape trigger queued at %s", ts)
+                self.send_json(200, {"ok": True, "queued_at": ts})
+            except OSError as exc:
+                log.error("trigger write error: %s", exc)
+                self.send_json(500, {"error": "write failed"})
+            return
+
+        if path not in ("/save", "/cases-sync", "/restore"):
             self.send_json(404, {"error": "not found"})
             return
 
@@ -195,6 +287,44 @@ class SaveHandler(BaseHTTPRequestHandler):
                 self.send_json(500, {"error": "write failed"})
             return
 
+        if path == "/restore":
+            backup_name = payload.get("backup", "")
+            if not isinstance(backup_name, str) or not BACKUP_NAME_RE.match(backup_name):
+                self.send_json(400, {"error": "invalid backup name"})
+                return
+
+            site_root = site_root_for_host(self.headers.get("Host", ""))
+            index_file = os.path.join(site_root, "index.html")
+            backup_file = os.path.join(site_root, backup_name)
+
+            if not os.path.exists(backup_file):
+                self.send_json(404, {"error": "backup not found"})
+                return
+
+            try:
+                os.makedirs(site_root, exist_ok=True)
+                pre_restore_backup = backup_current_index(index_file, site_root)
+                with open(backup_file, "r", encoding="utf-8") as src:
+                    restored_html = src.read()
+                write_atomic_text(index_file, restored_html)
+                log.info(
+                    "Restored index.html from %s for host %s",
+                    backup_name,
+                    self.headers.get("Host", ""),
+                )
+                self.send_json(
+                    200,
+                    {
+                        "ok": True,
+                        "restored_from": backup_name,
+                        "backup": pre_restore_backup,
+                    },
+                )
+            except OSError as exc:
+                log.error("Restore failed: %s", exc)
+                self.send_json(500, {"error": "restore failed"})
+            return
+
         html = payload.get("html", "")
         if not isinstance(html, str) or len(html.strip()) < 100:
             self.send_json(400, {"error": "html missing or too short"})
@@ -205,15 +335,11 @@ class SaveHandler(BaseHTTPRequestHandler):
 
         # ── Backup existing index.html ───────────────────────────────────
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_path = os.path.join(site_root, f"index_{ts}.html")
         try:
             os.makedirs(site_root, exist_ok=True)
-            if os.path.exists(index_file):
-                with open(index_file, "rb") as src:
-                    content = src.read()
-                with open(backup_path, "wb") as dst:
-                    dst.write(content)
-                log.info("Backed up → %s", backup_path)
+            backup_name = backup_current_index(index_file, site_root)
+            if backup_name:
+                log.info("Backed up → %s", os.path.join(site_root, backup_name))
             else:
                 log.info("No existing index.html to back up")
         except OSError as exc:
@@ -222,18 +348,15 @@ class SaveHandler(BaseHTTPRequestHandler):
             return
 
         # ── Write new index.html ─────────────────────────────────────────
-        tmp = index_file + ".tmp"
         try:
-            with open(tmp, "w", encoding="utf-8") as f:
-                f.write(html)
-            os.replace(tmp, index_file)   # atomic on Linux
+            write_atomic_text(index_file, html)
             log.info("Published new index.html for host %s (%d bytes)", self.headers.get("Host", ""), len(html))
         except OSError as exc:
             log.error("Write failed: %s", exc)
             self.send_json(500, {"error": "write failed"})
             return
 
-        self.send_json(200, {"ok": True, "backup": os.path.basename(backup_path), "ts": ts})
+        self.send_json(200, {"ok": True, "backup": backup_name, "ts": ts})
 
     def _handle_stripe_checkout(self):
         """Create a Stripe Checkout Session for a subscription with trial period."""

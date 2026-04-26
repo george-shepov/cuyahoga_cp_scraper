@@ -35,6 +35,17 @@ BASE_URL = os.getenv("BASE_URL", "https://cpdocket.cp.cuyahogacounty.gov")
 # Optional: toned-down delays by default
 DEFAULT_DELAY = max(300, int(os.getenv("DELAY_MS", "800")))  # 0.3–0.8s polite delay
 
+
+def _two_digit_to_full_year(y2: int) -> int:
+    """Convert a 2-digit court year to a full 4-digit year.
+
+    The court system uses 2-digit years in case IDs (e.g., CR-71-000006-ZA).
+    Cases from 1971–1999 have year codes 71–99; cases from 2000+ have 00–26 etc.
+    We use a cutoff of 40: values >= 40 are treated as 19xx, values < 40 as 20xx.
+    This correctly handles records back to at least 1971 and forward through 2039.
+    """
+    return (1900 + y2) if y2 >= 40 else (2000 + y2)
+
 console = Console()
 
 # Watchdog / stagnation controls (seconds and max consecutive no-save events)
@@ -55,6 +66,7 @@ class Cfg(BaseModel):
     capture_printer_pdfs: bool = False if os.getenv("CAPTURE_PRINTER_PDFS", "false").lower() == "false" else True
     download_all_pdfs: bool = False if os.getenv("DOWNLOAD_ALL_PDFS", "false").lower() == "false" else True
     pdf_cases: List[str] = []  # Specific cases to download PDFs for
+    pdf_types: List[str] = []  # Limit downloads to specific document types (e.g. ["CR", "JE"]); empty = no type filter
 
     @field_validator("direction")
     @classmethod
@@ -761,18 +773,17 @@ async def detect_year_from_case_number(page: Page, number: int) -> Optional[int]
         
         if match:
             year_2digit = int(match.group(1))
-            # Convert 2-digit year to 4-digit
-            full_year = 2000 + year_2digit
+            full_year = _two_digit_to_full_year(year_2digit)
             console.print(f"[green]✓ Detected year: {full_year} (from case ID pattern)[/green]")
             return full_year
         
         # Alternative: look for the case link text directly
-        case_link_pattern = re.compile(r'CR-(\d{2})-\d{6}-[A-Z]')
+        case_link_pattern = re.compile(r'CR-(\d{2})-\d{6}-[A-Z]+')
         matches = case_link_pattern.findall(page_content)
         
         if matches:
             year_2digit = int(matches[0])
-            full_year = 2000 + year_2digit
+            full_year = _two_digit_to_full_year(year_2digit)
             console.print(f"[green]✓ Detected year: {full_year} (from case link)[/green]")
             return full_year
         
@@ -821,12 +832,23 @@ async def search_case(page: Page, year: int, number: int) -> Optional[str]:
         except Exception as e:
             console.print(f"[yellow]Failed to re-select category: {e}[/yellow]")
     
-    # Fill year
+    # Fill year — the dropdown may use 4-digit labels ("2025"), 2-digit labels ("25"),
+    # or for pre-2000 records, just 2 digits ("71" for 1971).
     try:
         year_select = page.locator("select[name*='ddlCaseYear']")
         if await year_select.count() > 0:
-            await year_select.select_option(label=str(year))
-            console.print(f"[green]Selected year: {year}[/green]")
+            year_2d = str(year)[-2:]  # e.g. "71" for 1971, "25" for 2025
+            selected = False
+            for label_attempt in (str(year), year_2d):
+                try:
+                    await year_select.select_option(label=label_attempt)
+                    console.print(f"[green]Selected year: {label_attempt}[/green]")
+                    selected = True
+                    break
+                except Exception:
+                    pass
+            if not selected:
+                console.print(f"[red]Failed to select year {year} (tried '{year}' and '{year_2d}')[/red]")
         else:
             console.print("[red]No year select found![/red]")
     except Exception as e:
@@ -989,7 +1011,7 @@ async def search_case(page: Page, year: int, number: int) -> Optional[str]:
         console.print("[yellow]Timeout waiting for case info URL pattern[/yellow]")
 
     # Extract a case-id looking token
-    m = re.search(r"CR-\d{2}-\d{6}-[A-Z]", response_html)
+    m = re.search(r"CR-\d{2}-\d{6}-[A-Z]+", response_html)
     if m:
         console.print(f"[green]Found case ID: {m.group(0)}[/green]")
         return m.group(0)
@@ -1107,7 +1129,7 @@ def parse_co_defendants(summary_fields: Dict[str, Any]) -> List[Dict[str, Any]]:
     
     # Parse linked case numbers
     # Format: <a href='...'>CR-25-123456-A</a>, <a href='...'>CR-25-123457-A</a>
-    case_numbers = re.findall(r'(CR-\d{2}-\d{6}-[A-Z])', str(co_def_text))
+    case_numbers = re.findall(r'(CR-\d{2}-\d{6}-[A-Z]+)', str(co_def_text))
     
     # Also try to extract names if present
     co_defendants = []
@@ -1222,7 +1244,7 @@ async def extract_summary(page: Page) -> Dict[str, Any]:
     """Extract the summary section with co-defendants, charges, bonds, and case actions"""
     html = await page.content()
     case_id = None
-    m = re.search(r"(CR-\d{2}-\d{6}-[A-Z])", html)
+    m = re.search(r"(CR-\d{2}-\d{6}-[A-Z]+)", html)
     if m:
         case_id = m.group(1)
     data = {"case_id": case_id}
@@ -1520,7 +1542,8 @@ async def download_pdf_with_playwright(page: Page, pdf_link: str, output_path: P
         return False
 
 async def download_case_pdfs(page: Page, docket_entries: List[Dict[str, Any]], case_id: str, 
-                           pdf_dir: Path, sentencing_only: bool = True) -> Dict[str, Any]:
+                           pdf_dir: Path, sentencing_only: bool = True,
+                           pdf_types: List[str] = None) -> Dict[str, Any]:
     """Download PDFs for a case using the authenticated browser session
     
     Args:
@@ -1529,6 +1552,8 @@ async def download_case_pdfs(page: Page, docket_entries: List[Dict[str, Any]], c
         case_id: Case identifier (e.g., CR-23-684826-A)
         pdf_dir: Base directory for PDF storage
         sentencing_only: If True, only download sentencing/judgment entries (JE). Default True.
+        pdf_types: If provided, only download PDFs whose docket_type is in this list (e.g. ["CR", "JE"]).
+                   Takes precedence over sentencing_only when non-empty.
     """
     pdf_info = {
         "total_pdfs": 0,
@@ -1545,8 +1570,16 @@ async def download_case_pdfs(page: Page, docket_entries: List[Dict[str, Any]], c
     # Filter for PDFs
     pdf_entries = [entry for entry in docket_entries if entry.get("pdf_link")]
     
+    # If pdf_types provided, filter to only those types (takes precedence over sentencing_only)
+    if pdf_types:
+        upper_types = [t.upper() for t in pdf_types]
+        pdf_entries = [
+            entry for entry in pdf_entries
+            if entry.get("docket_type", entry.get("document_type", "")).upper() in upper_types
+        ]
+        console.print(f"[cyan]Found {len(pdf_entries)} PDFs of type(s) {upper_types} for case {case_id}[/cyan]")
     # If sentencing_only, filter for JE documents
-    if sentencing_only:
+    elif sentencing_only:
         pdf_entries = [
             entry for entry in pdf_entries 
             if entry.get("docket_type", entry.get("document_type", "")).upper() in ("JE", "SENTENCING", "JUDGMENT ENTRY")
@@ -1558,7 +1591,9 @@ async def download_case_pdfs(page: Page, docket_entries: List[Dict[str, Any]], c
     pdf_info["total_pdfs"] = len(pdf_entries)
     
     if not pdf_entries:
-        if sentencing_only:
+        if pdf_types:
+            console.print(f"[blue]ℹ No PDFs of type(s) {[t.upper() for t in pdf_types]} found for case {case_id}[/blue]")
+        elif sentencing_only:
             console.print(f"[blue]ℹ No sentencing PDFs found for case {case_id}[/blue]")
         else:
             console.print(f"[yellow]No PDFs found for case {case_id}[/yellow]")
@@ -1978,7 +2013,8 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                        download_pdfs: bool = False, case_id_filter: Optional[List[str]] = None,
                        capture_printer_pdfs: bool = False,
                        download_all_pdfs: bool = False,
-                       capture_tab_artifacts: bool = True) -> Dict[str, Any]:
+                       capture_tab_artifacts: bool = True,
+                       pdf_types: List[str] = None) -> Dict[str, Any]:
     console.print(f"[cyan]>>> Working case {year}-{number:06d}[/cyan]")
     
     # Create comprehensive case data structure
@@ -2145,15 +2181,20 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
                         case_id,
                         pdf_dir,
                         sentencing_only=not download_all_pdfs,
+                        pdf_types=pdf_types,
                     )
                     case_data["pdf_info"] = pdf_info
                     if pdf_info["downloaded"] > 0:
-                        if download_all_pdfs:
+                        if pdf_types:
+                            console.print(f"[green]✓ Type-filtered PDFs: {pdf_info['downloaded']}/{pdf_info['total_pdfs']} downloaded[/green]")
+                        elif download_all_pdfs:
                             console.print(f"[green]✓ All docket PDFs: {pdf_info['downloaded']}/{pdf_info['total_pdfs']} downloaded[/green]")
                         else:
                             console.print(f"[green]✓ Sentencing PDFs: {pdf_info['downloaded']}/{pdf_info['total_pdfs']} downloaded[/green]")
                     elif pdf_info["total_pdfs"] == 0:
-                        if download_all_pdfs:
+                        if pdf_types:
+                            console.print(f"[blue]ℹ No PDFs of type(s) {pdf_types} to download[/blue]")
+                        elif download_all_pdfs:
                             console.print(f"[blue]ℹ No docket PDFs to download[/blue]")
                         else:
                             console.print(f"[blue]ℹ No sentencing PDFs to download[/blue]")
@@ -2505,6 +2546,7 @@ async def run():
     scraper.add_argument("--download-pdfs", action="store_true", help="Download PDF files from docket entries")
     scraper.add_argument("--capture-printer-pdfs", action="store_true", help="Capture printer-friendly page PDFs (large volume; off by default)")
     scraper.add_argument("--all-pdfs", action="store_true", help="When --download-pdfs is set, download all docket PDFs (not only JE)")
+    scraper.add_argument("--pdf-types", nargs="+", metavar="TYPE", help="Only download PDFs of these docket types (e.g. --pdf-types CR JE). Overrides --all-pdfs filtering.")
     scraper.add_argument("--pdf-cases", nargs="*", help="Specific case IDs to download PDFs for (e.g., CR-25-706402-A)")
     scraper.add_argument("--discover-years", action="store_true", help="Discover and scrape full years (default: 2026, 2025, 2024)")
     scraper.add_argument("--years", nargs="+", type=int, help="Years to discover/scrape in order (e.g., --years 2026 2025 2024)")
@@ -2514,7 +2556,11 @@ async def run():
     scraper.add_argument("--frontier-interval", type=int, default=300, help="Seconds between frontier checks for new cases (default 300)")
     scraper.add_argument("--max-batch-size", type=int, default=200, help="Max numbers to enqueue per frontier expansion")
     scraper.add_argument("--reference-case", type=int, default=706402, help="Reference case number to start discovery from")
-    
+    scraper.add_argument("--historical", action="store_true",
+                         help="Historical archive mode: pre-2000 cases, case numbers are 0-padded strings, "
+                              "suffixes may be multi-char (e.g. -ZA). Applies slow delay (2500ms), "
+                              "1 worker, and headless mode. Combine with --year and --start.")
+
     # Statistics command
     stats_cmd = subparsers.add_parser("stats", help="Generate statistics and analysis for downloaded data")
     stats_cmd.add_argument("--year", type=int, default=2025, help="Year to analyze")
@@ -2564,9 +2610,19 @@ async def run():
     
     # Handle year auto-detection
     year_to_use = args.year
-    
-    # Simplified headless logic - if --headless flag is set, use headless mode
-    use_headless = args.headless or os.getenv("HEADLESS", "false").lower() == "true"
+
+    # --historical mode: pre-2000 archive, slow/polite, single worker
+    if getattr(args, "historical", False):
+        console.print("[bold yellow]📜 Historical archive mode enabled (pre-2000 cases)[/bold yellow]")
+        use_headless = True
+        args.delay_ms = max(args.delay_ms, 2500)
+        args.workers = 1
+        if year_to_use is None:
+            console.print("[red]--historical requires --year (e.g. --year 1971)[/red]")
+            return
+    else:
+        # Simplified headless logic - if --headless flag is set, use headless mode
+        use_headless = args.headless or os.getenv("HEADLESS", "false").lower() == "true"
     
     cfg = Cfg(
         headless=use_headless,
@@ -2576,7 +2632,8 @@ async def run():
         download_pdfs=args.download_pdfs,
         capture_printer_pdfs=args.capture_printer_pdfs,
         download_all_pdfs=args.all_pdfs,
-        pdf_cases=pdf_cases
+        pdf_cases=pdf_cases,
+        pdf_types=args.pdf_types or [],
     )
 
     # Determine years to process
@@ -2701,18 +2758,19 @@ async def run():
                 # Single year/range mode - pass playwright instance for context recovery
                 await process_case_range(p, cfg.year, targets, out_dir, resume_file,
                                    cfg.delay_ms, cfg.download_pdfs, cfg.capture_printer_pdfs, cfg.download_all_pdfs, cfg.pdf_cases,
-                                   headless=cfg.headless, workers=max(1, args.workers))
+                                   headless=cfg.headless, workers=max(1, args.workers), pdf_types=cfg.pdf_types)
 
     console.print(f"[green]Done.[/green] Output at: {cfg.output_dir}")
 
 async def process_case_range(playwright_instance: Playwright, year: int, targets: List[int], out_dir: Path,
                            resume_file: Path, delay_ms: int, download_pdfs: bool, capture_printer_pdfs: bool, download_all_pdfs: bool, pdf_cases: List[str],
-                           headless: bool = True, workers: int = 1):
+                           headless: bool = True, workers: int = 1, pdf_types: List[str] = None):
     """Process a specific range of case numbers for a single year with context recovery and tracking"""
     if workers > 1:
         await process_case_range_parallel(
             playwright_instance, year, targets, out_dir, resume_file,
             delay_ms, download_pdfs, capture_printer_pdfs, download_all_pdfs, pdf_cases, headless=headless, workers=workers,
+            pdf_types=pdf_types,
         )
         return
 
@@ -2825,7 +2883,8 @@ async def process_case_range(playwright_instance: Playwright, year: int, targets
                 case_data = None
                 for attempt in range(1, max_case_attempts + 1):
                     case_data = await snapshot_case(page, year, num, out_dir, delay_ms,
-                                                   download_pdfs, pdf_cases, capture_printer_pdfs, download_all_pdfs)
+                                                   download_pdfs, pdf_cases, capture_printer_pdfs, download_all_pdfs,
+                                                   pdf_types=pdf_types)
 
                     if not case_data["metadata"].get("exists"):
                         break
@@ -3014,7 +3073,7 @@ async def process_case_range(playwright_instance: Playwright, year: int, targets
 
 async def process_case_range_parallel(playwright_instance: Playwright, year: int, targets: List[int], out_dir: Path,
                                      resume_file: Path, delay_ms: int, download_pdfs: bool, capture_printer_pdfs: bool, download_all_pdfs: bool, pdf_cases: List[str], *,
-                                     headless: bool = True, workers: int = 3):
+                                     headless: bool = True, workers: int = 3, pdf_types: List[str] = None):
     """Process case numbers in parallel with one browser context per worker."""
     workers = max(1, workers)
     tracker = CaseTracker(year, targets[0], targets[-1], out_dir)
@@ -3077,7 +3136,7 @@ async def process_case_range_parallel(playwright_instance: Playwright, year: int
                         max_case_attempts = 3
                         case_data = None
                         for attempt in range(1, max_case_attempts + 1):
-                            case_data = await snapshot_case(page, year, num, out_dir, delay_ms, download_pdfs, pdf_cases, capture_printer_pdfs, download_all_pdfs)
+                            case_data = await snapshot_case(page, year, num, out_dir, delay_ms, download_pdfs, pdf_cases, capture_printer_pdfs, download_all_pdfs, pdf_types=pdf_types)
 
                             if not case_data["metadata"].get("exists"):
                                 break
@@ -3331,7 +3390,7 @@ async def process_live_mode(playwright_instance: Playwright, year: int, year_dir
 
             try:
                 console.print(f"[cyan][W{worker_id}] Working {year}-{n:06d}[/cyan]")
-                case_data = await snapshot_case(page, year, n, year_dir, delay_ms, download_pdfs, pdf_cases, capture_printer_pdfs, download_all_pdfs)
+                case_data = await snapshot_case(page, year, n, year_dir, delay_ms, download_pdfs, pdf_cases, capture_printer_pdfs, download_all_pdfs, pdf_types=pdf_types)
 
                 ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
                 fname = f"{year}-{n:06d}_{ts}.json"

@@ -3,12 +3,13 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.deps import get_current_user
 from app.schemas.billing import BillingSummaryResponse, UsageRecordRequest
 from app.services.billing_service import get_billing_summary
 from app.services.usage_metering_service import record_usage
 from database.session import SessionLocal
 
-router = APIRouter(tags=["billing"])
+router = APIRouter(tags=["billing"], dependencies=[Depends(get_current_user)])
 
 
 def get_db() -> Session:
