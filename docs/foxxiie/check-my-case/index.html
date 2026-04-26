@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Check My Case | Cuyahoga County Court Database</title>
+  <meta name="description" content="Look up your Cuyahoga County criminal case — docket entries, hearing dates, charges, and attorney information from the Common Pleas Court.">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#12151a">
+  <style>
+    :root {
+      --ink: #16191d;
+      --ink-soft: #53606c;
+      --ink-inverse: #f9f5ee;
+      --line: rgba(22, 25, 29, 0.11);
+      --steel: #263342;
+      --accent: #b56a34;
+      --accent-light: #d7874d;
+      --shadow: 0 22px 70px rgba(24, 28, 34, 0.13);
+      --radius-xl: 32px;
+      --radius-lg: 24px;
+      --serif: "Baskerville", "Iowan Old Style", "Palatino Linotype", serif;
+      --sans: "Avenir Next", "Segoe UI", "Trebuchet MS", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; min-height: 100vh;
+      color: var(--ink); font-family: var(--sans);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(181, 106, 52, 0.15), transparent 24%),
+        radial-gradient(circle at 85% 12%, rgba(38, 51, 66, 0.10), transparent 22%),
+        linear-gradient(180deg, #f6efe3 0%, #efe5d7 48%, #f7f1e8 100%);
+      overflow-x: hidden;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(22, 25, 29, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(22, 25, 29, 0.03) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at center, black 52%, transparent 100%);
+      opacity: 0.5;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    .shell {
+      position: relative; z-index: 1;
+      width: min(100% - 20px, 860px);
+      margin: 0 auto;
+      padding: max(16px, env(safe-area-inset-top)) 0 max(48px, env(safe-area-inset-bottom));
+    }
+
+    /* ── hero ──────────────────────────────────────────────── */
+    .hero {
+      margin-top: 12px; padding: 32px 28px 28px;
+      border-radius: var(--radius-xl);
+      border: 1px solid rgba(255,255,255,0.46);
+      background: linear-gradient(135deg, rgba(16,19,25,0.97), rgba(31,39,50,0.96));
+      color: var(--ink-inverse);
+      box-shadow: var(--shadow);
+      overflow: hidden; position: relative; isolation: isolate;
+    }
+    .hero::before {
+      content: ""; position: absolute; border-radius: 999px; filter: blur(14px); z-index: -1;
+      width: 320px; height: 320px; right: -80px; top: -130px;
+      background: radial-gradient(circle, rgba(181,106,52,0.52), transparent 68%);
+    }
+    .nav {
+      display: flex; justify-content: space-between;
+      gap: 16px; align-items: center; margin-bottom: 20px;
+    }
+    .brand { font-family: var(--serif); font-size: 1.3rem; letter-spacing: 0.01em; color: var(--ink-inverse); }
+    .nav-links { display: flex; gap: 20px; }
+    .nav-links a { font-size: 0.85rem; color: rgba(249,245,238,0.6); font-weight: 600; }
+    .nav-links a:hover { color: var(--ink-inverse); }
+
+    .eyebrow {
+      display: inline-flex; gap: 10px; align-items: center;
+      padding: 7px 14px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.08);
+      color: #ffddb9; text-transform: uppercase;
+      letter-spacing: 0.16em; font-size: 0.67rem; font-weight: 700;
+    }
+    h1 {
+      font-family: var(--serif); font-weight: 700; letter-spacing: -0.03em;
+      margin: 14px 0 0; font-size: clamp(2.2rem, 7vw, 3.8rem); line-height: 1.0;
+    }
+    .hero-sub {
+      margin: 12px 0 0; max-width: 56ch;
+      color: rgba(249,245,238,0.75); line-height: 1.7; font-size: 0.96rem;
+    }
+
+    /* ── search form ───────────────────────────────────────── */
+    .search-wrap {
+      margin-top: 24px;
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    .search-input {
+      flex: 1 1 240px; padding: 14px 18px;
+      border-radius: 14px; border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10); color: var(--ink-inverse);
+      font-family: var(--sans); font-size: 1rem; font-weight: 600;
+      letter-spacing: 0.04em; outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      text-transform: uppercase;
+    }
+    .search-input::placeholder { color: rgba(249,245,238,0.38); text-transform: none; }
+    .search-input:focus { border-color: var(--accent); background: rgba(255,255,255,0.15); }
+    .search-btn {
+      padding: 14px 28px; border-radius: 14px; border: none;
+      background: var(--accent); color: #fff;
+      font-family: var(--sans); font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; transition: background 0.2s, transform 0.1s;
+    }
+    .search-btn:hover { background: var(--accent-light); }
+    .search-btn:active { transform: scale(0.98); }
+    .search-hint { margin-top: 10px; font-size: 0.8rem; color: rgba(249,245,238,0.45); width: 100%; }
+
+    /* ── result area ───────────────────────────────────────── */
+    #result {
+      margin-top: 28px;
+      display: none;
+    }
+    .result-card {
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+      border-radius: var(--radius-lg); padding: 22px 22px;
+      color: var(--ink-inverse);
+    }
+    .result-card h2 { font-family: var(--serif); margin: 0 0 16px; font-size: 1.5rem; }
+    .result-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.9rem; }
+    .result-row:last-child { border-bottom: none; }
+    .result-label { color: rgba(249,245,238,0.55); }
+    .result-value { font-weight: 600; text-align: right; }
+    .status-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700;
+    }
+    .status-pending { background: rgba(154,98,0,0.35); color: #ffd080; }
+    .status-disposed { background: rgba(42,122,59,0.35); color: #7fd898; }
+
+    #result-not-found {
+      margin-top: 28px; display: none;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--radius-lg); padding: 22px;
+      color: rgba(249,245,238,0.70); font-size: 0.95rem; line-height: 1.65;
+    }
+
+    /* ── info cards ────────────────────────────────────────── */
+    .info-grid {
+      margin-top: 28px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px;
+    }
+    .info-card {
+      background: rgba(255,255,255,0.52);
+      border: 1px solid rgba(255,255,255,0.72);
+      border-radius: var(--radius-lg); padding: 20px;
+      box-shadow: 0 4px 18px rgba(24,28,34,0.06);
+    }
+    .info-card-icon { font-size: 1.8rem; margin-bottom: 10px; }
+    .info-card h3 { font-family: var(--serif); margin: 0 0 8px; font-size: 1.05rem; }
+    .info-card p { margin: 0; font-size: 0.87rem; line-height: 1.6; color: var(--ink-soft); }
+
+    /* ── CTA ───────────────────────────────────────────────── */
+    .cta-section {
+      margin-top: 28px; padding: 28px;
+      border-radius: var(--radius-xl); text-align: center;
+      background: linear-gradient(135deg, rgba(181,106,52,0.12), rgba(38,51,66,0.08));
+      border: 1px solid rgba(181,106,52,0.22);
+    }
+    .cta-section h2 { font-family: var(--serif); margin: 0 0 10px; font-size: 1.5rem; }
+    .cta-section p { margin: 0 0 20px; color: var(--ink-soft); font-size: 0.93rem; line-height: 1.6; }
+    .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .cta { display: inline-block; padding: 13px 26px; border-radius: 999px; font-weight: 700; font-size: 0.92rem; }
+    .cta-primary { background: var(--accent); color: #fff; }
+    .cta-primary:hover { background: var(--accent-light); }
+    .cta-secondary { border: 1.5px solid rgba(22,25,29,0.2); color: var(--ink); background: rgba(255,255,255,0.6); }
+    .cta-secondary:hover { background: rgba(255,255,255,0.9); }
+
+    @media (max-width: 600px) {
+      .hero { padding: 22px 18px 22px; }
+      .search-wrap { flex-direction: column; }
+      .search-btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="hero">
+    <nav class="nav">
+      <a class="brand" href="/">FOXXIIE</a>
+      <div class="nav-links">
+        <a href="/">Database</a>
+        <a href="/brocklerlaw/">Attorney</a>
+      </div>
+    </nav>
+
+    <span class="eyebrow">Cuyahoga County Common Pleas</span>
+    <h1>Check My Case</h1>
+    <p class="hero-sub">Enter your case number to look up docket entries, charges, hearing dates, and attorney information from the court database.</p>
+
+    <div class="search-wrap">
+      <input
+        id="case-input"
+        class="search-input"
+        type="text"
+        placeholder="e.g. CR-25-706402-A"
+        autocomplete="off"
+        spellcheck="false"
+        maxlength="30"
+      >
+      <button class="search-btn" onclick="lookupCase()">Look Up Case</button>
+    </div>
+    <p class="search-hint">Format: CR-YY-NNNNNN-A &nbsp;·&nbsp; Criminal cases 2020–2025</p>
+
+    <div id="result"></div>
+    <div id="result-not-found"></div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-card-icon">📋</div>
+      <h3>Docket Entries</h3>
+      <p>See every court filing, motion, hearing date, and order recorded in your case — in chronological order.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon">⚖️</div>
+      <h3>Charges &amp; Status</h3>
+      <p>View the charges filed, current case status, and disposition if the case has been resolved.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon">👤</div>
+      <h3>Attorney &amp; Judge</h3>
+      <p>Confirm which attorney is on the record, which judge is assigned, and the prosecuting attorney.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon">🔔</div>
+      <h3>Get Alerts</h3>
+      <p>Law firms can set up automatic alerts for case updates — new filings, hearings, and dispositions.</p>
+    </div>
+  </div>
+
+  <div class="cta-section">
+    <h2>Facing OVI or Criminal Charges?</h2>
+    <p>Aaron Brockler is a Cuyahoga County OVI and traffic defense attorney. Free consultation on your situation.</p>
+    <div class="cta-row">
+      <a class="cta cta-primary" href="/brocklerlaw/#contact">Free Consultation</a>
+      <a class="cta cta-secondary" href="/">Browse Court Database</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // This page builds direct docket links and does not require a startup JSON fetch.
+
+  function parseCaseNumber(raw) {
+    // Accept "CR-25-706402-A", "cr25706402", "706402" etc.
+    const s = raw.trim().toUpperCase().replace(/\s+/g, '');
+    // Full format
+    const full = s.match(/^CR-?(\d{2})-?(\d{5,6})-?([A-Z])$/);
+    if (full) return { year: '20' + full[1], number: full[2], suffix: full[3], raw: s };
+    // Just number
+    const num = s.match(/^(\d{5,6})$/);
+    if (num) return { year: null, number: num[1], suffix: null, raw: s };
+    return null;
+  }
+
+  function lookupCase() {
+    const input = document.getElementById('case-input').value;
+    const parsed = parseCaseNumber(input);
+    const resultEl = document.getElementById('result');
+    const notFoundEl = document.getElementById('result-not-found');
+
+    resultEl.style.display = 'none';
+    notFoundEl.style.display = 'none';
+
+    if (!parsed) {
+      notFoundEl.innerHTML = '<strong>Invalid format.</strong> Please enter a case number like <code>CR-25-706402-A</code>.';
+      notFoundEl.style.display = 'block';
+      return;
+    }
+
+    // Build canonical URL to the court docket
+    const year = parsed.year ? parsed.year.slice(-2) : '25';
+    const num = parsed.number.padStart(6, '0');
+    const suffix = parsed.suffix || 'A';
+    const canonical = `CR-${year}-${num}-${suffix}`;
+    const docketUrl = `https://cpdocket.cp.cuyahogacounty.gov/CR_CaseInformation_Summary.aspx?q=${encodeURIComponent(canonical)}`;
+
+    resultEl.innerHTML = `
+      <div class="result-card">
+        <h2>${canonical}</h2>
+        <div class="result-row">
+          <span class="result-label">Court</span>
+          <span class="result-value">Cuyahoga County Common Pleas</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Case number</span>
+          <span class="result-value">${canonical}</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Official docket</span>
+          <span class="result-value"><a href="${docketUrl}" target="_blank" rel="noopener" style="color:#ffddb9;text-decoration:underline">View on court site ↗</a></span>
+        </div>
+        <div class="result-row" style="border:none;margin-top:6px">
+          <span style="color:rgba(249,245,238,0.5);font-size:0.82rem">
+            The official Cuyahoga County court docket has real-time case information including all filings, hearings, and orders.
+          </span>
+        </div>
+      </div>
+    `;
+    resultEl.style.display = 'block';
+  }
+
+  // Allow Enter key in input
+  document.getElementById('case-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') lookupCase();
+  });
+
+  // Auto-format input as user types: insert dashes for CR-YY-NNNNNN-A
+  document.getElementById('case-input').addEventListener('input', function(e) {
+    let v = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    e.target.value = v;
+  });
+</script>
+</body>
+</html>

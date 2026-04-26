@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Aaron Brockler FAQ Admin | Review and Approval</title>
   <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Cache-Control" content="no-store">
   <meta name="theme-color" content="#12151a">
   <style>
     :root {
@@ -509,6 +510,30 @@
       border-color: transparent;
       color: #fffaf4;
     }
+    .faq-editor-actions .editor-delete {
+      display: none; /* moved to standalone corner button */
+    }
+    /* Standalone persistent delete button — always visible on card corner in review mode */
+    .faq-card-delete-btn {
+      display: none;
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 10;
+      min-height: 30px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 0;
+      background: linear-gradient(180deg, #c0392b, #962d22);
+      color: #fff;
+      font: inherit;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    body.review-mode .faq-card .faq-card-delete-btn { display: inline-flex; align-items: center; }
     .faq-answer-editor {
       position: relative;
       z-index: 1;
@@ -619,6 +644,71 @@
     .faq-card.is-editing .faq-answer-editor,
     .faq-card.is-selected .faq-answer-editor { display: block; }
     .faq-card.is-selected .faq-editor-actions { display: flex; }
+    .section-admin-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr;
+      margin-top: 12px;
+    }
+    .section-admin-card {
+      border-radius: var(--radius-md);
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .section-admin-card h3 {
+      margin: 0;
+      font-size: 1.15rem;
+      letter-spacing: -0.01em;
+    }
+    .section-admin-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .section-admin-controls label {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      font-size: 0.86rem;
+      color: var(--steel);
+      font-weight: 700;
+    }
+    .section-html-editor {
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      border-radius: 12px;
+      border: 1px solid rgba(22, 25, 29, 0.2);
+      background: #fffefb;
+      padding: 10px 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: var(--ink);
+    }
+    .section-admin-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .section-admin-actions button {
+      min-height: 36px;
+      border-radius: 999px;
+      border: 1px solid rgba(22, 25, 29, 0.12);
+      background: rgba(22, 25, 29, 0.06);
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0 12px;
+      cursor: pointer;
+    }
     .faq-card.is-hidden-public { display: none; }
     body.review-mode .faq-card.is-hidden-public {
       display: block;
@@ -629,11 +719,11 @@
       border-color: rgba(181, 106, 52, 0.52);
       box-shadow: 0 0 0 2px rgba(181, 106, 52, 0.2), var(--card-shadow);
     }
-    body.review-mode .faq-card .faq-status-row,
-    body.review-mode .faq-card .faq-meta-editor,
-    body.review-mode .faq-card .faq-visibility-controls,
-    body.review-mode .faq-card .faq-editor-actions { display: flex; }
-    body.review-mode .add-faq-btn { display: inline-flex; align-items: center; }
+    .faq-card .faq-status-row,
+    .faq-card .faq-meta-editor,
+    .faq-card .faq-visibility-controls,
+    .faq-card .faq-editor-actions { display: flex; }
+    .add-faq-btn { display: inline-flex; align-items: center; }
     .contact-band {
       margin-top: 18px;
       padding: 20px 18px;
@@ -836,8 +926,251 @@
       .practice-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     }
   </style>
+  <style>
+    /* ── My Cases Tab System ─────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      margin: 14px 0 0;
+      padding: 6px 8px;
+      background: rgba(18, 21, 26, 0.07);
+      border-radius: 999px;
+      width: fit-content;
+    }
+    .tab-btn {
+      padding: 8px 22px;
+      border: 0;
+      border-radius: 999px;
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: background 0.15s, color 0.15s;
+      background: transparent;
+      color: var(--ink-soft);
+    }
+    .tab-btn.active {
+      background: var(--steel);
+      color: var(--ink-inverse);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Cases Dashboard ─────────────────────────────────────── */
+    .cases-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .cases-toolbar button {
+      padding: 8px 18px;
+      border: 0;
+      border-radius: 999px;
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-sync {
+      background: linear-gradient(180deg, #263342, #161d28);
+      color: var(--ink-inverse);
+    }
+    .cases-stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+    .cases-stat {
+      padding: 12px 18px;
+      background: var(--panel-strong);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--line);
+      min-width: 120px;
+    }
+    .cases-stat strong { display: block; font-size: 1.5rem; line-height: 1.1; }
+    .cases-stat span { font-size: 0.78rem; color: var(--ink-soft); }
+    .cases-subhead {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 24px 0 12px;
+    }
+    .cases-subhead h3 { margin: 0; font-size: 1rem; font-weight: 800; }
+    .cases-subhead .badge {
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge-active { background: rgba(95, 109, 64, 0.15); color: var(--olive); }
+    .badge-vacant { background: rgba(181, 106, 52, 0.15); color: var(--accent); }
+    .case-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    @media (min-width: 760px) {
+      .case-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 1040px) {
+      .case-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    .case-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      position: relative;
+    }
+    .case-card-id {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--ink-soft);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .case-card h4 {
+      margin: 0 0 2px;
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+    .case-card-meta {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      margin-bottom: 10px;
+    }
+    .case-charges {
+      font-size: 0.78rem;
+      margin-bottom: 8px;
+    }
+    .charge-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(22, 25, 29, 0.07);
+      font-size: 0.72rem;
+      font-weight: 600;
+      margin: 2px 2px 2px 0;
+    }
+    .charge-pill.ovi { background: rgba(181, 106, 52, 0.18); color: #7a3c10; }
+    .case-card-status {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--ink-soft);
+    }
+    .case-card-next {
+      font-size: 0.74rem;
+      margin-top: 6px;
+      padding: 6px 10px;
+      background: rgba(38, 51, 66, 0.07);
+      border-radius: 8px;
+      color: var(--steel);
+    }
+    .case-flag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin: 2px 2px 0 0;
+    }
+    .flag-urgent { background: rgba(192, 57, 43, 0.12); color: #c0392b; }
+    .flag-ovi    { background: rgba(181, 106, 52, 0.15); color: #7a3c10; }
+    .flag-vacant { background: rgba(181, 106, 52, 0.12); color: #8c4e23; }
+    .flag-new    { background: rgba(95, 109, 64, 0.15); color: #404d28; }
+    .atty-vacant {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: rgba(181, 106, 52, 0.18);
+      color: #8c4e23;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+    .case-empty {
+      padding: 28px;
+      text-align: center;
+      color: var(--ink-soft);
+      font-size: 0.88rem;
+      background: var(--panel);
+      border-radius: var(--radius-lg);
+      border: 1px dashed var(--line);
+    }
+    /* ── Alert subscriptions ─────────────────────────────────── */
+    .alert-panel {
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      margin-top: 28px;
+    }
+    .alert-panel h3 { margin: 0 0 6px; font-size: 1rem; }
+    .alert-panel p { margin: 0 0 14px; font-size: 0.85rem; color: var(--ink-soft); }
+    .alert-email-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .alert-email-row input {
+      flex: 1;
+      min-width: 220px;
+      padding: 9px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      background: rgba(255,255,255,0.7);
+    }
+    .alert-email-row button {
+      padding: 9px 20px;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--accent), #8c4e23);
+      color: #fff8ef;
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .alert-subscribers { margin-top: 12px; font-size: 0.82rem; }
+    .alert-sub-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .alert-sub-item button {
+      background: transparent;
+      border: 0;
+      color: #c0392b;
+      font-size: 0.78rem;
+      cursor: pointer;
+      padding: 2px 6px;
+    }
+    .sync-info {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      margin-left: auto;
+    }
+  </style>
 </head>
 <body>
+  <script>
+    // Admin visit beacon — fires once on load, no auth required
+    (function() {
+      try { fetch('/ping?page=admin', { method: 'GET', cache: 'no-store' }); } catch(e) {}
+    })();
+  </script>
   <main class="shell">
     <div class="topline">
       <span><strong>Admin mode</strong> | Review, approve, and refine public FAQ content</span>
@@ -913,6 +1246,13 @@
         </aside>
       </div>
     </section>
+
+    <div class="tab-bar" id="main-tab-bar">
+      <button class="tab-btn active" data-tab="faq">FAQ Review</button>
+      <button class="tab-btn" data-tab="cases">My Cases</button>
+    </div>
+
+    <div class="tab-panel active" id="panel-faq">
 
     <section class="section">
       <div class="split">
@@ -1098,30 +1438,25 @@
           <button id="export-btn" type="button" style="display:none;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#5f6d40,#404d28);border:0;color:#f4f8ed;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;">
             Download Public Page (approved only)
           </button>
+          <button id="sync-live-btn" type="button" title="Fetch and merge FAQs from the live site" style="display:none;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#2b87b5,#1f5f86);border:0;color:#f5fbff;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;margin-left:8px;">
+            Sync from Live Site
+          </button>
           <button id="publish-btn" type="button" style="display:none;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#b56a34,#8c4e23);border:0;color:#fff8ef;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;">
             Publish to Live Site
           </button>
+          <button id="restore-btn" type="button" style="display:none;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#5c4ea1,#3d3270);border:0;color:#f7f1ff;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:0.02em;">
+            Restore Backup
+          </button>
+          <a id="seo-live-link" href="./index.html" target="_blank" rel="noopener noreferrer" style="display:none;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border-radius:999px;background:linear-gradient(180deg,#3d546f,#2c3d51);border:0;color:#f5fbff;font-family:inherit;font-size:0.9rem;font-weight:700;letter-spacing:0.02em;text-decoration:none;">
+            Open SEO Live Page
+          </a>
+
           <span id="export-count" style="display:none;margin-left:4px;color:var(--ink-soft);font-size:0.85rem;"></span>
-          <span id="publish-status" style="display:none;margin-left:4px;font-size:0.85rem;font-weight:600;"></span>
+          <span id="publish-status" style="margin-left:4px;font-size:0.85rem;font-weight:600;"></span>
         </div>
       </div>
       <div class="faq-grid">
-        <article class="faq-card"><h3>What should I do in the first 24 hours after an arrest in Cuyahoga County?</h3><p>Use your right to remain silent, do not discuss facts by phone or text, save all paperwork, and call defense counsel immediately before giving statements. Early decisions can affect bond, evidence use, and negotiation leverage.</p></article>
-        <article class="faq-card"><h3>Can a felony assault charge be reduced to a lesser offense?</h3><p>Sometimes. Reductions can depend on evidentiary strength, injury proof, intent evidence, witness credibility, prior record, and mitigation. Case framing and motion strategy often influence whether a reduction is realistic.</p></article>
-        <article class="faq-card"><h3>How do prosecutors prove felonious assault, and what defenses are common?</h3><p>In charges such as felonious assault (R.C. 2903.11, including indictments under division (A)(1)) and negligent assault (R.C. 2903.14(A)), prosecutors typically rely on injury evidence, witness statements, recordings, and intent or negligence theories tied to physical harm and weapon allegations. Common defenses include identity challenge, self-defense where applicable, lack of required mental state, causation disputes, and impeachment of inconsistent witness accounts.</p></article>
-        <article class="faq-card"><h3>What is the difference between domestic violence and attempted domestic violence charges?</h3><p>Domestic violence charges, including indictments under R.C. 2919.25(A), generally allege completed harm or threat under the statute. Attempted domestic violence usually alleges a substantial step toward that offense without full completion. The facts and proof burden still matter in both.</p></article>
-        <article class="faq-card"><h3>Can self-defense apply in an assault or domestic violence case?</h3><p>Yes, in the right facts. Self-defense often turns on reasonableness, proportionality, and credibility evidence such as injuries, video, 911 audio, and witness timelines. Early evidence preservation is critical.</p></article>
-        <article class="faq-card"><h3>How are strangulation and aggravated menacing charges defended?</h3><p>Cases involving strangulation (R.C. 2903.18) and aggravated menacing indictments under R.C. 2903.21(A) often depend on conflicting statements, injury interpretation, and context evidence. Defense work typically focuses on timeline reconstruction, credibility testing, medical record review, and whether the legal elements are fully supported.</p></article>
-        <article class="faq-card"><h3>What happens if I am charged with resisting arrest or obstructing official business?</h3><p>These charges, including Obstructing Official Business indictments under R.C. 2921.31(A) and Resisting Arrest under R.C. 2921.33(A), are often filed alongside other counts and can increase case complexity. That can include protection-order contexts, such as Obstructing Official Business (PO) and Assault (PO) allegations. Defense usually focuses on officer conduct, lawfulness of police actions, bodycam review, and whether the legal elements are actually met.</p></article>
-        <article class="faq-card"><h3>Can weapons charges be dismissed if police search procedures were improper?</h3><p>Potentially. If a stop, search, seizure, or warrant process violated constitutional rules, suppression motions may limit or exclude evidence. Case outcomes can change significantly when search issues are identified early.</p></article>
-        <article class="faq-card"><h3>What are the penalties for carrying a concealed weapon or firearm-in-vehicle charges?</h3><p>Penalties depend on charge level, prior history, firearm facts, and related allegations, including Carrying Concealed Weapons (R.C. 2923.12(A)(2)), attempted Improperly Handling Firearms in a Motor Vehicle (R.C. 2923.16(B)), and Using Weapons While Intoxicated (R.C. 2923.15(A)). Consequences can include jail or prison exposure, probation, firearm restrictions, and collateral licensing impacts.</p></article>
-        <article class="faq-card"><h3>Can theft, burglary, or criminal-tools charges be negotiated down or diverted?</h3><p>Sometimes. In indictments involving property-related counts, including Breaking and Entering (R.C. 2911.13(A)), Possessing Criminal Tools (R.C. 2923.24(A)), Theft or Aggravated Theft (R.C. 2913.02(A)(1)), Receiving Stolen Property (R.C. 2913.51(A)), Identity Fraud (R.C. 2913.49(B)(1) and (B)(2)), Falsification (R.C. 2921.13(A)(03)), Criminal Damaging (R.C. 2909.06(A)(1)), Aggravated Trespass (R.C. 2911.211(A)(1)), and related Obstructing Official Business allegations (R.C. 2921.31(A)), outcomes may depend on record, loss amount, restitution posture, evidentiary issues, and mitigation. In suitable cases, reduced counts or alternative resolutions can be pursued.</p></article>
-        <article class="faq-card"><h3>How are robbery and family-related indictment cases defended?</h3><p>In cases that combine robbery (R.C. 2911.02(A)(2)), abduction or attempted abduction (R.C. 2905.02(A)(2)), domestic violence (R.C. 2919.25(A)), and endangering children (R.C. 2919.22(A)), defense strategy often focuses on witness reliability, injury and intent proof, timeline reconstruction, and whether each count can be independently proven beyond a reasonable doubt.</p></article>
-        <article class="faq-card"><h3>How are drug possession cases challenged in Cuyahoga County courts?</h3><p>In indicted Drug Possession cases, including charges under R.C. 2925.11(A), defense review often focuses on stop legality, search issues, chain of custody, lab proof, constructive possession theories, and statements made during police contact. Strategic motion practice can be case-defining.</p></article>
-        <article class="faq-card"><h3>What does a probation or community-control violation hearing look like?</h3><p>The court reviews alleged probation or community-control violations, hearing evidence, supervision history, and any new criminal allegations before deciding sanctions. In some cases, that supervision exposure can be tied to new indicted counts such as felonious assault (R.C. 2903.11(A)(1)), negligent assault (R.C. 2903.14(A)), obstructing official business (R.C. 2921.31(A)), or using weapons while intoxicated (R.C. 2923.15(A)). Outcomes can range from continuation with added conditions to custody, depending on facts and presentation.</p></article>
-        <article class="faq-card"><h3>Can bond conditions be modified after arraignment?</h3><p>Yes, in many cases. Counsel can request bond review based on updated facts, compliance history, treatment participation, employment, family obligations, and changed risk assessment.</p></article>
-        <article class="faq-card"><h3>Should I talk to detectives or prosecutors before I hire counsel?</h3><p>In most situations, no. Statements made without defense planning can create avoidable risk. It is usually safer to have counsel evaluate the case first and control communication strategy.</p></article>
-        <article class="faq-card"><h3>What documents should I bring to my first consultation?</h3><p>Bring charging paperwork, bond conditions, court dates, prior case records if relevant, police paperwork, any video or messages, and witness names or contact details. A complete timeline helps build strategy faster.</p></article>
+        <article class="faq-card"><h3>What should I do in the first 24 hours after an OVI arrest in Cuyahoga County?</h3><p>Use your right to remain silent, do not discuss facts by phone or text, save all paperwork, and call defense counsel immediately before giving statements. Early decisions can affect license suspension risk and case leverage.</p></article>
         <article class="faq-card"><h3>For OVI-related stops, what evidence should be reviewed first (stop, bodycam, testing, timeline)?</h3><p>Start with the reason for the stop, full bodycam and dash footage, field-sobriety process, testing procedures, and exact timeline from stop to chemical test. Small procedural errors can materially affect case value.</p></article>
         <article class="faq-card"><h3>Will I lose my license after an OVI or DUI in Ohio?</h3><p>License suspension is possible, but not automatic in every case. It depends on prior record, test results, and how the case is handled. In some situations, limited driving privileges may be available.</p></article>
         <article class="faq-card"><h3>Can a DUI or OVI charge be reduced or dismissed?</h3><p>Sometimes. This depends on issues with the stop, testing procedures, and the evidence. If there are legal or technical problems, they can create leverage to challenge the charge.</p></article>
@@ -1135,7 +1470,54 @@
         <article class="faq-card"><h3>How many points will this ticket add to my license?</h3><p>Point values vary depending on the offense. Too many points can lead to a suspension, so tickets should be addressed early.</p></article>
         <article class="faq-card"><h3>Should I fight a traffic ticket or just pay it?</h3><p>Paying a ticket is usually an admission of guilt and may add points to your record. Fighting it can sometimes reduce penalties or avoid points.</p></article>
         <article class="faq-card"><h3>What happens if I miss a court date for a traffic or OVI case?</h3><p>A warrant may be issued and additional consequences can follow. Addressing it quickly can help limit the impact.</p></article>
-        <article class="faq-card"><h3>Can a traffic-related criminal case (for example vehicular assault) avoid a felony conviction?</h3><p>Depending on facts, yes. In indicted charges such as attempted aggravated vehicular assault or vehicular assault under R.C. 2903.08(A)(2)(B), defense may challenge causation, impairment proof, injury classification, and evidentiary reliability while pursuing mitigation and resolution strategies designed to limit long-term damage.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="sections-admin">
+      <div class="section-head">
+        <span class="kicker">Page Sections</span>
+        <h2>Toggle and edit landing-page sections before publishing.</h2>
+        <p>
+          These controls affect the live page export and publish output. Keep a section visible to
+          publish it, or hide it to remove it from the generated <code>index.html</code>.
+        </p>
+      </div>
+      <div class="section-admin-grid">
+        <article class="section-admin-card" data-section-target="services">
+          <h3>Why Brockler Law</h3>
+          <div class="section-admin-controls">
+            <label><input type="checkbox" class="section-visible-toggle" checked> Visible on live site</label>
+          </div>
+          <textarea class="section-html-editor" aria-label="Why Brockler Law HTML"></textarea>
+          <div class="section-admin-actions">
+            <button type="button" class="section-save-btn">Save Section</button>
+            <button type="button" class="section-reset-btn">Reset</button>
+          </div>
+        </article>
+
+        <article class="section-admin-card" data-section-target="practice">
+          <h3>Practice Areas</h3>
+          <div class="section-admin-controls">
+            <label><input type="checkbox" class="section-visible-toggle" checked> Visible on live site</label>
+          </div>
+          <textarea class="section-html-editor" aria-label="Practice Areas HTML"></textarea>
+          <div class="section-admin-actions">
+            <button type="button" class="section-save-btn">Save Section</button>
+            <button type="button" class="section-reset-btn">Reset</button>
+          </div>
+        </article>
+
+        <article class="section-admin-card" data-section-target="process">
+          <h3>What To Expect</h3>
+          <div class="section-admin-controls">
+            <label><input type="checkbox" class="section-visible-toggle" checked> Visible on live site</label>
+          </div>
+          <textarea class="section-html-editor" aria-label="What To Expect HTML"></textarea>
+          <div class="section-admin-actions">
+            <button type="button" class="section-save-btn">Save Section</button>
+            <button type="button" class="section-reset-btn">Reset</button>
+          </div>
+        </article>
       </div>
     </section>
 
@@ -1179,6 +1561,57 @@
       </div>
     </section>
 
+    </div><!-- /panel-faq -->
+
+    <div class="tab-panel" id="panel-cases">
+      <section class="section" id="my-cases">
+        <div class="section-head">
+          <span class="kicker">Case Intelligence</span>
+          <h2>My active cases and new county filings.</h2>
+          <p>Cases where you are the attorney of record, plus recently filed cases — including those with no defense attorney assigned yet.</p>
+        </div>
+
+        <div class="cases-toolbar">
+          <button class="btn-sync" id="cases-sync-btn" type="button">Sync Cases</button>
+          <span class="sync-info" id="cases-sync-info">Last sync: —</span>
+          <span id="cases-sync-status" style="font-size:0.82rem;font-weight:600;color:var(--ink-soft);"></span>
+        </div>
+
+        <div class="cases-stats" id="cases-stats" style="display:none;">
+          <div class="cases-stat"><strong id="stat-my">—</strong><span>My active cases</span></div>
+          <div class="cases-stat"><strong id="stat-vacant">—</strong><span>No attorney filed</span></div>
+          <div class="cases-stat"><strong id="stat-ovi">—</strong><span>OVI / DUI filings</span></div>
+          <div class="cases-stat"><strong id="stat-urgent">—</strong><span>Event within 7 days</span></div>
+        </div>
+
+        <div class="cases-subhead">
+          <h3>My Active Cases</h3>
+          <span class="badge badge-active" id="badge-my-count">0</span>
+        </div>
+        <div class="case-grid" id="my-cases-grid">
+          <div class="case-empty">Sign in and sync to load your cases.</div>
+        </div>
+
+        <div class="cases-subhead">
+          <h3>New Filings — No Defense Attorney</h3>
+          <span class="badge badge-vacant" id="badge-vacant-count">0</span>
+        </div>
+        <div class="case-grid" id="vacant-cases-grid">
+          <div class="case-empty">Sync to load new unrepresented filings.</div>
+        </div>
+
+        <div class="alert-panel" id="alert-panel" style="display:none;">
+          <h3>Case Change Alerts</h3>
+          <p>Add email addresses to receive a CC when new filings or case updates are detected on your next sync.</p>
+          <div class="alert-email-row">
+            <input type="email" id="alert-email-input" placeholder="Add email address…">
+            <button type="button" id="alert-add-btn">Add</button>
+          </div>
+          <div class="alert-subscribers" id="alert-subscribers-list"></div>
+        </div>
+      </section>
+    </div><!-- /panel-cases -->
+
     <footer class="footer">
       Aaron Brockler review workspace for Cleveland and Cuyahoga County criminal defense content.
     </footer>
@@ -1192,7 +1625,7 @@
   <div class="modal-shell" data-login-modal aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="login-title">
       <h3 id="login-title">Manage FAQ</h3>
-      <p>Enter review credentials to open management mode.</p>
+      <p>Enter your credentials and authenticator code.</p>
       <form class="login-form" data-login-form>
         <label>
           Login
@@ -1202,7 +1635,14 @@
           Password
           <input type="password" name="password" autocomplete="current-password" required>
         </label>
-        <div class="login-error" data-login-error></div>
+        <label>
+          Authenticator Code
+          <input type="text" name="totp_code" autocomplete="one-time-code"
+                 inputmode="numeric" maxlength="6" pattern="[0-9]{6}"
+                 placeholder="6-digit code" required
+                 style="letter-spacing:0.25em">
+        </label>
+          <div class="login-error" data-login-error aria-live="polite"></div>
         <div class="login-actions">
           <button class="login-cancel" type="button" data-login-cancel>Cancel</button>
           <button class="login-submit" type="submit">Sign in</button>
@@ -1213,15 +1653,63 @@
 
   <script>
     (function () {
-      var REVIEW_USER = "Aaron";
-      // SHA-256 of the admin password – plaintext never stored in source.
-      var REVIEW_PASSWORD_HASH = "afebf43cf94f084bf1dea949a5a1441eb51956602f2fb4caa82bae7fa45e53bb";
+      if (window.location.protocol !== "https:" && window.location.hostname) {
+        window.location.replace("https://" + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+        return;
+      }
+
       var SESSION_TOKEN_KEY = "brockler-review-token";
-      var _sessionToken = ""; // holds typed password in memory after login
+      var _sessionToken = "";
       try {
-        _sessionToken = sessionStorage.getItem(SESSION_TOKEN_KEY) || "";
+        // Force re-authentication on every page load.
+        sessionStorage.removeItem(SESSION_TOKEN_KEY);
+        _sessionToken = "";
+        window._brocklerSessionToken = _sessionToken;
+        // Show TOTP field — client-side TOTP is supported
+        var _totpRow = form ? form.querySelector('label:has([name="totp_code"])') : null;
+        if (_totpRow) { _totpRow.style.display = ""; }
+        var totpInput2 = form && form.elements.totp_code;
+        if (totpInput2) { totpInput2.required = true; }
       } catch (error) {
         _sessionToken = "";
+      }
+
+      // ── Client-side TOTP (RFC 6238) — no backend required ─────────────
+      var _TOTP_SECRET = "J7ZELJBTCXZ3RCAN5QN75EVV5UHC7IWE";
+      function _b32decode(s) {
+        var alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        s = s.toUpperCase().replace(/=+$/, "");
+        var bits = "";
+        for (var i = 0; i < s.length; i++) {
+          var v = alpha.indexOf(s[i]);
+          if (v < 0) throw new Error("bad b32");
+          bits += v.toString(2).padStart(5, "0");
+        }
+        var bytes = [];
+        for (var i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
+        return new Uint8Array(bytes);
+      }
+      function _validateTOTP(code) {
+        if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) return Promise.resolve(false);
+        var userCode = parseInt(code, 10);
+        var secretBytes = _b32decode(_TOTP_SECRET);
+        var now = Math.floor(Date.now() / 1000);
+        var windows = [Math.floor(now / 30) - 1, Math.floor(now / 30), Math.floor(now / 30) + 1];
+        return crypto.subtle.importKey("raw", secretBytes, { name: "HMAC", hash: "SHA-1" }, false, ["sign"])
+          .then(function (key) {
+            return Promise.all(windows.map(function (ctr) {
+              var buf = new ArrayBuffer(8);
+              var dv = new DataView(buf);
+              dv.setUint32(4, ctr, false);
+              return crypto.subtle.sign("HMAC", key, buf).then(function (sig) {
+                var h = new Uint8Array(sig);
+                var off = h[19] & 0xf;
+                var num = (((h[off] & 0x7f) << 24) | ((h[off+1] & 0xff) << 16) | ((h[off+2] & 0xff) << 8) | (h[off+3] & 0xff)) % 1000000;
+                return num === userCode;
+              });
+            }));
+          })
+          .then(function (results) { return results.some(Boolean); });
       }
       var STORAGE_KEY = "brockler-review-mode";
       var FAQ_STORAGE_KEY = "brockler-faq-answer-edits";
@@ -1229,16 +1717,21 @@
       var FAQ_MANUAL_KEY = "brockler-faq-manual";
       var FAQ_VISIBILITY_KEY = "brockler-faq-visibility";
       var FAQ_VISIBILITY_VERSION_KEY = "brockler-faq-visibility-version";
-      var FAQ_VISIBILITY_VERSION = "traffic-ovi-approved-v2-all-visible";
+      var FAQ_VISIBILITY_VERSION = "ovi-focused-v3-reset";
+      var FAQ_DELETED_KEY = "brockler-faq-deleted";
+      var SECTION_CONTENT_KEY = "brockler-section-content-v1";
+      var SECTION_VISIBILITY_KEY = "brockler-section-visibility-v1";
+      var MANAGED_SECTION_IDS = ["services", "practice", "process"];
       var DEFAULT_VISIBLE_QUESTIONS = {
+        "What should I do in the first 24 hours after an OVI arrest in Cuyahoga County?": true,
+        "For OVI-related stops, what evidence should be reviewed first (stop, bodycam, testing, timeline)?": true,
         "Will I lose my license after an OVI or DUI in Ohio?": true,
         "Can a DUI or OVI charge be reduced or dismissed?": true,
+        "What can be challenged in an Ohio OVI case besides the breath test?": true,
+        "Can I get limited driving privileges while my OVI case is pending?": true,
+        "Can I use the FieldKit driver license app for my OVI or DUI intake?": true,
         "Do I have to take a breathalyzer or chemical test?": true,
         "What happens if I refuse a breath test in Ohio?": true,
-        "Will I have to go to court for a traffic ticket?": true,
-        "Can a traffic ticket be dismissed or reduced?": true,
-        "How many points will this ticket add to my license?": true,
-        "Should I fight a traffic ticket or just pay it?": true,
         "What happens if I miss a court date for a traffic or OVI case?": true
       };
       var body = document.body;
@@ -1262,6 +1755,9 @@
       var savedAnswers = loadSavedAnswers();
       var savedMeta = loadSavedMeta();
       var savedVisibility = loadSavedVisibility();
+      var sectionDefaults = loadSectionDefaults();
+      var savedSectionContent = loadSavedSectionContent();
+      var savedSectionVisibility = loadSavedSectionVisibility();
       renderManualQuestions();
       var faqCards = Array.prototype.slice.call(document.querySelectorAll(".faq-card"));
 
@@ -1334,6 +1830,96 @@
 
       function persistSavedVisibility() {
         localStorage.setItem(FAQ_VISIBILITY_KEY, JSON.stringify(savedVisibility));
+      }
+
+      function loadSectionDefaults() {
+        var defaults = {};
+        MANAGED_SECTION_IDS.forEach(function (id) {
+          var node = document.getElementById(id);
+          defaults[id] = node ? node.innerHTML.trim() : "";
+        });
+        return defaults;
+      }
+
+      function loadSavedSectionContent() {
+        try {
+          var value = JSON.parse(localStorage.getItem(SECTION_CONTENT_KEY) || "{}");
+          return value && typeof value === "object" ? value : {};
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function persistSavedSectionContent() {
+        localStorage.setItem(SECTION_CONTENT_KEY, JSON.stringify(savedSectionContent));
+      }
+
+      function loadSavedSectionVisibility() {
+        try {
+          var value = JSON.parse(localStorage.getItem(SECTION_VISIBILITY_KEY) || "{}");
+          return value && typeof value === "object" ? value : {};
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function persistSavedSectionVisibility() {
+        localStorage.setItem(SECTION_VISIBILITY_KEY, JSON.stringify(savedSectionVisibility));
+      }
+
+      function getManagedSectionHtml(sectionId) {
+        return (savedSectionContent[sectionId] || sectionDefaults[sectionId] || "").trim();
+      }
+
+      function isManagedSectionVisible(sectionId) {
+        return savedSectionVisibility[sectionId] !== false;
+      }
+
+      function applyManagedSectionToPreview(sectionId) {
+        var node = document.getElementById(sectionId);
+        if (!node) { return; }
+        node.innerHTML = getManagedSectionHtml(sectionId);
+        node.style.display = isManagedSectionVisible(sectionId) ? "" : "none";
+      }
+
+      function initManagedSectionEditors() {
+        var cards = Array.prototype.slice.call(document.querySelectorAll(".section-admin-card[data-section-target]"));
+        cards.forEach(function (card) {
+          var sectionId = card.getAttribute("data-section-target");
+          var editor = card.querySelector(".section-html-editor");
+          var toggle = card.querySelector(".section-visible-toggle");
+          var saveBtn = card.querySelector(".section-save-btn");
+          var resetBtn = card.querySelector(".section-reset-btn");
+          if (!sectionId || !editor || !toggle || !saveBtn || !resetBtn) { return; }
+
+          editor.value = getManagedSectionHtml(sectionId);
+          toggle.checked = isManagedSectionVisible(sectionId);
+          applyManagedSectionToPreview(sectionId);
+
+          toggle.addEventListener("change", function () {
+            savedSectionVisibility[sectionId] = !!toggle.checked;
+            persistSavedSectionVisibility();
+            applyManagedSectionToPreview(sectionId);
+          });
+
+          saveBtn.addEventListener("click", function () {
+            var value = (editor.value || "").trim();
+            if (!value) {
+              alert("Section HTML cannot be empty. Use Reset to restore defaults.");
+              return;
+            }
+            savedSectionContent[sectionId] = value;
+            persistSavedSectionContent();
+            applyManagedSectionToPreview(sectionId);
+          });
+
+          resetBtn.addEventListener("click", function () {
+            delete savedSectionContent[sectionId];
+            persistSavedSectionContent();
+            editor.value = sectionDefaults[sectionId] || "";
+            applyManagedSectionToPreview(sectionId);
+          });
+        });
       }
 
       function fallbackSha256Hex(value) {
@@ -1493,8 +2079,17 @@
       }
 
       function buildFaqEditors() {
+        var _deletedIds;
+        try { _deletedIds = JSON.parse(localStorage.getItem(FAQ_DELETED_KEY) || "{}"); } catch (e) { _deletedIds = {}; }
         faqCards.forEach(function (card, index) {
           if (card.getAttribute("data-editor-ready") === "true") { return; }
+          var tentativeId = card.getAttribute("data-faq-id") || ("faq-" + index);
+          if (_deletedIds[tentativeId]) {
+            var di = faqCards.indexOf(card);
+            if (di !== -1) { faqCards.splice(di, 1); }
+            if (card.parentNode) { card.parentNode.removeChild(card); }
+            return;
+          }
           var answer = card.querySelector("p");
           if (!answer) { return; }
           var faqId = card.getAttribute("data-faq-id") || "faq-" + index;
@@ -1505,6 +2100,7 @@
           var saveButton = document.createElement("button");
           var cancelEditButton = document.createElement("button");
           var resetButton = document.createElement("button");
+          var deleteButton = document.createElement("button");
           var statusRow = document.createElement("div");
           var statusBadge = document.createElement("span");
           var metaRow = document.createElement("div");
@@ -1570,6 +2166,9 @@
           resetButton.type = "button";
           resetButton.className = "editor-reset";
           resetButton.textContent = "Reset";
+          deleteButton.type = "button";
+          deleteButton.className = "editor-delete";
+          deleteButton.textContent = "Delete";
 
           approvedButton.addEventListener("click", function () {
             card.classList.add("is-selected");
@@ -1627,6 +2226,19 @@
             persistSavedAnswers();
             card.classList.remove("is-editing");
           });
+          deleteButton.addEventListener("click", function () {
+            var q = card.querySelector("h3");
+            var label = q ? q.textContent.trim() : "this question";
+            if (!confirm('Permanently delete:\n\n"' + label + '"\n\nThis cannot be undone.')) { return; }
+            var deletedIds;
+            try { deletedIds = JSON.parse(localStorage.getItem(FAQ_DELETED_KEY) || "{}"); } catch (e) { deletedIds = {}; }
+            deletedIds[faqId] = true;
+            try { localStorage.setItem(FAQ_DELETED_KEY, JSON.stringify(deletedIds)); } catch (e) {}
+            var idx = faqCards.indexOf(card);
+            if (idx !== -1) { faqCards.splice(idx, 1); }
+            if (card.parentNode) { card.parentNode.removeChild(card); }
+            updateExportButton();
+          });
           tagsInput.addEventListener("change", function () {
             savedMeta[faqId] = savedMeta[faqId] || { tags: "", rating: "3" };
             savedMeta[faqId].tags = tagsInput.value.trim();
@@ -1644,10 +2256,31 @@
           visibilityControls.appendChild(pendingButton);
           visibilityControls.appendChild(showButton);
           visibilityControls.appendChild(hideButton);
+          var standalonDeleteBtn = document.createElement("button");
+          standalonDeleteBtn.type = "button";
+          standalonDeleteBtn.className = "faq-card-delete-btn";
+          standalonDeleteBtn.textContent = "Delete";
+          standalonDeleteBtn.title = "Permanently delete this question";
+          standalonDeleteBtn.addEventListener("click", function (event) {
+            event.stopPropagation();
+            var q = card.querySelector("h3");
+            var label = q ? q.textContent.trim() : "this question";
+            if (!confirm('Permanently delete:\n\n"' + label + '"\n\nThis cannot be undone.')) { return; }
+            var deletedIds;
+            try { deletedIds = JSON.parse(localStorage.getItem(FAQ_DELETED_KEY) || "{}"); } catch (e) { deletedIds = {}; }
+            deletedIds[faqId] = true;
+            try { localStorage.setItem(FAQ_DELETED_KEY, JSON.stringify(deletedIds)); } catch (e) {}
+            var idx = faqCards.indexOf(card);
+            if (idx !== -1) { faqCards.splice(idx, 1); }
+            if (card.parentNode) { card.parentNode.removeChild(card); }
+            updateExportButton();
+          });
           actions.appendChild(editButton);
           actions.appendChild(saveButton);
           actions.appendChild(cancelEditButton);
           actions.appendChild(resetButton);
+          actions.appendChild(deleteButton);
+          card.insertBefore(standalonDeleteBtn, card.firstChild);
           card.insertBefore(statusRow, card.firstChild);
           card.appendChild(metaRow);
           card.appendChild(editor);
@@ -1679,6 +2312,8 @@
       }
       function closeModal() {
         if (!modal) { return; }
+        // Keep modal open when user is not authenticated yet.
+        if (!body.classList.contains("review-mode")) { return; }
         modal.classList.remove("is-open");
         modal.setAttribute("aria-hidden", "true");
       }
@@ -1701,15 +2336,85 @@
         });
       }
 
+      function hasValidSessionToken(token) {
+        if (!token) { return Promise.resolve(false); }
+        return fetch("/cases?token=" + encodeURIComponent(token), { cache: "no-store" })
+          .then(function (res) { return res.json(); })
+          .then(function (data) { return !(data && data.error); })
+          .catch(function () { return false; });
+      }
+
       buildFaqEditors();
       migrateVisibilityState();
       faqCards.forEach(function (card) { applyCardVisibility(card); });
+      initManagedSectionEditors();
 
-      if (localStorage.getItem(STORAGE_KEY) === "enabled" && _sessionToken) {
-        enableReviewMode();
-      } else {
-        openModal();
+      // Sync FAQs from the live site and merge into local admin state
+      function fetchLiveFaqs() {
+        return fetch('https://prosecutordefense.com/index.html', { cache: 'no-store' })
+          .then(function (res) { if (!res.ok) { throw new Error('fetch failed: ' + res.status); } return res.text(); })
+          .then(function (html) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+            var cards = Array.prototype.slice.call(doc.querySelectorAll('.faq-card'));
+            return cards.map(function (card) {
+              var q = card.querySelector('h3');
+              var a = card.querySelector('p');
+              return { question: q ? q.textContent.trim() : '', answer: a ? a.textContent.trim() : '' };
+            }).filter(function (it) { return it.question && it.answer; });
+          });
       }
+
+      function syncFromLive() {
+        var syncBtn = document.getElementById('sync-live-btn');
+        if (syncBtn) { syncBtn.disabled = true; syncBtn.textContent = 'Syncing…'; }
+        fetchLiveFaqs()
+          .then(function (items) {
+            var existingQs = {};
+            // collect existing questions (from DOM and savedManualQuestions)
+            Array.prototype.slice.call(document.querySelectorAll('.faq-card h3')).forEach(function (h) {
+              existingQs[h.textContent.trim()] = true;
+            });
+            savedManualQuestions.forEach(function (m) { existingQs[m.question] = true; });
+            var added = 0;
+            items.forEach(function (it, idx) {
+              if (existingQs[it.question]) { return; }
+              var id = 'live-' + Date.now().toString(36) + '-' + idx;
+              var obj = { id: id, question: it.question, answer: it.answer, tags: '', rating: '3' };
+              savedManualQuestions.push(obj);
+              savedMeta[id] = { tags: '', rating: '3' };
+              persistSavedManualQuestions();
+              persistSavedMeta();
+              var card = createManualFaqCard(obj);
+              if (card) { added++; }
+            });
+            // Rebuild editors for new cards
+            faqCards = Array.prototype.slice.call(document.querySelectorAll('.faq-card'));
+            buildFaqEditors();
+            faqCards.forEach(function (card) { applyCardVisibility(card); });
+            updateExportButton();
+            if (publishStatus) {
+              publishStatus.style.display = 'inline';
+              publishStatus.style.color = '#2b87b5';
+              publishStatus.textContent = 'Synced ' + added + ' new question' + (added === 1 ? '' : 's') + ' from live site.';
+            }
+          })
+          .catch(function (err) {
+            if (publishStatus) {
+              publishStatus.style.display = 'inline';
+              publishStatus.style.color = '#c0392b';
+              publishStatus.textContent = 'Sync failed: ' + (err && err.message ? err.message : 'network error');
+            }
+          })
+          .finally(function () { if (syncBtn) { syncBtn.disabled = false; syncBtn.textContent = 'Sync from Live Site'; } });
+      }
+
+      var syncBtnEl = document.getElementById('sync-live-btn');
+      if (syncBtnEl) { syncBtnEl.addEventListener('click', function () { syncFromLive(); }); }
+
+      // Login-first behavior for /admin/: require auth on every load.
+      disableReviewMode();
+      openModal();
       if (manageLink) {
         manageLink.addEventListener("click", function (event) {
           event.preventDefault();
@@ -1717,42 +2422,71 @@
         });
       }
       if (cancelButton) {
-        cancelButton.addEventListener("click", closeModal);
+        cancelButton.addEventListener("click", function () {
+          if (body.classList.contains("review-mode")) {
+            closeModal();
+            return;
+          }
+          window.location.href = "/";
+        });
       }
       if (modal) {
         modal.addEventListener("click", function (event) {
-          if (event.target === modal) { closeModal(); }
+          if (event.target === modal && body.classList.contains("review-mode")) { closeModal(); }
         });
       }
       document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape" && modal && modal.classList.contains("is-open")) {
+        if (event.key === "Escape" && modal && modal.classList.contains("is-open") && body.classList.contains("review-mode")) {
           closeModal();
         }
       });
       if (form) {
         form.addEventListener("submit", function (event) {
           event.preventDefault();
-          var typed = passwordInput.value;
-          sha256Hex(typed).then(function (hash) {
-            if (usernameInput.value === REVIEW_USER && hash === REVIEW_PASSWORD_HASH) {
-              _sessionToken = typed;
-              try {
-                sessionStorage.setItem(SESSION_TOKEN_KEY, typed);
-              } catch (error) {
-                // Ignore browser storage restrictions.
+          var submitBtn = form.querySelector('[type="submit"]');
+          if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Verifying…"; }
+          var totpInput = form.elements.totp_code;
+          var username = usernameInput.value.trim().toLowerCase();
+          var password = passwordInput.value;
+          var totpCode = totpInput ? totpInput.value.trim() : "";
+          // Client-side auth: validate username, SHA-256 password, then TOTP
+          var validUser = (username === "aaron" || username === "brockler");
+          if (!validUser) {
+            errorNode.textContent = "Invalid credentials.";
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Sign in"; }
+            return;
+          }
+          crypto.subtle.digest("SHA-256", new TextEncoder().encode(password))
+            .then(function (hashBuf) {
+              var hex = Array.from(new Uint8Array(hashBuf)).map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+              if (hex !== "afebf43cf94f084bf1dea949a5a1441eb51956602f2fb4caa82bae7fa45e53bb") {
+                throw Object.assign(new Error("bad_creds"), { isCreds: true });
               }
-              enableReviewMode();
-              closeModal();
-              return;
-            }
-            errorNode.textContent = "Incorrect login or password.";
-          }).catch(function () {
-            errorNode.textContent = "Unable to verify login in this browser.";
-          });
+              return _validateTOTP(totpCode);
+            })
+            .then(function (valid) {
+              if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Sign in"; }
+              if (valid) {
+                _sessionToken = password;
+                window._brocklerSessionToken = _sessionToken;
+                try { sessionStorage.setItem(SESSION_TOKEN_KEY, _sessionToken); } catch (e) {}
+                enableReviewMode();
+                closeModal();
+              } else {
+                errorNode.textContent = "Invalid authenticator code. Check your app and try again.";
+              }
+            })
+            .catch(function (err) {
+              if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Sign in"; }
+              errorNode.textContent = (err && err.isCreds) ? "Invalid credentials." : "Verification error — try again.";
+            });
         });
       }
       if (logoutButton) {
-        logoutButton.addEventListener("click", function () { disableReviewMode(); });
+        logoutButton.addEventListener("click", function () {
+          disableReviewMode();
+          window.location.href = "/";
+        });
       }
 
       if (addFaqButton) {
@@ -1866,12 +2600,36 @@
         }).join(",\n");
       }
 
+      function buildManagedSectionMarkup(sectionId) {
+        if (!isManagedSectionVisible(sectionId)) { return ""; }
+        var inner = getManagedSectionHtml(sectionId);
+        if (!inner) { return ""; }
+        return "\n    <section class=\"section\" id=\"" + sectionId + "\">\n" + inner + "\n    </section>\n";
+      }
+
+      function injectManagedSectionsIntoPublicHtml(html) {
+        var servicesMarkup = buildManagedSectionMarkup("services");
+        var practiceMarkup = buildManagedSectionMarkup("practice");
+        var processMarkup = buildManagedSectionMarkup("process");
+        var managedMarkup = servicesMarkup + practiceMarkup + processMarkup;
+        if (!managedMarkup) { return html; }
+
+        var sectionBlockRegex = /<section class=\"section\" id=\"services\">[\s\S]*?<section class=\"section\" id=\"faq\">/;
+        if (sectionBlockRegex.test(html)) {
+          return html.replace(sectionBlockRegex, managedMarkup + "\n    <section class=\"section\" id=\"faq\">");
+        }
+        return html;
+      }
+
       function buildPublicPage(faqCardsHtml, jsonLdEntries) {
-        return "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, viewport-fit=cover\">\n  <title>Aaron Brockler | Cleveland OVI Lawyer | DUI and Traffic Ticket Defense</title>\n  <meta name=\"description\" content=\"Aaron Brockler is a Cleveland OVI lawyer defending DUI, traffic-ticket, and impaired-driving cases across Cuyahoga County. Direct answers on license suspension, breath tests, court dates, and fighting tickets.\">\n  <meta name=\"theme-color\" content=\"#12151a\">\n  <style>\n    :root {\n      --ink: #16191d;\n      --ink-soft: #53606c;\n      --ink-inverse: #f9f5ee;\n      --line: rgba(22, 25, 29, 0.11);\n      --steel: #263342;\n      --accent: #b56a34;\n      --shadow: 0 22px 70px rgba(24, 28, 34, 0.13);\n      --card-shadow: 0 18px 40px rgba(24, 28, 34, 0.08);\n      --radius-xl: 32px;\n      --radius-lg: 24px;\n      --serif: \"Baskerville\", \"Iowan Old Style\", \"Palatino Linotype\", serif;\n      --sans: \"Avenir Next\", \"Segoe UI\", \"Trebuchet MS\", sans-serif;\n    }\n    * { box-sizing: border-box; }\n    html { scroll-behavior: smooth; }\n    body { margin: 0; min-height: 100vh; color: var(--ink); font-family: var(--sans); background: radial-gradient(circle at 8% 8%, rgba(181,106,52,0.18), transparent 24%), radial-gradient(circle at 85% 12%, rgba(38,51,66,0.12), transparent 22%), linear-gradient(180deg, #f6efe3 0%, #efe5d7 48%, #f7f1e8 100%); overflow-x: hidden; }\n    body::before { content: \"\"; position: fixed; inset: 0; pointer-events: none; background-image: linear-gradient(rgba(22,25,29,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(22,25,29,0.03) 1px, transparent 1px); background-size: 42px 42px; mask-image: radial-gradient(circle at center, black 52%, transparent 100%); opacity: 0.5; }\n    a { color: inherit; text-decoration: none; }\n    .shell { position: relative; z-index: 1; width: min(100% - 20px, 1120px); margin: 0 auto; padding: max(16px, env(safe-area-inset-top)) 0 max(28px, env(safe-area-inset-bottom)); }\n    .topline { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 10px 14px; border: 1px solid rgba(255,255,255,0.42); border-radius: 999px; background: rgba(18,21,26,0.9); color: rgba(249,245,238,0.9); box-shadow: var(--card-shadow); font-size: 0.82rem; letter-spacing: 0.03em; }\n    .topline strong { color: #ffffff; }\n    .topline a { font-weight: 700; }\n    .hero { margin-top: 12px; padding: 22px 18px 20px; border-radius: var(--radius-xl); border: 1px solid rgba(255,255,255,0.46); background: linear-gradient(135deg, rgba(16,19,25,0.97), rgba(31,39,50,0.96)), linear-gradient(180deg, rgba(255,255,255,0.04), transparent); color: var(--ink-inverse); box-shadow: var(--shadow); overflow: hidden; position: relative; isolation: isolate; }\n    .hero::before, .hero::after { content: \"\"; position: absolute; border-radius: 999px; filter: blur(12px); z-index: -1; }\n    .hero::before { width: 300px; height: 300px; right: -70px; top: -120px; background: radial-gradient(circle, rgba(181,106,52,0.56), transparent 68%); }\n    .hero::after { width: 260px; height: 260px; left: -90px; bottom: -140px; background: radial-gradient(circle, rgba(95,109,64,0.34), transparent 70%); }\n    .nav { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 26px; }\n    .brand { display: inline-flex; align-items: center; gap: 12px; }\n    .brand-text { display: inline-flex; flex-direction: column; gap: 3px; }\n    .brand-logo { width: 72px; height: 72px; object-fit: contain; border-radius: 999px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.04); }\n    .brand-mark { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(249,245,238,0.6); }\n    .brand-name { font-family: var(--serif); font-size: 1.45rem; letter-spacing: 0.02em; }\n    .nav-links { display: none; gap: 16px; align-items: center; font-size: 0.9rem; color: rgba(249,245,238,0.76); }\n    .phone-link, .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 18px; border-radius: 999px; font-weight: 700; }\n    .phone-link { background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08)); border: 1px solid rgba(255,255,255,0.12); color: #fff8ef; }\n    .eyebrow { display: inline-flex; gap: 10px; align-items: center; padding: 10px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.08); color: #ffddb9; text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.7rem; font-weight: 700; }\n    h1, h2, h3 { font-family: var(--serif); font-weight: 700; letter-spacing: -0.04em; }\n    h1 { margin: 0; max-width: 12ch; font-size: clamp(2.9rem, 11vw, 5.8rem); line-height: 0.94; }\n    .hero-grid { display: grid; gap: 20px; margin-top: 20px; }\n    .hero-copy p { margin: 18px 0 0; max-width: 56ch; color: rgba(249,245,238,0.83); line-height: 1.7; font-size: 1rem; }\n    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }\n    .cta-primary { background: linear-gradient(180deg, #d7874d, #b86532); color: #fffaf4; box-shadow: 0 12px 28px rgba(181,106,52,0.28); }\n    .cta-secondary { color: #fff5e7; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }\n    .hero-note, .section, .faq-card, .contact-card, .signal-card { border-radius: var(--radius-lg); border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(252,248,242,0.96)); box-shadow: var(--card-shadow); }\n    .hero-note { padding: 20px; background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); border-color: rgba(255,255,255,0.12); color: rgba(249,245,238,0.9); }\n    .hero-note h2 { margin: 0 0 12px; font-size: 1.6rem; color: #fff5e5; }\n    .hero-note p, .hero-note li { line-height: 1.65; font-size: 0.96rem; }\n    .hero-note ul { margin: 14px 0 0; padding-left: 18px; }\n    .section { margin-top: 18px; padding: 18px; border-radius: var(--radius-xl); background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,250,243,0.9)); }\n    .section-head { margin-bottom: 18px; }\n    .kicker { display: inline-block; margin-bottom: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.72rem; font-weight: 700; }\n    .section-head h2 { margin: 0; font-size: clamp(2rem, 6vw, 3.2rem); line-height: 0.98; }\n    .section-head p, .intro-copy, .faq-card p, .contact-card p, .contact-card address, .signal-card p { color: var(--ink-soft); line-height: 1.7; margin: 0; font-style: normal; }\n    .intro-copy { max-width: 66ch; }\n    .signal-grid, .faq-grid, .contact-grid { display: grid; gap: 14px; }\n    .signal-card, .faq-card, .contact-card { position: relative; overflow: hidden; padding: 18px; }\n    .signal-card::after, .faq-card::after { content: \"\"; position: absolute; inset: auto -30px -36px auto; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, rgba(181,106,52,0.12), transparent 70%); }\n    .signal-card strong { display: block; margin-bottom: 8px; font-size: 1.05rem; color: var(--steel); }\n    .faq-card h3, .contact-card h3 { margin: 0 0 10px; font-size: 1.38rem; line-height: 1.06; }\n    .contact-band { margin-top: 18px; padding: 20px 18px; border-radius: var(--radius-xl); background: linear-gradient(135deg, rgba(19,24,31,0.98), rgba(31,41,55,0.97)), linear-gradient(180deg, rgba(255,255,255,0.06), transparent); color: var(--ink-inverse); box-shadow: var(--shadow); }\n    .contact-band .section-head p, .contact-card p, .contact-card address, .contact-card a, .mini-note { color: rgba(249,245,238,0.8); }\n    .contact-card { background: linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.06)), linear-gradient(180deg, rgba(181,106,52,0.08), transparent); border-color: rgba(255,255,255,0.12); }\n    .contact-card h3 { color: #fff7ea; }\n    .contact-stack { display: flex; flex-direction: column; gap: 8px; }\n    .contact-stack strong { color: #ffffff; font-size: 1.5rem; font-family: var(--serif); letter-spacing: -0.02em; }\n    .mini-note { margin-top: 14px; font-size: 0.85rem; line-height: 1.65; }\n    .footer { margin-top: 14px; padding: 0 6px; color: var(--ink-soft); font-size: 0.9rem; line-height: 1.7; }\n    @media (min-width: 760px) {\n      .shell { width: min(100% - 34px, 1120px); padding-top: 28px; }\n      .hero { padding: 26px 26px 28px; }\n      .nav-links { display: inline-flex; }\n      .hero-grid { grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.78fr); gap: 24px; }\n      .section, .contact-band { padding: 28px; }\n      .signal-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }\n      .faq-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }\n      .contact-grid { grid-template-columns: 1.05fr 0.95fr 0.9fr; }\n    }\n  </style>\n  <script type=\"application/ld+json\">\n    {\n      \"@context\": \"https://schema.org\",\n      \"@type\": \"LegalService\",\n      \"name\": \"Brockler Law\",\n      \"telephone\": \"+1-216-299-5946\",\n      \"address\": {\n        \"@type\": \"PostalAddress\",\n        \"streetAddress\": \"75 Public Square, Suite 920\",\n        \"addressLocality\": \"Cleveland\",\n        \"addressRegion\": \"OH\",\n        \"postalCode\": \"44113\",\n        \"addressCountry\": \"US\"\n      },\n      \"areaServed\": \"Cuyahoga County\",\n      \"priceRange\": \"$$\",\n      \"url\": \"https://george-shepov.github.io/cuyahoga_cp_scraper/\"\n    }\n  <\/script>\n  <script type=\"application/ld+json\">\n    {\n      \"@context\": \"https://schema.org\",\n      \"@type\": \"FAQPage\",\n      \"mainEntity\": [\n" + jsonLdEntries + "\n      ]\n    }\n  <\/script>\n</head>\n<body>\n  <main class=\"shell\">\n    <div class=\"topline\">\n      <span><strong>Free consultation</strong> | Cleveland OVI lawyer available 24/7</span>\n      <a href=\"tel:+12162995946\">216-299-5946</a>\n    </div>\n\n    <section class=\"hero\" id=\"top\">\n      <header class=\"nav\">\n        <a class=\"brand\" href=\"#top\" aria-label=\"Brockler Law home\">\n          <img class=\"brand-logo\" src=\"brockler+new+color+white-1920w.webp\" alt=\"Brockler Law logo\">\n          <span class=\"brand-text\">\n            <span class=\"brand-mark\">Brockler Law</span>\n            <span class=\"brand-name\">Aaron Brockler</span>\n          </span>\n        </a>\n        <nav class=\"nav-links\" aria-label=\"Primary\">\n          <a href=\"#services\">Why Brockler Law</a>\n          <a href=\"#faq\">Traffic and OVI FAQ</a>\n          <a href=\"#contact\">Contact</a>\n        </nav>\n        <a class=\"phone-link\" href=\"tel:+12162995946\">Call 216-299-5946</a>\n      </header>\n\n      <span class=\"eyebrow\">Cleveland OVI Lawyer | DUI Defense | Traffic Tickets | Cuyahoga County</span>\n\n      <div class=\"hero-grid\">\n        <div class=\"hero-copy\">\n          <h1>Cleveland OVI lawyer defending your license and your record.</h1>\n          <p>\n            Aaron Brockler is a Cleveland OVI lawyer who helps drivers across Cuyahoga County\n            respond fast to OVI, DUI, and serious traffic-ticket charges. The goal is to protect\n            your license, reduce exposure, and avoid costly mistakes early in the case.\n          </p>\n          <div class=\"cta-row\">\n            <a class=\"cta cta-primary\" href=\"tel:+12162995946\">Call a Cleveland OVI Lawyer Now</a>\n            <a class=\"cta cta-secondary\" href=\"#faq\">Read OVI and Traffic FAQ</a>\n          </div>\n        </div>\n\n        <aside class=\"hero-note\" aria-label=\"Immediate guidance\">\n          <h2>Fast answers matter after a stop, citation, or OVI arrest.</h2>\n          <p>\n            The first decisions after a traffic or OVI charge can affect license status, court\n            exposure, and what options remain available. Quick review of the stop, the paperwork,\n            and the testing issues can change how the case is handled.\n          </p>\n          <ul>\n            <li>Do not assume paying a ticket is the safest option.</li>\n            <li>Bring your citation, court date, and any suspension paperwork.</li>\n            <li>Call before making statements that lock in the record.</li>\n          </ul>\n        </aside>\n      </div>\n    </section>\n\n    <section class=\"section\" id=\"services\">\n      <div class=\"section-head\">\n        <span class=\"kicker\">Cleveland OVI and Traffic Defense</span>\n        <h2>Why drivers charged with OVI in Cleveland call Brockler Law first.</h2>\n        <p class=\"intro-copy\">\n          As a Cleveland OVI lawyer, Aaron Brockler focuses on the questions drivers actually need\n          answered: whether a license suspension can be avoided, whether a breath test can be\n          challenged, whether a ticket is worth fighting, and what happens at each court date.\n        </p>\n      </div>\n      <div class=\"signal-grid\">\n        <article class=\"signal-card\">\n          <strong>License risk</strong>\n          <p>Get clear answers on suspensions, refusals, and limited driving privileges.</p>\n        </article>\n        <article class=\"signal-card\">\n          <strong>Ticket strategy</strong>\n          <p>Understand when a citation can be reduced, dismissed, or worth fighting.</p>\n        </article>\n        <article class=\"signal-card\">\n          <strong>Court exposure</strong>\n          <p>Know what happens if you have to appear or if you miss a court date.</p>\n        </article>\n      </div>\n    </section>\n\n    <section class=\"section\" id=\"faq\">\n      <div class=\"section-head\">\n        <span class=\"kicker\">Cleveland OVI Lawyer FAQ</span>\n        <h2>What Cleveland drivers ask when facing OVI and traffic charges.</h2>\n        <p>\n          Answers from a Cleveland OVI lawyer on the questions that come up most often: license\n          suspension, breath tests, court appearances, points, and when to fight a ticket.\n        </p>\n      </div>\n      <div class=\"faq-grid\">\n" + faqCardsHtml + "\n      </div>\n    </section>\n\n    <section class=\"contact-band\" id=\"contact\">\n      <div class=\"section-head\">\n        <span class=\"kicker\">Contact a Cleveland OVI Lawyer</span>\n        <h2>Talk to a Cleveland OVI lawyer about your case today.</h2>\n        <p>\n          Call for a confidential review if you are dealing with a license issue, a court date,\n          breath-test refusal consequences, or a traffic charge with bigger criminal exposure.\n        </p>\n      </div>\n      <div class=\"contact-grid\">\n        <article class=\"contact-card\">\n          <h3>Call anytime</h3>\n          <div class=\"contact-stack\">\n            <strong><a href=\"tel:+12162995946\">216-299-5946</a></strong>\n            <p>24/7 phone availability for urgent intake and consultation requests.</p>\n          </div>\n        </article>\n        <article class=\"contact-card\">\n          <h3>Office</h3>\n          <address>\n            75 Public Square<br>\n            Suite 920<br>\n            Cleveland, OH 44113\n          </address>\n        </article>\n        <article class=\"contact-card\">\n          <h3>Hours</h3>\n          <p>Monday through Friday: 8:00 am - 5:00 pm</p>\n          <p>Saturday: 9:00 am - 1:00 pm</p>\n          <p>Phone intake remains available 24/7.</p>\n        </article>\n      </div>\n      <p class=\"mini-note\">\n        Hablamos Espanol. This website is for general informational purposes only and does not\n        create an attorney-client relationship. Prior results do not guarantee a similar outcome.\n      </p>\n    </section>\n\n    <footer class=\"footer\">\n      Aaron Brockler is a Cleveland OVI lawyer serving drivers in Cleveland and across Cuyahoga\n      County. Defense for OVI, DUI, and traffic-ticket charges.\n    </footer>\n  </main>\n</body>\n</html>";
+        return "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, viewport-fit=cover\">\n  <title>Aaron Brockler | Cleveland OVI Defense Lawyer | Ohio DUI Attorney</title>\n  <meta name=\"description\" content=\"Aaron Brockler is a Cleveland OVI defense lawyer handling DUI and OVI charges across Cuyahoga County. Direct answers on ALS suspension, breath-test challenges, field sobriety, and what to do after an OVI arrest.\">\n  <meta name=\"theme-color\" content=\"#12151a\">\n  <style>\n    :root {\n      --ink: #16191d;\n      --ink-soft: #53606c;\n      --ink-inverse: #f9f5ee;\n      --line: rgba(22, 25, 29, 0.11);\n      --steel: #263342;\n      --accent: #b56a34;\n      --shadow: 0 22px 70px rgba(24, 28, 34, 0.13);\n      --card-shadow: 0 18px 40px rgba(24, 28, 34, 0.08);\n      --radius-xl: 32px;\n      --radius-lg: 24px;\n      --serif: \"Baskerville\", \"Iowan Old Style\", \"Palatino Linotype\", serif;\n      --sans: \"Avenir Next\", \"Segoe UI\", \"Trebuchet MS\", sans-serif;\n    }\n    * { box-sizing: border-box; }\n    html { scroll-behavior: smooth; }\n    body { margin: 0; min-height: 100vh; color: var(--ink); font-family: var(--sans); background: radial-gradient(circle at 8% 8%, rgba(181,106,52,0.18), transparent 24%), radial-gradient(circle at 85% 12%, rgba(38,51,66,0.12), transparent 22%), linear-gradient(180deg, #f6efe3 0%, #efe5d7 48%, #f7f1e8 100%); overflow-x: hidden; }\n    body::before { content: \"\"; position: fixed; inset: 0; pointer-events: none; background-image: linear-gradient(rgba(22,25,29,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(22,25,29,0.03) 1px, transparent 1px); background-size: 42px 42px; mask-image: radial-gradient(circle at center, black 52%, transparent 100%); opacity: 0.5; }\n    a { color: inherit; text-decoration: none; }\n    .shell { position: relative; z-index: 1; width: min(100% - 20px, 1120px); margin: 0 auto; padding: max(16px, env(safe-area-inset-top)) 0 max(28px, env(safe-area-inset-bottom)); }\n    .topline { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 10px 14px; border: 1px solid rgba(255,255,255,0.42); border-radius: 999px; background: rgba(18,21,26,0.9); color: rgba(249,245,238,0.9); box-shadow: var(--card-shadow); font-size: 0.82rem; letter-spacing: 0.03em; }\n    .topline strong { color: #ffffff; }\n    .topline a { font-weight: 700; }\n    .hero { margin-top: 12px; padding: 22px 18px 20px; border-radius: var(--radius-xl); border: 1px solid rgba(255,255,255,0.46); background: linear-gradient(135deg, rgba(16,19,25,0.97), rgba(31,39,50,0.96)), linear-gradient(180deg, rgba(255,255,255,0.04), transparent); color: var(--ink-inverse); box-shadow: var(--shadow); overflow: hidden; position: relative; isolation: isolate; }\n    .hero::before, .hero::after { content: \"\"; position: absolute; border-radius: 999px; filter: blur(12px); z-index: -1; }\n    .hero::before { width: 300px; height: 300px; right: -70px; top: -120px; background: radial-gradient(circle, rgba(181,106,52,0.56), transparent 68%); }\n    .hero::after { width: 260px; height: 260px; left: -90px; bottom: -140px; background: radial-gradient(circle, rgba(95,109,64,0.34), transparent 70%); }\n    .nav { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 26px; }\n    .brand { display: inline-flex; align-items: center; gap: 12px; }\n    .brand-text { display: inline-flex; flex-direction: column; gap: 3px; }\n    .brand-logo { width: 72px; height: 72px; object-fit: contain; border-radius: 999px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.04); }\n    .brand-mark { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(249,245,238,0.6); }\n    .brand-name { font-family: var(--serif); font-size: 1.45rem; letter-spacing: 0.02em; }\n    .nav-links { display: none; gap: 16px; align-items: center; font-size: 0.9rem; color: rgba(249,245,238,0.76); }\n    .phone-link, .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 18px; border-radius: 999px; font-weight: 700; }\n    .phone-link { background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08)); border: 1px solid rgba(255,255,255,0.12); color: #fff8ef; }\n    .eyebrow { display: inline-flex; gap: 10px; align-items: center; padding: 10px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.08); color: #ffddb9; text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.7rem; font-weight: 700; }\n    h1, h2, h3 { font-family: var(--serif); font-weight: 700; letter-spacing: -0.04em; }\n    h1 { margin: 0; max-width: 12ch; font-size: clamp(2.9rem, 11vw, 5.8rem); line-height: 0.94; }\n    .hero-grid { display: grid; gap: 20px; margin-top: 20px; }\n    .hero-copy p { margin: 18px 0 0; max-width: 56ch; color: rgba(249,245,238,0.83); line-height: 1.7; font-size: 1rem; }\n    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }\n    .cta-primary { background: linear-gradient(180deg, #d7874d, #b86532); color: #fffaf4; box-shadow: 0 12px 28px rgba(181,106,52,0.28); }\n    .cta-secondary { color: #fff5e7; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }\n    .hero-note, .section, .faq-card, .contact-card, .signal-card { border-radius: var(--radius-lg); border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(252,248,242,0.96)); box-shadow: var(--card-shadow); }\n    .hero-note { padding: 20px; background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); border-color: rgba(255,255,255,0.12); color: rgba(249,245,238,0.9); }\n    .hero-note h2 { margin: 0 0 12px; font-size: 1.6rem; color: #fff5e5; }\n    .hero-note p, .hero-note li { line-height: 1.65; font-size: 0.96rem; }\n    .hero-note ul { margin: 14px 0 0; padding-left: 18px; }\n    .section { margin-top: 18px; padding: 18px; border-radius: var(--radius-xl); background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,250,243,0.9)); }\n    .section-head { margin-bottom: 18px; }\n    .kicker { display: inline-block; margin-bottom: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.72rem; font-weight: 700; }\n    .section-head h2 { margin: 0; font-size: clamp(2rem, 6vw, 3.2rem); line-height: 0.98; }\n    .section-head p, .intro-copy, .faq-card p, .contact-card p, .contact-card address, .signal-card p { color: var(--ink-soft); line-height: 1.7; margin: 0; font-style: normal; }\n    .intro-copy { max-width: 66ch; }\n    .signal-grid, .faq-grid, .contact-grid { display: grid; gap: 14px; }\n    .signal-card, .faq-card, .contact-card { position: relative; overflow: hidden; padding: 18px; }\n    .signal-card::after, .faq-card::after { content: \"\"; position: absolute; inset: auto -30px -36px auto; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, rgba(181,106,52,0.12), transparent 70%); }\n    .signal-card strong { display: block; margin-bottom: 8px; font-size: 1.05rem; color: var(--steel); }\n    .faq-card h3, .contact-card h3 { margin: 0 0 10px; font-size: 1.38rem; line-height: 1.06; }\n    .contact-band { margin-top: 18px; padding: 20px 18px; border-radius: var(--radius-xl); background: linear-gradient(135deg, rgba(19,24,31,0.98), rgba(31,41,55,0.97)), linear-gradient(180deg, rgba(255,255,255,0.06), transparent); color: var(--ink-inverse); box-shadow: var(--shadow); }\n    .contact-band .section-head p, .contact-card p, .contact-card address, .contact-card a, .mini-note { color: rgba(249,245,238,0.8); }\n    .contact-card { background: linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.06)), linear-gradient(180deg, rgba(181,106,52,0.08), transparent); border-color: rgba(255,255,255,0.12); }\n    .contact-card h3 { color: #fff7ea; }\n    .contact-stack { display: flex; flex-direction: column; gap: 8px; }\n    .contact-stack strong { color: #ffffff; font-size: 1.5rem; font-family: var(--serif); letter-spacing: -0.02em; }\n    .mini-note { margin-top: 14px; font-size: 0.85rem; line-height: 1.65; }\n    .footer { margin-top: 14px; padding: 0 6px; color: var(--ink-soft); font-size: 0.9rem; line-height: 1.7; }\n    @media (min-width: 760px) {\n      .shell { width: min(100% - 34px, 1120px); padding-top: 28px; }\n      .hero { padding: 26px 26px 28px; }\n      .nav-links { display: inline-flex; }\n      .hero-grid { grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.78fr); gap: 24px; }\n      .section, .contact-band { padding: 28px; }\n      .signal-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }\n      .faq-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }\n      .contact-grid { grid-template-columns: 1.05fr 0.95fr 0.9fr; }\n    }\n  </style>\n  <script type=\"application/ld+json\">\n    {\n      \"@context\": \"https://schema.org\",\n      \"@type\": \"LegalService\",\n      \"name\": \"Brockler Law\",\n      \"telephone\": \"+1-216-299-5946\",\n      \"address\": {\n        \"@type\": \"PostalAddress\",\n        \"streetAddress\": \"75 Public Square, Suite 920\",\n        \"addressLocality\": \"Cleveland\",\n        \"addressRegion\": \"OH\",\n        \"postalCode\": \"44113\",\n        \"addressCountry\": \"US\"\n      },\n      \"areaServed\": \"Cuyahoga County\",\n      \"priceRange\": \"$$\",\n      \"url\": \"https://george-shepov.github.io/cuyahoga_cp_scraper/\"\n    }\n  <\/script>\n  <script type=\"application/ld+json\">\n    {\n      \"@context\": \"https://schema.org\",\n      \"@type\": \"FAQPage\",\n      \"mainEntity\": [\n" + jsonLdEntries + "\n      ]\n    }\n  <\/script>\n</head>\n<body>\n  <main class=\"shell\">\n    <div class=\"topline\">\n      <span><strong>Free consultation</strong> | Cleveland OVI lawyer available 24/7</span>\n      <a href=\"tel:+12162995946\">216-299-5946</a>\n    </div>\n\n    <section class=\"hero\" id=\"top\">\n      <header class=\"nav\">\n        <a class=\"brand\" href=\"#top\" aria-label=\"Brockler Law home\">\n          <img class=\"brand-logo\" src=\"brockler+new+color+white-1920w.webp\" alt=\"Brockler Law logo\">\n          <span class=\"brand-text\">\n            <span class=\"brand-mark\">Brockler Law</span>\n            <span class=\"brand-name\">Aaron Brockler</span>\n          </span>\n        </a>\n        <nav class=\"nav-links\" aria-label=\"Primary\">\n          <a href=\"#services\">Why Brockler Law</a>\n          <a href=\"#faq\">OVI Defense FAQ</a>\n          <a href=\"#contact\">Contact</a>\n        </nav>\n        <a class=\"phone-link\" href=\"tel:+12162995946\">Call 216-299-5946</a>\n      </header>\n\n      <span class=\"eyebrow\">Cleveland OVI Defense Lawyer | DUI | ALS Suspension | Cuyahoga County</span>\n\n      <div class=\"hero-grid\">\n        <div class=\"hero-copy\">\n          <h1>Cleveland OVI lawyer defending your license and your record.</h1>\n          <p>\n            Aaron Brockler is a Cleveland OVI lawyer who helps drivers across Cuyahoga County\n            respond fast to OVI, DUI, and serious traffic-ticket charges. The goal is to protect\n            your license, reduce exposure, and avoid costly mistakes early in the case.\n          </p>\n          <div class=\"cta-row\">\n            <a class=\"cta cta-primary\" href=\"tel:+12162995946\">Call a Cleveland OVI Lawyer Now</a>\n            <a class=\"cta cta-secondary\" href=\"#faq\">Read OVI Defense FAQ</a>\n          </div>\n        </div>\n\n        <aside class=\"hero-note\" aria-label=\"Immediate guidance\">\n          <h2>Fast answers matter after a stop, citation, or OVI arrest.</h2>\n          <p>\n            The first decisions after a traffic or OVI charge can affect license status, court\n            exposure, and what options remain available. Quick review of the stop, the paperwork,\n            and the testing issues can change how the case is handled.\n          </p>\n          <ul>\n            <li>Do not assume paying a ticket is the safest option.</li>\n            <li>Bring your citation, court date, and any suspension paperwork.</li>\n            <li>Call before making statements that lock in the record.</li>\n          </ul>\n        </aside>\n      </div>\n    </section>\n\n    <section class=\"section\" id=\"services\">\n      <div class=\"section-head\">\n        <span class=\"kicker\">Cleveland OVI Defense</span>\n        <h2>Why drivers charged with OVI in Cleveland call Brockler Law first.</h2>\n        <p class=\"intro-copy\">\n          As a Cleveland OVI lawyer, Aaron Brockler focuses on the questions drivers actually need\n          answered: whether a license suspension can be avoided, whether a breath test can be\n          challenged, whether a ticket is worth fighting, and what happens at each court date.\n        </p>\n      </div>\n      <div class=\"signal-grid\">\n        <article class=\"signal-card\">\n          <strong>License risk</strong>\n          <p>Get clear answers on suspensions, refusals, and limited driving privileges.</p>\n        </article>\n        <article class=\"signal-card\">\n          <strong>Ticket strategy</strong>\n          <p>Understand when a citation can be reduced, dismissed, or worth fighting.</p>\n        </article>\n        <article class=\"signal-card\">\n          <strong>Court exposure</strong>\n          <p>Know what happens if you have to appear or if you miss a court date.</p>\n        </article>\n      </div>\n    </section>\n\n    <section class=\"section\" id=\"faq\">\n      <div class=\"section-head\">\n        <span class=\"kicker\">Cleveland OVI Defense FAQ</span>\n        <h2>What Cleveland drivers ask when facing an OVI charge.</h2>\n        <p>\n          Answers from a Cleveland OVI lawyer on the questions that come up most often: license\n          suspension, breath tests, court appearances, points, and when to fight a ticket.\n        </p>\n      </div>\n      <div class=\"faq-grid\">\n" + faqCardsHtml + "\n      </div>\n    </section>\n\n    <section class=\"contact-band\" id=\"contact\">\n      <div class=\"section-head\">\n        <span class=\"kicker\">Contact a Cleveland OVI Defense Lawyer</span>\n        <h2>Talk to a Cleveland OVI defense lawyer about your case today.</h2>\n        <p>\n          Call for a confidential review if you are dealing with a license issue, a court date,\n          breath-test refusal consequences, or a traffic charge with bigger criminal exposure.\n        </p>\n      </div>\n      <div class=\"contact-grid\">\n        <article class=\"contact-card\">\n          <h3>Call anytime</h3>\n          <div class=\"contact-stack\">\n            <strong><a href=\"tel:+12162995946\">216-299-5946</a></strong>\n            <p>24/7 phone availability for urgent intake and consultation requests.</p>\n          </div>\n        </article>\n        <article class=\"contact-card\">\n          <h3>Office</h3>\n          <address>\n            75 Public Square<br>\n            Suite 920<br>\n            Cleveland, OH 44113\n          </address>\n        </article>\n        <article class=\"contact-card\">\n          <h3>Hours</h3>\n          <p>Monday through Friday: 8:00 am - 5:00 pm</p>\n          <p>Saturday: 9:00 am - 1:00 pm</p>\n          <p>Phone intake remains available 24/7.</p>\n        </article>\n      </div>\n      <p class=\"mini-note\">\n        Hablamos Espanol. This website is for general informational purposes only and does not\n        create an attorney-client relationship. Prior results do not guarantee a similar outcome.\n      </p>\n    </section>\n\n    <footer class=\"footer\">\n      Aaron Brockler is a Cleveland OVI lawyer serving drivers in Cleveland and across Cuyahoga\n      County. OVI and DUI defense, ALS suspension challenges, and breath-test review.\n    </footer>\n  </main>\n</body>\n</html>";
       }
 
       var publishBtn    = document.getElementById("publish-btn");
+      var restoreBtn    = document.getElementById("restore-btn");
       var publishStatus = document.getElementById("publish-status");
+      var seoLiveLink = document.getElementById("seo-live-link");
+
 
       function updateExportButton() {
         if (!exportBtn) { return; }
@@ -1879,7 +2637,12 @@
         var active = body.classList.contains("review-mode");
         exportBtn.style.display  = active ? "inline-flex" : "none";
         exportBtn.style.alignItems = "center";
+        var syncBtn = document.getElementById("sync-live-btn");
+        if (syncBtn) { syncBtn.style.display = active ? "inline-flex" : "none"; syncBtn.style.alignItems = "center"; }
         if (publishBtn)  { publishBtn.style.display  = active ? "inline-flex" : "none"; publishBtn.style.alignItems = "center"; }
+        if (restoreBtn)  { restoreBtn.style.display  = active ? "inline-flex" : "none"; restoreBtn.style.alignItems = "center"; }
+        if (seoLiveLink) { seoLiveLink.style.display = active ? "inline-flex" : "none"; seoLiveLink.style.alignItems = "center"; }
+
         if (publishStatus) { publishStatus.style.display = active ? "inline" : "none"; }
         if (exportCount) {
           exportCount.style.display = active ? "inline" : "none";
@@ -1898,7 +2661,7 @@
           }
           var faqCardsHtml = buildFaqCards(items);
           var jsonLdEntries = buildJsonLdEntries(items);
-          var html = buildPublicPage(faqCardsHtml, jsonLdEntries);
+          var html = injectManagedSectionsIntoPublicHtml(buildPublicPage(faqCardsHtml, jsonLdEntries));
           var blob = new Blob([html], { type: "text/html;charset=utf-8" });
           var url = URL.createObjectURL(blob);
           var anchor = document.createElement("a");
@@ -1914,28 +2677,30 @@
       /* ── Publish to Live Site ─────────────────────────────────────────── */
       if (publishBtn) {
         publishBtn.addEventListener("click", function () {
-          if (!_sessionToken) {
-            if (publishStatus) {
-              publishStatus.style.color = "#c0392b";
-              publishStatus.textContent = "Session expired. Please sign in again.";
-            }
-            openModal();
-            return;
-          }
           var items = getApprovedFaqs();
           if (items.length === 0) {
             alert("No approved questions found. Approve at least one FAQ before publishing.");
             return;
           }
+          // If no session token, open login modal first
+          if (!_sessionToken) {
+            if (publishStatus) {
+              publishStatus.style.display = "inline";
+              publishStatus.style.color = "var(--ink-soft)";
+              publishStatus.textContent = "Sign in to publish.";
+            }
+            openModal();
+            return;
+          }
           if (!confirm("Publish " + items.length + " approved FAQ" + (items.length === 1 ? "" : "s") + " to the live site?\n\nThe current index.html will be backed up with today's timestamp.")) {
             return;
           }
-          var html = buildPublicPage(buildFaqCards(items), buildJsonLdEntries(items));
+          var html = injectManagedSectionsIntoPublicHtml(buildPublicPage(buildFaqCards(items), buildJsonLdEntries(items)));
           publishBtn.disabled = true;
           publishBtn.textContent = "Publishing…";
           if (publishStatus) { publishStatus.style.color = "var(--ink-soft)"; publishStatus.textContent = ""; }
 
-          fetch("/brocklerlaw/save", {
+          fetch("/save", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ html: html, token: _sessionToken })
@@ -1952,15 +2717,24 @@
             } else {
               if (result.data && result.data.error === "unauthorized") {
                 _sessionToken = "";
-                try {
-                  sessionStorage.removeItem(SESSION_TOKEN_KEY);
-                } catch (error) {
-                  // Ignore browser storage restrictions.
+                window._brocklerSessionToken = "";
+                try { sessionStorage.removeItem(SESSION_TOKEN_KEY); } catch (error) {}
+                if (publishStatus) {
+                  publishStatus.style.display = "inline";
+                  publishStatus.style.color = "#c0392b";
+                  publishStatus.textContent = "Wrong password – sign in again.";
                 }
-              }
-              if (publishStatus) {
-                publishStatus.style.color = "#c0392b";
-                publishStatus.textContent = "Error: " + (result.data.error || "unknown error");
+                openModal();
+              } else {
+                if (publishStatus) {
+                  publishStatus.style.display = "inline";
+                  publishStatus.style.color = "#c0392b";
+                  if (result.data && result.data.error === "not found") {
+                    publishStatus.textContent = "Error: publish endpoint not found. Open https://prosecutordefense.com/admin.html and try again.";
+                  } else {
+                    publishStatus.textContent = "Error: " + (result.data && result.data.error ? result.data.error : "unknown error");
+                  }
+                }
               }
             }
           })
@@ -1975,6 +2749,143 @@
         });
       }
 
+      /* ── Restore Previous Backup ─────────────────────────────────────── */
+      if (restoreBtn) {
+        restoreBtn.addEventListener("click", function () {
+          if (!_sessionToken) {
+            if (publishStatus) {
+              publishStatus.style.display = "inline";
+              publishStatus.style.color = "var(--ink-soft)";
+              publishStatus.textContent = "Sign in to restore backups.";
+            }
+            openModal();
+            return;
+          }
+
+          restoreBtn.disabled = true;
+          restoreBtn.textContent = "Loading Backups…";
+          if (publishStatus) {
+            publishStatus.style.display = "inline";
+            publishStatus.style.color = "var(--ink-soft)";
+            publishStatus.textContent = "Fetching backup list…";
+          }
+
+          fetch("/backups?limit=20&token=" + encodeURIComponent(_sessionToken))
+            .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+            .then(function (result) {
+              restoreBtn.disabled = false;
+              restoreBtn.textContent = "Restore Backup";
+
+              if (!result.ok || !result.data || !Array.isArray(result.data.backups)) {
+                if (result.data && result.data.error === "unauthorized") {
+                  _sessionToken = "";
+                  window._brocklerSessionToken = "";
+                  try { sessionStorage.removeItem(SESSION_TOKEN_KEY); } catch (error) {}
+                  if (publishStatus) {
+                    publishStatus.style.color = "#c0392b";
+                    publishStatus.textContent = "Session expired. Sign in again.";
+                  }
+                  openModal();
+                  return;
+                }
+                if (publishStatus) {
+                  publishStatus.style.color = "#c0392b";
+                  publishStatus.textContent = "Could not load backups.";
+                }
+                return;
+              }
+
+              var backups = result.data.backups;
+              if (!backups.length) {
+                if (publishStatus) {
+                  publishStatus.style.color = "var(--ink-soft)";
+                  publishStatus.textContent = "No backups available yet.";
+                }
+                return;
+              }
+
+              var options = backups.map(function (entry, idx) {
+                return (idx + 1) + ". " + entry.name;
+              }).join("\n");
+
+              var pick = prompt("Select a backup to restore by number:\n\n" + options, "1");
+              if (!pick) {
+                if (publishStatus) {
+                  publishStatus.style.color = "var(--ink-soft)";
+                  publishStatus.textContent = "Restore canceled.";
+                }
+                return;
+              }
+
+              var index = parseInt(pick, 10) - 1;
+              if (isNaN(index) || index < 0 || index >= backups.length) {
+                if (publishStatus) {
+                  publishStatus.style.color = "#c0392b";
+                  publishStatus.textContent = "Invalid backup selection.";
+                }
+                return;
+              }
+
+              var backupName = backups[index].name;
+              if (!confirm("Restore " + backupName + " as live index.html?\n\nCurrent live page will be backed up first.")) {
+                if (publishStatus) {
+                  publishStatus.style.color = "var(--ink-soft)";
+                  publishStatus.textContent = "Restore canceled.";
+                }
+                return;
+              }
+
+              restoreBtn.disabled = true;
+              restoreBtn.textContent = "Restoring…";
+              if (publishStatus) {
+                publishStatus.style.color = "var(--ink-soft)";
+                publishStatus.textContent = "Restoring backup…";
+              }
+
+              return fetch("/restore", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ backup: backupName, token: _sessionToken })
+              })
+              .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+              .then(function (restoreResult) {
+                restoreBtn.disabled = false;
+                restoreBtn.textContent = "Restore Backup";
+                if (restoreResult.ok && restoreResult.data && restoreResult.data.ok) {
+                  if (publishStatus) {
+                    publishStatus.style.color = "#5f6d40";
+                    publishStatus.textContent = "Restored from " + backupName + (restoreResult.data.backup ? " (live page backed up as " + restoreResult.data.backup + ")" : "");
+                  }
+                } else {
+                  if (restoreResult.data && restoreResult.data.error === "unauthorized") {
+                    _sessionToken = "";
+                    window._brocklerSessionToken = "";
+                    try { sessionStorage.removeItem(SESSION_TOKEN_KEY); } catch (error) {}
+                    if (publishStatus) {
+                      publishStatus.style.color = "#c0392b";
+                      publishStatus.textContent = "Session expired. Sign in again.";
+                    }
+                    openModal();
+                    return;
+                  }
+                  if (publishStatus) {
+                    publishStatus.style.color = "#c0392b";
+                    publishStatus.textContent = "Restore failed: " + (restoreResult.data && restoreResult.data.error ? restoreResult.data.error : "unknown error");
+                  }
+                }
+              });
+            })
+            .catch(function () {
+              restoreBtn.disabled = false;
+              restoreBtn.textContent = "Restore Backup";
+              if (publishStatus) {
+                publishStatus.style.color = "#c0392b";
+                publishStatus.textContent = "Network error while restoring backup.";
+              }
+            });
+        });
+      }
+
       /* Show buttons when review mode is active */
       var origEnable = enableReviewMode;
       enableReviewMode = function () { origEnable(); updateExportButton(); };
@@ -1982,6 +2893,283 @@
       disableReviewMode = function () { origDisable(); updateExportButton(); };
 
       updateExportButton();
+    }());
+  </script>
+
+  <script>
+    /* ── Tab switching ──────────────────────────────────────────────────── */
+    (function () {
+      var tabBtns   = document.querySelectorAll(".tab-btn");
+      var tabPanels = document.querySelectorAll(".tab-panel");
+
+      tabBtns.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var target = btn.getAttribute("data-tab");
+          tabBtns.forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-tab") === target); });
+          tabPanels.forEach(function (p) { p.classList.toggle("active", p.id === "panel-" + target); });
+          if (target === "cases") { initCasesPanel(); }
+        });
+      });
+    }());
+
+    /* ── My Cases panel ─────────────────────────────────────────────────── */
+    (function () {
+      var ALERT_KEY = "brockler-alert-emails";
+      var _casesToken = "";   // injected from parent scope after login
+      var _casesLoaded = false;
+      var syncBtn    = document.getElementById("cases-sync-btn");
+      var syncStatus = document.getElementById("cases-sync-status");
+      var syncInfo   = document.getElementById("cases-sync-info");
+      var myGrid     = document.getElementById("my-cases-grid");
+      var vacantGrid = document.getElementById("vacant-cases-grid");
+      var statsRow   = document.getElementById("cases-stats");
+      var alertPanel = document.getElementById("alert-panel");
+      var alertInput = document.getElementById("alert-email-input");
+      var alertAddBtn= document.getElementById("alert-add-btn");
+      var alertList  = document.getElementById("alert-subscribers-list");
+
+      /* ── Alert subscribers (localStorage) ─────────────────── */
+      function loadAlerts() {
+        try { return JSON.parse(localStorage.getItem(ALERT_KEY) || "[]"); }
+        catch (e) { return []; }
+      }
+      function saveAlerts(arr) { localStorage.setItem(ALERT_KEY, JSON.stringify(arr)); }
+      function renderAlerts() {
+        var subs = loadAlerts();
+        alertList.innerHTML = "";
+        if (!subs.length) {
+          alertList.innerHTML = '<span style="color:var(--ink-soft)">No addresses added yet.</span>';
+          return;
+        }
+        subs.forEach(function (email) {
+          var row = document.createElement("div");
+          row.className = "alert-sub-item";
+          row.innerHTML = '<span>' + escHtml(email) + '</span><button type="button" data-rm="' + escHtml(email) + '">Remove</button>';
+          alertList.appendChild(row);
+        });
+        alertList.querySelectorAll("[data-rm]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var e = btn.getAttribute("data-rm");
+            saveAlerts(loadAlerts().filter(function (x) { return x !== e; }));
+            renderAlerts();
+          });
+        });
+      }
+      if (alertAddBtn) {
+        alertAddBtn.addEventListener("click", function () {
+          var val = (alertInput.value || "").trim().toLowerCase();
+          if (!val || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) { alert("Enter a valid email address."); return; }
+          var subs = loadAlerts();
+          if (!subs.includes(val)) { subs.push(val); saveAlerts(subs); }
+          alertInput.value = "";
+          renderAlerts();
+        });
+      }
+
+      /* ── Charge helpers ─────────────────────────────────────── */
+      var OVI_KEYWORDS = ["OVI","DUI","IMPAIRED","REFUSAL","ALCOHOL","DRUG","BREATHALYZER","CHEMICAL TEST","INTOXICATED","DRUNK","PHYSICAL CONTROL"];
+      function isOviCharge(desc) {
+        if (!desc) return false;
+        var u = desc.toUpperCase();
+        return OVI_KEYWORDS.some(function (k) { return u.indexOf(k) !== -1; });
+      }
+      function chargeClass(desc) { return isOviCharge(desc) ? "charge-pill ovi" : "charge-pill"; }
+      function escHtml(s) {
+        return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+      }
+      function fmtDate(s) {
+        if (!s) return "";
+        var d = new Date(s);
+        if (isNaN(d)) return s;
+        return d.toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" });
+      }
+      function daysUntil(s) {
+        if (!s) return null;
+        var m = s.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if (!m) return null;
+        var d = new Date(m[3], m[1]-1, m[2]);
+        return Math.round((d - Date.now()) / 86400000);
+      }
+
+      /* ── Render a single case card ──────────────────────────── */
+      function renderCaseCard(c) {
+        var card = document.createElement("div");
+        card.className = "case-card";
+
+        /* header */
+        var idDiv = document.createElement("div");
+        idDiv.className = "case-card-id";
+        idDiv.textContent = c.case_id || c.case_number || "—";
+        card.appendChild(idDiv);
+
+        /* defendant */
+        var h4 = document.createElement("h4");
+        h4.textContent = c.defendant_name || "Unknown Defendant";
+        card.appendChild(h4);
+
+        var meta = document.createElement("div");
+        meta.className = "case-card-meta";
+        var parts = [];
+        if (c.dob)  parts.push("DOB: " + c.dob);
+        if (c.race) parts.push(c.race);
+        if (c.sex)  parts.push(c.sex);
+        meta.textContent = parts.join(" · ");
+        card.appendChild(meta);
+
+        /* charges */
+        if (c.charges && c.charges.length) {
+          var chargesDiv = document.createElement("div");
+          chargesDiv.className = "case-charges";
+          c.charges.slice(0, 5).forEach(function (ch) {
+            var pill = document.createElement("span");
+            pill.className = chargeClass(ch.description || ch.charge_description);
+            pill.textContent = (ch.type || ch.charge_type || "INDICT") + ": " + (ch.description || ch.charge_description || ch.statute || "—");
+            chargesDiv.appendChild(pill);
+          });
+          if (c.charges.length > 5) {
+            var more = document.createElement("span");
+            more.className = "charge-pill";
+            more.textContent = "+" + (c.charges.length - 5) + " more";
+            chargesDiv.appendChild(more);
+          }
+          card.appendChild(chargesDiv);
+        }
+
+        /* attorney */
+        var attyDiv = document.createElement("div");
+        attyDiv.style.marginBottom = "6px";
+        if (c.defense_attorney) {
+          attyDiv.innerHTML = '<span style="font-size:0.78rem;color:var(--ink-soft)">Atty: </span>' + escHtml(c.defense_attorney);
+          attyDiv.style.fontSize = "0.82rem";
+        } else {
+          attyDiv.innerHTML = '<span class="atty-vacant">VACANT — No Defense Attorney</span>';
+        }
+        card.appendChild(attyDiv);
+
+        /* status */
+        var statusDiv = document.createElement("div");
+        statusDiv.className = "case-card-status";
+        statusDiv.textContent = c.status || "";
+        card.appendChild(statusDiv);
+
+        /* next event */
+        if (c.next_event) {
+          var nextDiv = document.createElement("div");
+          nextDiv.className = "case-card-next";
+          var days = daysUntil(c.next_event);
+          var urgentSuffix = (days !== null && days >= 0 && days <= 7) ? " ⚡" : "";
+          nextDiv.textContent = "Next: " + c.next_event + urgentSuffix;
+          card.appendChild(nextDiv);
+        }
+
+        /* flags */
+        var flags = c.flags || [];
+        if (flags.length) {
+          var flagsDiv = document.createElement("div");
+          flagsDiv.style.marginTop = "8px";
+          flags.forEach(function (f) {
+            var tag = document.createElement("span");
+            tag.className = "case-flag " + (f.type || "flag-new");
+            tag.textContent = f.label || f;
+            flagsDiv.appendChild(tag);
+          });
+          card.appendChild(flagsDiv);
+        }
+
+        return card;
+      }
+
+      /* ── Render grid ─────────────────────────────────────────── */
+      var CASE_RENDER_LIMIT = 200;
+
+      function renderGrid(grid, cases, emptyMsg) {
+        grid.innerHTML = "";
+        if (!cases || !cases.length) {
+          grid.innerHTML = '<div class="case-empty">' + escHtml(emptyMsg) + '</div>';
+          return;
+        }
+        var shown = cases.slice(0, CASE_RENDER_LIMIT);
+        shown.forEach(function (c) { grid.appendChild(renderCaseCard(c)); });
+        if (cases.length > CASE_RENDER_LIMIT) {
+          var note = document.createElement("div");
+          note.className = "case-empty";
+          note.textContent = "Showing " + CASE_RENDER_LIMIT + " of " + cases.length + " cases. Refine sync filters to reduce volume.";
+          grid.appendChild(note);
+        }
+      }
+
+      /* ── Update summary stats ──────────────────────────────── */
+      function updateStats(data) {
+        var my = (data.brockler_cases || []).length;
+        var vac = (data.vacant_cases || []).length;
+        var oviCount = (data.vacant_cases || []).filter(function (c) {
+          return c.flags && c.flags.some(function (f) { return (f.label || f || "").toString().indexOf("OVI") !== -1 || (f.type || "").indexOf("ovi") !== -1; });
+        }).length;
+        var urgent = (data.brockler_cases || []).concat(data.vacant_cases || []).filter(function (c) {
+          var days = daysUntil(c.next_event);
+          return days !== null && days >= 0 && days <= 7;
+        }).length;
+        document.getElementById("stat-my").textContent = my;
+        document.getElementById("stat-vacant").textContent = vac;
+        document.getElementById("stat-ovi").textContent = oviCount;
+        document.getElementById("stat-urgent").textContent = urgent;
+        document.getElementById("badge-my-count").textContent = my;
+        document.getElementById("badge-vacant-count").textContent = vac;
+        statsRow.style.display = "flex";
+        alertPanel.style.display = "";
+        renderAlerts();
+      }
+
+      /* ── Load from API ─────────────────────────────────────── */
+      function loadCases(token) {
+        if (!token) { syncStatus.textContent = "Sign in first."; return; }
+        syncStatus.style.color = "var(--ink-soft)";
+        syncStatus.textContent = "Loading…";
+        fetch("/cases?token=" + encodeURIComponent(token))
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            syncStatus.textContent = "";
+            if (data.error) {
+              if (data.error === "unauthorized") {
+                syncStatus.style.color = "#c0392b";
+                syncStatus.textContent = "Session expired. Sign in again.";
+                syncInfo.textContent = "Last sync: —";
+                disableReviewMode();
+                openModal();
+                return;
+              }
+              syncStatus.style.color = "#c0392b";
+              syncStatus.textContent = "Error: " + data.error;
+              return;
+            }
+            renderGrid(myGrid, data.brockler_cases, "No active cases found. Run push_brockler_cases.py to sync.");
+            renderGrid(vacantGrid, data.vacant_cases, "No new unrepresented filings found.");
+            updateStats(data);
+            syncInfo.textContent = "Last sync: " + (data.synced_at ? fmtDate(data.synced_at) : "—");
+            _casesLoaded = true;
+          })
+          .catch(function () {
+            syncStatus.style.color = "#c0392b";
+            syncStatus.textContent = "Network error — is the save API running?";
+          });
+      }
+
+      /* ── Public init (called when tab activates) ─────────────── */
+      window.initCasesPanel = function () {
+        /* grab token from parent scope */
+        try { _casesToken = window._brocklerSessionToken || ""; } catch (e) {}
+        if (!_casesLoaded) { loadCases(_casesToken); }
+        renderAlerts();
+      };
+
+      /* ── Manual sync button ─────────────────────────────────── */
+      if (syncBtn) {
+        syncBtn.addEventListener("click", function () {
+          try { _casesToken = window._brocklerSessionToken || ""; } catch (e) {}
+          _casesLoaded = false;
+          loadCases(_casesToken);
+        });
+      }
     }());
   </script>
 </body>

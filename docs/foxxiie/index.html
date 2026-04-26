@@ -169,6 +169,95 @@
       background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,250,243,0.9));
       box-shadow: var(--card-shadow);
     }
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 16px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .cta-primary {
+      background: linear-gradient(180deg, #d7874d, #b86532);
+      color: #fffaf4;
+      box-shadow: 0 10px 24px rgba(181,106,52,0.22);
+    }
+    .cta-secondary {
+      background: rgba(255,255,255,0.85);
+      border-color: var(--line);
+      color: var(--ink);
+    }
+    .trial-form { margin-top: 20px; }
+    .trial-form .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .trial-form input[type="email"],
+    .trial-form input[type="text"] {
+      flex: 1 1 220px;
+      padding: 11px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      background: rgba(255,255,255,0.92);
+      color: var(--ink);
+      outline: none;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .trial-form input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(181,106,52,0.12);
+    }
+    .trial-form .trial-note {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+    .trial-form .trial-note strong { color: var(--ink); }
+    .trial-form .trial-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 22px;
+      border-radius: 999px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(180deg, #d7874d, #b86532);
+      color: #fffaf4;
+      border: none;
+      box-shadow: 0 10px 24px rgba(181,106,52,0.22);
+      transition: opacity 0.15s;
+    }
+    .trial-form .trial-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .trial-form .trial-status {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      min-height: 1.2em;
+      color: var(--ink-soft);
+    }
+    .trial-form .trial-status.error { color: #b91c1c; }
+    .trial-form .trial-status.success { color: #166534; }
+    .trial-links {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
     .section.hidden { display: none; }
     .kicker {
       display: inline-block; margin-bottom: 8px;
@@ -279,9 +368,6 @@
         <div class="brand-mark">foxxiie.com</div>
         <div class="brand-name">Court Database</div>
       </div>
-      <a href="/brocklerlaw/" class="tab-btn" style="font-size:0.8rem;padding:8px 16px;">
-        Brockler Law ↗
-      </a>
     </nav>
 
     <div class="eyebrow">
@@ -305,6 +391,48 @@
       <button class="tab-btn active" data-tab="attorneys">Defense Attorneys</button>
       <button class="tab-btn" data-tab="judges">Judges</button>
       <button class="tab-btn" data-tab="prosecutors">Prosecutors</button>
+    </div>
+  </section>
+
+  <!-- ── LAW FIRM TRIAL ─────────────────────────────────────── -->
+  <section class="section" id="law-firms">
+    <div class="kicker">For Law Firms</div>
+    <h2>Start a free trial for case monitoring alerts.</h2>
+    <p class="section-desc">
+      If you are a defense lawyer, test automated case and docket monitoring for your active
+      matters. We can set up your trial and alert rules quickly so your team does not miss
+      filings, hearings, or case status changes.
+    </p>
+    <div class="card-grid">
+      <article class="card">
+        <div class="card-name">Daily alert feed</div>
+        <p class="section-desc">Track updates across assigned cases without manual docket checking.</p>
+      </article>
+      <article class="card">
+        <div class="card-name">Custom watchlists</div>
+        <p class="section-desc">Monitor by case number, judge, and prosecutor with configurable thresholds.</p>
+      </article>
+      <article class="card">
+        <div class="card-name">Rapid onboarding</div>
+        <p class="section-desc">Trial setup is handled for your team with practical defaults and support.</p>
+      </article>
+    </div>
+    <form class="trial-form" id="trialForm" novalidate>
+      <div class="form-row">
+        <input type="email" id="trialEmail" name="email" placeholder="Your email address" autocomplete="email" required>
+        <input type="text" id="trialFirm" name="firm" placeholder="Law firm name (optional)" autocomplete="organization">
+      </div>
+      <div class="form-row">
+        <button type="submit" class="trial-btn" id="trialBtn">Start free trial &rarr;</button>
+      </div>
+      <p class="trial-note">
+        <strong>14-day free trial</strong> &mdash; enter your card on the next screen to lock in the trial discount.
+        Cancel any time before the trial ends. Powered by Stripe.
+      </p>
+      <div class="trial-status" id="trialStatus" role="status" aria-live="polite"></div>
+    </form>
+    <div class="trial-links">
+      <a class="cta cta-secondary" href="/brocklerlaw/seo/">Browse SEO topic pages</a>
     </div>
   </section>
 
@@ -545,6 +673,60 @@ document.getElementById("searchInput").addEventListener("input", e => {
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 loadData();
+</script>
+
+<script>
+// Trial signup -> Stripe Checkout
+(function () {
+  const form = document.getElementById("trialForm");
+  const btn = document.getElementById("trialBtn");
+  const status = document.getElementById("trialStatus");
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = (document.getElementById("trialEmail").value || "").trim();
+    const firm = (document.getElementById("trialFirm").value || "").trim();
+
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      status.textContent = "Please enter a valid email address.";
+      status.className = "trial-status error";
+      return;
+    }
+
+    btn.disabled = true;
+    status.textContent = "Redirecting to secure checkout...";
+    status.className = "trial-status";
+
+    try {
+      const res = await fetch("/stripe-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, firm }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "No checkout URL returned");
+      }
+      window.location.href = data.url;
+    } catch (err) {
+      console.error("Stripe checkout error:", err);
+      status.textContent = "Could not start checkout. Please try again or contact us directly.";
+      status.className = "trial-status error";
+      btn.disabled = false;
+    }
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("trial") === "success") {
+    status.textContent = "Trial activated. Check your email for setup instructions.";
+    status.className = "trial-status success";
+    history.replaceState(null, "", window.location.pathname);
+  } else if (params.get("trial") === "cancelled") {
+    status.textContent = "Checkout cancelled. You can try again any time.";
+    status.className = "trial-status";
+  }
+})();
 </script>
 </body>
 </html>

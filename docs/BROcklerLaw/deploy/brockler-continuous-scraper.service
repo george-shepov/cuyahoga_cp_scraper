@@ -1,0 +1,21 @@
+[Unit]
+Description=Brockler continuous county scraper
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/brocklerlaw-scraper
+EnvironmentFile=-/etc/brocklerlaw-save/env
+Environment=PLAYWRIGHT_BROWSERS_PATH=/opt/brocklerlaw-scraper/.playwright
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/brocklerlaw-scraper/.venv/bin/python /opt/brocklerlaw-scraper/continuous_scraper.py
+Restart=always
+RestartSec=20
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Brockler case sync every 20 minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=20min
+Persistent=true
+Unit=brockler-cases-sync.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  scraper-forward:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: cuyahoga_scraper_forward
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ../out:/app/out
+      - ../browser_data:/app/browser_data
+      - ../logs:/app/logs
+      - ../cloud_state:/app/cloud_state
+    command:
+      - python3
+      - scripts/cloud_range_worker.py
+      - --direction
+      - up
+      - --start
+      - "706402"
+      - --limit
+      - "150"
+      - --workers
+      - "6"
+      - --delay
+      - "20"
+      - --cursor-file
+      - cloud_state/forward.cursor
+      - --headless
+      - --download-pdfs
+    restart: unless-stopped
+
+  scraper-backward:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: cuyahoga_scraper_backward
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ../out:/app/out
+      - ../browser_data:/app/browser_data
+      - ../logs:/app/logs
+      - ../cloud_state:/app/cloud_state
+    command:
+      - python3
+      - scripts/cloud_range_worker.py
+      - --direction
+      - down
+      - --start
+      - "706402"
+      - --limit
+      - "150"
+      - --workers
+      - "6"
+      - --delay
+      - "20"
+      - --cursor-file
+      - cloud_state/backward.cursor
+      - --min-case
+      - "677500"
+      - --headless
+      - --download-pdfs
+    restart: unless-stopped
+
+  scraper-targeted:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: cuyahoga_scraper_targeted
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ../out:/app/out
+      - ../browser_data:/app/browser_data
+      - ../logs:/app/logs
+      - ../my_cases.json:/app/my_cases.json
+    command:
+      - python3
+      - scripts/cloud_targeted_worker.py
+      - --cases-file
+      - my_cases.json
+      - --refresh-seconds
+      - "1800"
+      - --workers
+      - "2"
+      - --headless
+      - --download-pdfs
+    restart: unless-stopped
