@@ -30,7 +30,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 # ── Config ───────────────────────────────────────────────────────────────────
-REPO_ROOT = Path(__file__).resolve().parent.parent  # /home/shepov/brockler-scraper
+REPO_ROOT = Path(__file__).resolve().parent  # /home/shepov/brockler-scraper
 PYTHON    = str(REPO_ROOT / ".venv" / "bin" / "python3")
 if not os.path.exists(PYTHON):
     PYTHON = sys.executable
@@ -54,8 +54,9 @@ _scrape_lock = threading.Lock()
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 def token_is_valid(token: str) -> bool:
-    h = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    return h == API_TOKEN_HASH
+    # Accept the raw password (hashed here) OR the pre-hashed value sent by save_api.py proxy
+    return (token == API_TOKEN_HASH
+            or hashlib.sha256(token.encode("utf-8")).hexdigest() == API_TOKEN_HASH)
 
 
 def parse_case_id(s: str) -> tuple[int | None, int | None]:
@@ -143,8 +144,10 @@ def run_scrape(year: int, number: int) -> dict:
 def try_years(number: int) -> tuple[int, dict]:
     """Try to scrape a case by cycling through likely years (newest first)."""
     current_year = datetime.now(timezone.utc).year
-    for yr in range(current_year, max(current_year - 5, 2019), -1):
-        # Check cache first
+    year_range = range(current_year, max(current_year - 6, 2019), -1)
+
+    # 1. Fresh cache hit (< 1 hour old) for any year
+    for yr in year_range:
         cached = find_newest_json(yr, number)
         if cached and (time.time() - cached.stat().st_mtime) < CACHE_MAX_AGE:
             with open(cached, encoding="utf-8") as f:
@@ -153,12 +156,31 @@ def try_years(number: int) -> tuple[int, dict]:
                 log.info("cache hit year=%d number=%d", yr, number)
                 return yr, data
 
-    # Not cached — scrape current year (main.py auto-detects if not found)
-    current_year_data = run_scrape(current_year, number)
-    if current_year_data.get("metadata", {}).get("exists", True):
-        return current_year, current_year_data
+    # 2. Stale cache: return any existing JSON without re-scraping
+    #    (avoids trying the wrong year when the case year is already known)
+    for yr in year_range:
+        cached = find_newest_json(yr, number)
+        if cached:
+            with open(cached, encoding="utf-8") as f:
+                data = json.load(f)
+            if data.get("metadata", {}).get("exists", True):
+                log.info("stale cache hit year=%d number=%d age=%.0fs",
+                         yr, number, time.time() - cached.stat().st_mtime)
+                return yr, data
 
-    raise RuntimeError(f"Case {number} not found in any year")
+    # 3. Nothing cached — scrape each year in order until one succeeds
+    for yr in year_range:
+        try:
+            data = run_scrape(yr, number)
+            if data.get("metadata", {}).get("exists", True):
+                return yr, data
+            log.info("year=%d number=%d → not found, trying next year", yr, number)
+        except RuntimeError:
+            log.info("year=%d number=%d → scrape produced no JSON, trying next year", yr, number)
+        except subprocess.TimeoutExpired:
+            log.warning("year=%d number=%d → scrape timed out", yr, number)
+
+    raise RuntimeError(f"Case {number} not found in years {min(year_range)}-{max(year_range)}")
 
 
 # ── HTTP Handler ─────────────────────────────────────────────────────────────

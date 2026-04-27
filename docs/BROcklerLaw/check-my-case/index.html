@@ -348,6 +348,30 @@
 </footer>
 
 <script>
+// ── Known-cases cache (loaded at page start) ─────────────────────────────────
+// Map: normalised case number (digits only) → summary object from cases_data.json
+const _knownCases = new Map();
+let _knownCasesReady = false;
+
+(async function loadKnownCases() {
+  try {
+    const resp = await fetch('/cases-cached');
+    if (!resp.ok) return;
+    const data = await resp.json();
+    for (const c of (data.cases || [])) {
+      const num = caseNumKey(c.case_id || '');
+      if (num) _knownCases.set(num, c);
+    }
+    _knownCasesReady = true;
+  } catch (_) { /* silent — just means no instant load */ }
+})();
+
+function caseNumKey(s) {
+  // Extract the numeric part from any case_id format, e.g. CR-25-706402-A → "706402"
+  const m = String(s).match(/(\d{5,7})/);
+  return m ? m[1] : null;
+}
+
 // ── Tab switching ───────────────────────────────────────────────────────────
 function switchTab(btn, panelId) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -407,8 +431,17 @@ async function doLookup() {
 
   hideError();
   document.getElementById('results').classList.remove('show');
-  showLoading('Fetching case data — this may take up to 60 seconds for new cases…');
   document.getElementById('lookupBtn').disabled = true;
+
+  // ── Instant load from known-cases cache ─────────────────────────────────
+  const key = caseNumKey(raw);
+  const known = key ? _knownCases.get(key) : null;
+  if (known) {
+    renderInstant(known);   // show immediately
+    showLoading('Refreshing live data…');
+  } else {
+    showLoading('Fetching case data — this may take up to 60 seconds for new cases…');
+  }
 
   try {
     const resp = await fetch('/scrape-case', {
@@ -426,10 +459,77 @@ async function doLookup() {
     renderResult(json.data, json.cached);
   } catch (err) {
     hideLoading();
-    showError(err.message || 'Unknown error. Please try again.');
+    if (known) {
+      // Keep the instant result visible; show a soft warning instead of hard error
+      const metaEl = document.getElementById('rCaseMeta');
+      metaEl.innerHTML += `<div class="meta-pill" style="color:#fca5a5">Live refresh failed — showing cached data</div>`;
+    } else {
+      showError(err.message || 'Unknown error. Please try again.');
+    }
   } finally {
     document.getElementById('lookupBtn').disabled = false;
   }
+}
+
+// ── Render from cases_data.json summary (instant, no scrape needed) ─────────
+function renderInstant(c) {
+  // c = { case_id, defendant_name, status, judge, next_event, charges, dob, race, sex, ... }
+  document.getElementById('rCaseId').textContent    = c.case_id || '';
+  document.getElementById('rCaseTitle').textContent = `THE STATE OF OHIO vs. ${c.defendant_name || 'UNKNOWN'}`;
+
+  const metaEl = document.getElementById('rCaseMeta');
+  metaEl.innerHTML = [
+    c.status && `<div class="meta-pill">Status: <span>${esc(c.status)}</span></div>`,
+    c.judge  && `<div class="meta-pill">Judge: <span>${esc(c.judge)}</span></div>`,
+    c.next_event && `<div class="meta-pill">Next Event: <span>${esc(c.next_event)}</span></div>`,
+    `<div class="meta-pill" style="color:#a3c4e0">Brockler Law · cached</div>`,
+  ].filter(Boolean).join('');
+
+  // Overview
+  document.getElementById('overviewGrid').innerHTML = [
+    field('Case Number',  c.case_id,      'highlight'),
+    field('Status',       c.status,       statusClass(c.status)),
+    field('Judge',        c.judge),
+    field('Next Event',   c.next_event),
+    field('Defense Attorney', 'Aaron Brockler', 'green'),
+  ].join('') || '<p class="empty">No overview data.</p>';
+
+  // Defendant
+  document.getElementById('defendantGrid').innerHTML = [
+    field('Name',   c.defendant_name, 'highlight'),
+    field('DOB',    c.dob),
+    field('Race',   c.race),
+    field('Sex',    c.sex),
+    field('Status', c.status),
+  ].join('') || '<p class="empty">No defendant data.</p>';
+
+  // Charges
+  const charges = Array.isArray(c.charges) ? c.charges : [];
+  if (charges.length === 0) {
+    document.getElementById('chargeRows').innerHTML =
+      `<tr><td colspan="4" class="empty">No charge data.</td></tr>`;
+  } else {
+    document.getElementById('chargeRows').innerHTML = charges.map(ch => `
+      <tr>
+        <td>${badgeType(ch.type || '')}</td>
+        <td>${esc(ch.statute || '')}</td>
+        <td class="desc-col">${esc(ch.description || '')}</td>
+        <td>${esc(ch.disposition || '—')}</td>
+      </tr>`).join('');
+  }
+
+  // Attorneys — we know it's Brockler
+  document.getElementById('attorneyGrid').innerHTML = [
+    field('Defense Attorney', 'Aaron Brockler', 'green'),
+    c.judge ? field('Assigned Judge', c.judge) : '',
+  ].join('');
+
+  // Timeline — not available in summary; show placeholder
+  document.getElementById('timelineRows').innerHTML =
+    `<tr><td colspan="2" class="empty">Full timeline available after live refresh.</td></tr>`;
+
+  document.getElementById('results').classList.add('show');
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ── Render result ─────────────────────────────────────────────────────────────

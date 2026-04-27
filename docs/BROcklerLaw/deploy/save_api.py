@@ -183,6 +183,30 @@ class SaveHandler(BaseHTTPRequestHandler):
             self.send_json(200, {"ok": True, "backups": list_backups(site_root, limit=limit)})
             return
 
+        # ── /cases-cached – public, no auth: brockler_cases summary for instant UI load ──
+        if parsed.path.rstrip("/") == "/cases-cached":
+            try:
+                with open(CASES_FILE, "r", encoding="utf-8") as fh:
+                    data = json.load(fh)
+                payload = {
+                    "ok": True,
+                    "cases": data.get("brockler_cases", []),
+                    "synced_at": data.get("synced_at"),
+                }
+            except FileNotFoundError:
+                payload = {"ok": True, "cases": [], "synced_at": None}
+            except (OSError, ValueError) as exc:
+                log.error("cases-cached read error: %s", exc)
+                payload = {"ok": True, "cases": [], "synced_at": None}
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Cache-Control", "public, max-age=300")
+            data_bytes = json.dumps(payload).encode()
+            self.send_header("Content-Length", str(len(data_bytes)))
+            self.end_headers()
+            self.wfile.write(data_bytes)
+            return
+
         if parsed.path.rstrip("/") != "/cases":
             self.send_json(404, {"error": "not found"})
             return
