@@ -611,12 +611,30 @@ function renderResult(data, cached) {
   }
 
   // ── Timeline tab ───────────────────────────────────────────────────────
-  const sorted = [...actions].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  if (sorted.length === 0) {
+  // Prefer top-level docket (MM/DD/YYYY format), fall back to summary.case_actions
+  const docket = Array.isArray(data.docket) ? data.docket : [];
+  const timelineItems = docket.length > 0
+    ? docket.map(e => ({
+        date: e.proceeding_date || e.filing_date || '',
+        event: [e.document_type, e.description, e.additional].filter(Boolean).join(' — '),
+      }))
+    : actions.map(e => ({ date: e.date || '', event: e.event || '' }));
+
+  // Parse MM/DD/YYYY or YYYY-MM-DD to a sortable integer (YYYYMMDD)
+  function dateKey(s) {
+    if (!s) return 0;
+    const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (m) return parseInt(m[3] + m[1] + m[2], 10);  // MM/DD/YYYY → YYYYMMDD
+    return parseInt(s.replace(/-/g, ''), 10);          // YYYY-MM-DD → YYYYMMDD
+  }
+
+  const sortedItems = [...timelineItems].sort((a, b) => dateKey(a.date) - dateKey(b.date));
+
+  if (sortedItems.length === 0) {
     document.getElementById('timelineRows').innerHTML =
       `<tr><td colspan="2" class="empty">No timeline data available.</td></tr>`;
   } else {
-    document.getElementById('timelineRows').innerHTML = sorted.map(a => `
+    document.getElementById('timelineRows').innerHTML = sortedItems.map(a => `
       <tr>
         <td class="date-col">${esc(a.date || '')}</td>
         <td class="desc-col">${esc(a.event || '')}</td>
