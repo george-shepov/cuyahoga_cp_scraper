@@ -520,8 +520,7 @@ function renderInstant(c) {
 
   // Attorneys — we know it's Brockler
   document.getElementById('attorneyGrid').innerHTML = [
-    field('Defense Attorney', 'Aaron Brockler', 'green'),
-    c.judge ? field('Assigned Judge', c.judge) : '',
+    field('Defense Attorney', c.defense_attorney || 'Aaron Brockler', 'green'),
   ].join('');
 
   // Timeline — not available in summary; show placeholder
@@ -601,10 +600,10 @@ function renderResult(data, cached) {
   }
 
   // ── Attorneys tab ──────────────────────────────────────────────────────
-  const attys = extractAttorneys(actions, fields);
+  const attys = extractAttorneys(data, actions, fields);
   const attyGrid = document.getElementById('attorneyGrid');
   if (Object.keys(attys).length === 0) {
-    attyGrid.innerHTML = '<p class="empty">Attorney data not parsed. Check the Timeline tab for COURT ASSIGNED entries.</p>';
+    attyGrid.innerHTML = '<p class="empty">Attorney data is not available for this case yet.</p>';
   } else {
     attyGrid.innerHTML = Object.entries(attys).map(([role, name]) =>
       field(role, name)
@@ -636,8 +635,18 @@ function statusClass(s) {
   return '';
 }
 
-function extractAttorneys(actions, fields) {
+function extractAttorneys(data, actions, fields) {
   const result = {};
+
+  // Prefer explicit attorney objects when available from the scraper API.
+  const attorneyList = Array.isArray(data.attorneys) ? data.attorneys : [];
+  for (const atty of attorneyList) {
+    const name = String(atty.name || '').trim();
+    if (!name) continue;
+    const role = String(atty.role || atty.party || 'Attorney').trim();
+    result[titleCase(role)] = titleCase(name.replace(/,+$/, ''));
+  }
+
   // Look in case_actions events for attorney assignments
   for (const a of actions) {
     const ev = (a.event || '').toUpperCase();
@@ -648,16 +657,14 @@ function extractAttorneys(actions, fields) {
       result['Defense Attorney'] = titleCase(m1[1].trim().replace(/,$/, ''));
     }
 
-    // "JUDGE ASSIGNED: SMITH, JOHN" style
-    const m2 = ev.match(/JUDGE\s+([A-Z ,\.]+)\s+\(\d+\)\s+ASSIGNED/);
-    if (m2) {
-      result['Assigned Judge'] = titleCase(m2[1].trim());
-    }
   }
 
-  // Judge fallback from fields
-  if (!result['Assigned Judge'] && fields['Judge Name:']) {
-    result['Assigned Judge'] = fields['Judge Name:'];
+  // Optional fallback from parsed fields if attorney-like labels exist.
+  for (const [key, value] of Object.entries(fields || {})) {
+    if (!value || value === 'N/A') continue;
+    if (/attorney|counsel|lawyer|defense/i.test(key)) {
+      result[key.replace(/:$/, '')] = String(value).trim();
+    }
   }
 
   return result;
