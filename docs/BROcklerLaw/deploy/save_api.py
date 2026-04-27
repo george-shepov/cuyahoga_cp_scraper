@@ -12,6 +12,8 @@ import json
 import logging
 import hashlib
 import re
+import time
+import threading
 import urllib.request
 import urllib.error
 from datetime import datetime
@@ -38,6 +40,13 @@ CASES_FILE        = "/opt/brocklerlaw-save/cases_data.json"
 VISITS_FILE       = "/opt/brocklerlaw-save/visits.log"
 SCRAPE_TRIGGER_FILE = "/opt/brocklerlaw-save/scrape_trigger.json"
 BACKUP_NAME_RE = re.compile(r"^index_\d{8}_\d{6}\.html$")
+
+# ── Scrape-case proxy config ─────────────────────────────────────────────────
+SCRAPE_NODE_URL = os.environ.get("SCRAPE_NODE_URL", "http://104.237.9.52:8766/scrape-case")
+SCRAPE_PROXY_TIMEOUT = 115  # seconds (nginx client timeout is 120s)
+# Simple in-memory rate limiter: IP → last_request_time
+_rate_limit: dict[str, float] = {}
+_rate_limit_lock = threading.Lock()
 
 # ── Stripe config (set via environment variables) ────────────────────────────
 STRIPE_SECRET_KEY   = os.environ.get("STRIPE_SECRET_KEY", "")          # sk_live_... or sk_test_...
@@ -243,10 +252,14 @@ class SaveHandler(BaseHTTPRequestHandler):
                 self.send_json(500, {"error": "write failed"})
             return
 
+        # ── /scrape-case – public case lookup, proxied to scraping node ─────
+        if path == "/scrape-case":
+            self._handle_scrape_case()
+            return
+
         if path not in ("/save", "/cases-sync", "/restore"):
             self.send_json(404, {"error": "not found"})
             return
-
         length = int(self.headers.get("Content-Length", 0))
         if length > MAX_BYTES:
             self.send_json(413, {"error": "payload too large"})
@@ -413,6 +426,65 @@ class SaveHandler(BaseHTTPRequestHandler):
         except urllib.error.URLError as exc:
             log.error("Stripe network error: %s", exc)
             self.send_json(502, {"error": "Stripe network error"})
+
+    def _handle_scrape_case(self):
+        """Public endpoint: proxy a single-case scrape to the .52 node."""
+        length = int(self.headers.get("Content-Length", 0))
+        raw = self.rfile.read(min(length, 1024)) if length else b""
+        try:
+            body = json.loads(raw.decode("utf-8")) if raw.strip() else {}
+        except (ValueError, UnicodeDecodeError):
+            self.send_json(400, {"error": "invalid JSON"})
+            return
+
+        case_id = str(body.get("case_id", "")).strip()
+        if not case_id:
+            self.send_json(400, {"error": "case_id required"})
+            return
+
+        # Rate limit: 1 request per 60 s per IP
+        ip = self.headers.get("X-Forwarded-For", self.client_address[0]).split(",")[0].strip()
+        now = time.time()
+        with _rate_limit_lock:
+            last = _rate_limit.get(ip, 0)
+            if now - last < 60:
+                wait = int(60 - (now - last))
+                self.send_json(429, {"error": f"Too many requests. Please wait {wait}s."})
+                return
+            _rate_limit[ip] = now
+            # prune old entries to avoid memory growth
+            expired = [k for k, v in _rate_limit.items() if now - v > 300]
+            for k in expired:
+                del _rate_limit[k]
+
+        # Forward to scraping node
+        payload = json.dumps({"token": API_TOKEN_HASH, "case_id": case_id}).encode()
+        req = urllib.request.Request(
+            SCRAPE_NODE_URL,
+            data=payload,
+            method="POST",
+        )
+        req.add_header("Content-Type", "application/json")
+        req.add_header("Content-Length", str(len(payload)))
+        try:
+            with urllib.request.urlopen(req, timeout=SCRAPE_PROXY_TIMEOUT) as resp:
+                resp_body = resp.read()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(resp_body)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(resp_body)
+        except urllib.error.HTTPError as exc:
+            err = exc.read().decode("utf-8", errors="replace")
+            log.error("scrape-node error %d: %s", exc.code, err[:200])
+            self.send_json(exc.code, {"error": err})
+        except urllib.error.URLError as exc:
+            log.error("scrape-node unreachable: %s", exc)
+            self.send_json(503, {"error": "Scraping service unavailable"})
+        except TimeoutError:
+            log.error("scrape-node timed out for case_id=%s", case_id)
+            self.send_json(504, {"error": "Scrape timed out"})
 
 
 if __name__ == "__main__":

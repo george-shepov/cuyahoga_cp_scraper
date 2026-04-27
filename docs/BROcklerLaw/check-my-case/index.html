@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Check My Case | Prosecutor Defense</title>
+<meta name="description" content="Look up your Cuyahoga County criminal case status, charges, attorneys, and full docket history.">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:   #1a2332;
+    --navy2:  #243448;
+    --navy3:  #2e4060;
+    --amber:  #e8a000;
+    --amber2: #f5b800;
+    --white:  #f0f4f8;
+    --gray:   #8fa0b8;
+    --green:  #22c55e;
+    --red:    #ef4444;
+  }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── Header ─────────────────────────────────── */
+  header {
+    background: var(--navy2);
+    border-bottom: 2px solid var(--amber);
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .logo-text { line-height: 1.2; }
+  .logo-text .brand { font-size: 1.4rem; font-weight: 700; color: var(--white); letter-spacing: -0.3px; }
+  .logo-text .tagline { font-size: 0.78rem; color: var(--amber); font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
+  .logo-badge {
+    width: 44px; height: 44px;
+    background: var(--amber);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; font-weight: 900; color: var(--navy);
+    flex-shrink: 0;
+  }
+
+  /* ── Main layout ─────────────────────────────── */
+  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 60px; }
+
+  .page-title {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .page-title h1 { font-size: 1.9rem; font-weight: 700; margin-bottom: 6px; }
+  .page-title p  { color: var(--gray); font-size: 0.95rem; }
+
+  /* ── Search card ─────────────────────────────── */
+  .card {
+    background: var(--navy2);
+    border: 1px solid var(--navy3);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+
+  .search-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .search-row input {
+    flex: 1; min-width: 200px;
+    background: var(--navy);
+    border: 1px solid var(--navy3);
+    border-radius: 8px;
+    color: var(--white);
+    font-size: 1rem;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-row input:focus { border-color: var(--amber); }
+  .search-row input::placeholder { color: var(--gray); }
+  .btn {
+    background: var(--amber);
+    color: var(--navy);
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 12px 28px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--amber2); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .hint { color: var(--gray); font-size: 0.8rem; margin-top: 10px; }
+  .hint code { background: var(--navy3); border-radius: 4px; padding: 1px 5px; font-size: 0.77rem; }
+
+  /* ── Status messages ─────────────────────────── */
+  .status-msg {
+    display: none;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    align-items: center;
+    gap: 10px;
+  }
+  .status-msg.show { display: flex; }
+  .status-msg.loading { background: var(--navy3); color: var(--white); }
+  .status-msg.error   { background: #3b1010; color: #fca5a5; border: 1px solid #7f1d1d; }
+
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: var(--amber);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Result area ─────────────────────────────── */
+  #results { display: none; }
+  #results.show { display: block; }
+
+  .case-header {
+    background: linear-gradient(135deg, var(--navy3) 0%, var(--navy2) 100%);
+    border: 1px solid var(--amber);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .case-header .case-id { font-size: 1.25rem; font-weight: 700; color: var(--amber); }
+  .case-header .case-title { font-size: 1rem; color: var(--white); margin-top: 2px; }
+  .case-header .case-meta { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; }
+  .case-header .meta-pill {
+    background: var(--navy);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.78rem;
+    color: var(--gray);
+  }
+  .case-header .meta-pill span { color: var(--white); font-weight: 600; }
+
+  /* ── Tabs ────────────────────────────────────── */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--navy3); margin-bottom: 20px; overflow-x: auto; }
+  .tab-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--gray); font-size: 0.88rem; font-weight: 600;
+    padding: 10px 16px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: var(--white); }
+  .tab-btn.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Field grid ──────────────────────────────── */
+  .field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .field {
+    background: var(--navy);
+    border: 1px solid var(--navy3);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .field .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--gray); margin-bottom: 4px; }
+  .field .value { font-size: 0.95rem; font-weight: 600; color: var(--white); word-break: break-word; }
+  .field .value.highlight { color: var(--amber); }
+  .field .value.green { color: var(--green); }
+  .field .value.red { color: var(--red); }
+
+  /* ── Table ───────────────────────────────────── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .data-table th {
+    background: var(--navy3);
+    color: var(--amber);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 10px 14px;
+    text-align: left;
+  }
+  .data-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--navy3);
+    color: var(--white);
+    vertical-align: top;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .data-table .date-col { color: var(--gray); white-space: nowrap; }
+  .data-table .desc-col { line-height: 1.5; }
+  .badge {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .badge.indict { background: #2d1b00; color: #fbbf24; }
+  .badge.guilty { background: #1c1c2e; color: #ef4444; }
+  .badge.open   { background: #1c2a1c; color: #4ade80; }
+  .badge.closed { background: #2d2d2d; color: #9ca3af; }
+  .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--navy3); }
+
+  /* ── Empty state ─────────────────────────────── */
+  .empty { color: var(--gray); font-size: 0.9rem; padding: 20px 0; text-align: center; }
+
+  /* ── Disclaimer ──────────────────────────────── */
+  .disclaimer {
+    margin-top: 32px;
+    background: var(--navy2);
+    border-left: 3px solid var(--navy3);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    font-size: 0.78rem;
+    color: var(--gray);
+    line-height: 1.6;
+  }
+
+  footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--gray);
+    font-size: 0.8rem;
+  }
+  footer a { color: var(--amber); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-badge">PD</div>
+  <div class="logo-text">
+    <div class="brand">Prosecutor Defense</div>
+    <div class="tagline">Cuyahoga County Criminal Defense</div>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">
+    <h1>Check My Case</h1>
+    <p>Look up your Cuyahoga County criminal case — status, charges, attorneys, and full docket.</p>
+  </div>
+
+  <div class="card">
+    <div class="search-row">
+      <input type="text" id="caseInput" placeholder="e.g. CR-25-706402-A  or  706402" autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="btn" id="lookupBtn" onclick="doLookup()">Look Up Case</button>
+    </div>
+    <p class="hint">Enter your case number in any format:
+      <code>CR-25-706402-A</code> &nbsp;·&nbsp;
+      <code>25-706402</code> &nbsp;·&nbsp;
+      <code>706402</code>
+    </p>
+  </div>
+
+  <div class="status-msg loading" id="loadingMsg">
+    <div class="spinner"></div>
+    <span id="loadingText">Fetching case data — this may take up to 60 seconds for new cases…</span>
+  </div>
+  <div class="status-msg error" id="errorMsg">
+    <span>⚠</span>
+    <span id="errorText"></span>
+  </div>
+
+  <div id="results">
+    <div class="case-header">
+      <div class="case-id" id="rCaseId"></div>
+      <div class="case-title" id="rCaseTitle"></div>
+      <div class="case-meta" id="rCaseMeta"></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-overview')">Overview</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-defendant')">Defendant</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-charges')">Charges</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-attorneys')">Attorneys</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-timeline')">Timeline</button>
+    </div>
+
+    <!-- Overview tab -->
+    <div class="tab-panel active" id="tab-overview">
+      <div class="field-grid" id="overviewGrid"></div>
+    </div>
+
+    <!-- Defendant tab -->
+    <div class="tab-panel" id="tab-defendant">
+      <div class="field-grid" id="defendantGrid"></div>
+    </div>
+
+    <!-- Charges tab -->
+    <div class="tab-panel" id="tab-charges">
+      <div class="table-wrap">
+        <table class="data-table" id="chargesTable">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Statute</th>
+              <th>Charge</th>
+              <th>Disposition</th>
+            </tr>
+          </thead>
+          <tbody id="chargeRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Attorneys tab -->
+    <div class="tab-panel" id="tab-attorneys">
+      <div class="field-grid" id="attorneyGrid"></div>
+    </div>
+
+    <!-- Timeline tab -->
+    <div class="tab-panel" id="tab-timeline">
+      <div class="table-wrap">
+        <table class="data-table" id="timelineTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Event</th>
+            </tr>
+          </thead>
+          <tbody id="timelineRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- #results -->
+
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> This information is drawn from public Cuyahoga County Common Pleas Court records and may not reflect the most current status. Always verify with the official court docket at
+    <a href="https://cpdocket.cp.cuyahogacounty.gov" target="_blank" rel="noopener">cpdocket.cp.cuyahogacounty.gov</a>.
+    This tool is provided for informational purposes only and does not constitute legal advice.
+    For professional representation, <a href="https://prosecutordefense.com" target="_blank" rel="noopener">contact Brockler Law</a>.
+  </div>
+</main>
+
+<footer>
+  &copy; 2025 <a href="https://prosecutordefense.com">prosecutordefense.com</a> &nbsp;·&nbsp; Brockler Law
+</footer>
+
+<script>
+// ── Tab switching ───────────────────────────────────────────────────────────
+function switchTab(btn, panelId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+// ── Field helpers ────────────────────────────────────────────────────────────
+function field(label, value, cls = '') {
+  if (!value || value === 'N/A' || value === '') return '';
+  return `<div class="field">
+    <div class="label">${esc(label)}</div>
+    <div class="value ${cls}">${esc(String(value))}</div>
+  </div>`;
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function badgeType(t) {
+  const map = {
+    'INDICT':'indict','GUILTY':'guilty','OPEN':'open','CLOSED':'closed',
+    'CASE OPEN':'open','ACTIVE':'open'
+  };
+  const k = Object.keys(map).find(k => String(t).toUpperCase().includes(k));
+  return k ? `<span class="badge ${map[k]}">${esc(t)}</span>` : `<span class="badge">${esc(t)}</span>`;
+}
+
+// ── Main lookup ──────────────────────────────────────────────────────────────
+document.getElementById('caseInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLookup();
+});
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  document.getElementById('errorText').textContent = msg;
+  el.classList.add('show');
+}
+function hideError() {
+  document.getElementById('errorMsg').classList.remove('show');
+}
+function showLoading(msg) {
+  document.getElementById('loadingText').textContent = msg || 'Looking up case…';
+  document.getElementById('loadingMsg').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loadingMsg').classList.remove('show');
+}
+
+async function doLookup() {
+  const raw = document.getElementById('caseInput').value.trim();
+  if (!raw) { showError('Please enter a case number.'); return; }
+
+  hideError();
+  document.getElementById('results').classList.remove('show');
+  showLoading('Fetching case data — this may take up to 60 seconds for new cases…');
+  document.getElementById('lookupBtn').disabled = true;
+
+  try {
+    const resp = await fetch('/scrape-case', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ case_id: raw }),
+    });
+    const json = await resp.json();
+
+    if (!resp.ok || !json.ok) {
+      throw new Error(json.error || `HTTP ${resp.status}`);
+    }
+
+    hideLoading();
+    renderResult(json.data, json.cached);
+  } catch (err) {
+    hideLoading();
+    showError(err.message || 'Unknown error. Please try again.');
+  } finally {
+    document.getElementById('lookupBtn').disabled = false;
+  }
+}
+
+// ── Render result ─────────────────────────────────────────────────────────────
+function renderResult(data, cached) {
+  const meta     = data.metadata  || {};
+  const summary  = data.summary   || {};
+  const fields   = summary.fields || {};
+  const charges  = summary.charges      || [];
+  const actions  = summary.case_actions || [];
+
+  const caseId   = meta.case_id || fields['Number:'] || 'Unknown';
+  const defName  = fields['Name:'] || 'Unknown Defendant';
+  const status   = fields['Status:'] || '';
+  const judge    = fields['Judge Name:'] || '';
+  const nextEvt  = fields['Next Event:'] || '';
+
+  // ── Header ─────────────────────────────────────────────────────────────
+  document.getElementById('rCaseId').textContent    = caseId;
+  document.getElementById('rCaseTitle').textContent = `THE STATE OF OHIO vs. ${defName}`;
+
+  const metaEl = document.getElementById('rCaseMeta');
+  metaEl.innerHTML = [
+    status && `<div class="meta-pill">Status: <span>${esc(status)}</span></div>`,
+    judge  && `<div class="meta-pill">Judge: <span>${esc(judge)}</span></div>`,
+    nextEvt && nextEvt !== 'N/A' && `<div class="meta-pill">Next Event: <span>${esc(nextEvt)}</span></div>`,
+    cached ? `<div class="meta-pill" style="color:#a3c4e0">Cached data</div>` : '',
+  ].filter(Boolean).join('');
+
+  // ── Overview tab ───────────────────────────────────────────────────────
+  document.getElementById('overviewGrid').innerHTML = [
+    field('Case Number',     caseId,                          'highlight'),
+    field('Status',          status,                          statusClass(status)),
+    field('Judge',           judge),
+    field('Next Event',      nextEvt !== 'N/A' ? nextEvt : ''),
+    field('Arrested Date',   fields['Arrested Date:'] !== 'N/A' ? fields['Arrested Date:'] : ''),
+    field('Arresting Agency',fields['Arresting Agency:']),
+    field('Agency Report',   fields['Arresting Agency Report:']),
+    field('Court of Appeals',fields['Court of Appeals Case:'] !== 'N/A' ? fields['Court of Appeals Case:'] : ''),
+    field('Co-Defendants',   fields['Co-Defendants:'] !== 'N/A' ? fields['Co-Defendants:'] : ''),
+    field('Year',            meta.year),
+    field('Category',        meta.case_id ? 'CRIMINAL' : ''),
+  ].join('') || '<p class="empty">No overview data available.</p>';
+
+  // ── Defendant tab ──────────────────────────────────────────────────────
+  document.getElementById('defendantGrid').innerHTML = [
+    field('Name',            defName,                         'highlight'),
+    field('Defendant Number',fields['Number:']),
+    field('Date of Birth',   fields['Date of Birth:']),
+    field('Race',            fields['Race:']),
+    field('Sex',             fields['Sex:']),
+    field('Status',          fields['Status:']),
+    field('Other Cases',     fields['Other Cases:'] !== 'N/A' ? fields['Other Cases:'] : ''),
+    field('Co-Defendants',   fields['Co-Defendants:'] !== 'N/A' ? fields['Co-Defendants:'] : ''),
+  ].join('') || '<p class="empty">No defendant data available.</p>';
+
+  // ── Charges tab ────────────────────────────────────────────────────────
+  const realCharges = charges.filter(c => c.statute && c.charge_description);
+  if (realCharges.length === 0) {
+    document.getElementById('chargeRows').innerHTML =
+      `<tr><td colspan="4" class="empty">No charge data available.</td></tr>`;
+  } else {
+    document.getElementById('chargeRows').innerHTML = realCharges.map(c => `
+      <tr>
+        <td>${badgeType(c.type || '')}</td>
+        <td>${esc(c.statute || '')}</td>
+        <td class="desc-col">${esc(c.charge_description || '')}</td>
+        <td>${esc(c.disposition || '—')}</td>
+      </tr>`).join('');
+  }
+
+  // ── Attorneys tab ──────────────────────────────────────────────────────
+  const attys = extractAttorneys(actions, fields);
+  const attyGrid = document.getElementById('attorneyGrid');
+  if (Object.keys(attys).length === 0) {
+    attyGrid.innerHTML = '<p class="empty">Attorney data not parsed. Check the Timeline tab for COURT ASSIGNED entries.</p>';
+  } else {
+    attyGrid.innerHTML = Object.entries(attys).map(([role, name]) =>
+      field(role, name)
+    ).join('');
+  }
+
+  // ── Timeline tab ───────────────────────────────────────────────────────
+  const sorted = [...actions].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  if (sorted.length === 0) {
+    document.getElementById('timelineRows').innerHTML =
+      `<tr><td colspan="2" class="empty">No timeline data available.</td></tr>`;
+  } else {
+    document.getElementById('timelineRows').innerHTML = sorted.map(a => `
+      <tr>
+        <td class="date-col">${esc(a.date || '')}</td>
+        <td class="desc-col">${esc(a.event || '')}</td>
+      </tr>`).join('');
+  }
+
+  document.getElementById('results').classList.add('show');
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function statusClass(s) {
+  const u = (s || '').toUpperCase();
+  if (u.includes('GUILTY') || u.includes('CONVICTED') || u.includes('SENTENCED')) return 'red';
+  if (u.includes('DISMISSED') || u.includes('ACQUITTED') || u.includes('DIVERSION')) return 'green';
+  if (u.includes('OPEN') || u.includes('ACTIVE') || u.includes('PENDING')) return 'highlight';
+  return '';
+}
+
+function extractAttorneys(actions, fields) {
+  const result = {};
+  // Look in case_actions events for attorney assignments
+  for (const a of actions) {
+    const ev = (a.event || '').toUpperCase();
+
+    // "COURT ASSIGNED SMITH, JOHN AS COUNSEL"
+    const m1 = ev.match(/COURT ASSIGNED\s+([A-Z ,\.]+)\s+AS COUNSEL/);
+    if (m1) {
+      result['Defense Attorney'] = titleCase(m1[1].trim().replace(/,$/, ''));
+    }
+
+    // "JUDGE ASSIGNED: SMITH, JOHN" style
+    const m2 = ev.match(/JUDGE\s+([A-Z ,\.]+)\s+\(\d+\)\s+ASSIGNED/);
+    if (m2) {
+      result['Assigned Judge'] = titleCase(m2[1].trim());
+    }
+  }
+
+  // Judge fallback from fields
+  if (!result['Assigned Judge'] && fields['Judge Name:']) {
+    result['Assigned Judge'] = fields['Judge Name:'];
+  }
+
+  return result;
+}
+
+function titleCase(s) {
+  return s.split(/[\s,]+/).map(w =>
+    w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+  ).join(' ').replace(/\s+/g,' ').trim();
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+[Unit]
+Description=Brockler Scrape-Case API (port 8766)
+After=network.target
+
+[Service]
+Type=simple
+User=shepov
+WorkingDirectory=/home/shepov/brockler-scraper
+ExecStart=/home/shepov/brockler-scraper/.venv/bin/python3 /home/shepov/brockler-scraper/scrape_case_api.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=scrape-case-api
+
+[Install]
+WantedBy=multi-user.target
