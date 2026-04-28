@@ -2008,6 +2008,57 @@ def polite_delay(delay_ms: int):
     if delay_ms > 0:
         time.sleep(delay_ms / 1000.0)
 
+
+def _parse_case_date(value: Any) -> Optional[datetime]:
+    text = str(value or "").strip()
+    if not text or text.upper() == "N/A":
+        return None
+    for fmt in ("%m/%d/%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def _compute_temporal_metadata(case_data: Dict[str, Any]) -> Dict[str, Optional[str]]:
+    """Derive lifecycle dates from summary, docket, and case actions."""
+    dates: List[datetime] = []
+
+    summary_fields = (case_data.get("summary") or {}).get("fields") or {}
+    if isinstance(summary_fields, dict):
+        started = _parse_case_date(summary_fields.get("Arrested Date:", ""))
+        if started:
+            dates.append(started)
+
+    for entry in case_data.get("docket", []) or []:
+        if not isinstance(entry, dict):
+            continue
+        for key in ("date", "proceeding_date", "filing_date"):
+            dt = _parse_case_date(entry.get(key, ""))
+            if dt:
+                dates.append(dt)
+
+    for action in case_data.get("case_actions", []) or []:
+        if not isinstance(action, dict):
+            continue
+        dt = _parse_case_date(action.get("date", ""))
+        if dt:
+            dates.append(dt)
+
+    case_started = min(dates).date().isoformat() if dates else None
+    latest_update = max(dates).date().isoformat() if dates else None
+
+    meta = case_data.get("metadata", {}) or {}
+    downloaded_at = str(meta.get("scraped_at") or datetime.now(timezone.utc).isoformat())
+
+    return {
+        "case_year": str(meta.get("year") or ""),
+        "case_started_date": case_started,
+        "latest_case_update_date": latest_update,
+        "downloaded_at": downloaded_at,
+    }
+
 @retry(stop=stop_after_attempt(2), wait=wait_fixed(2))
 async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: int, 
                        download_pdfs: bool = False, case_id_filter: Optional[List[str]] = None,
@@ -2433,6 +2484,9 @@ async def snapshot_case(page, year: int, number: int, out_root: Path, delay_ms: 
             })
     else:
         case_data["metadata"]["complete_extraction"] = False
+
+    # Add normalized lifecycle metadata to every downloaded case payload.
+    case_data["metadata"].update(_compute_temporal_metadata(case_data))
 
     return case_data
 
