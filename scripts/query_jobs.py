@@ -357,6 +357,19 @@ def _parse_mmddyyyy(value: str) -> Optional[datetime]:
         return None
 
 
+def _parse_case_date(value: str) -> Optional[datetime]:
+    """Parse either MM/DD/YYYY or YYYY-MM-DD date strings."""
+    text = str(value or "").strip()
+    if not text or text.upper() == "N/A":
+        return None
+    for fmt in ("%m/%d/%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+    return None
+
+
 def _compute_outcome_and_resolution(
     fields: Dict[str, Any],
     charges: List[Dict[str, Any]],
@@ -620,6 +633,30 @@ def build_latest_dataset() -> pd.DataFrame:
         )
         disposition_signals = _compute_disposition_signals(charge_rows)
 
+        event_dates: List[datetime] = []
+        for entry in docket:
+            if not isinstance(entry, dict):
+                continue
+            for key in ("date", "proceeding_date", "filing_date"):
+                dt = _parse_case_date(str(entry.get(key, "") or ""))
+                if dt:
+                    event_dates.append(dt)
+
+        for action in case_actions:
+            if not isinstance(action, dict):
+                continue
+            dt = _parse_case_date(str(action.get("date", "") or ""))
+            if dt:
+                event_dates.append(dt)
+
+        created_dt = min(event_dates) if event_dates else None
+        updated_dt = max(event_dates) if event_dates else None
+
+        file_scrape_dt = _parse_filename_ts(p)
+        downloaded_last_at = None
+        if file_scrape_dt != datetime.min:
+            downloaded_last_at = file_scrape_dt.isoformat(timespec="seconds")
+
         representation_bucket = _representation_bucket(defense_entries)
         retained_count = 0
         public_defender_count = 0
@@ -665,6 +702,9 @@ def build_latest_dataset() -> pd.DataFrame:
                 "resolution_days": resolution_days,
                 "case_start_date": start_date or "",
                 "case_resolution_date": resolution_date or "",
+                "case_created_date": created_dt.date().isoformat() if created_dt else "",
+                "last_case_update_date": updated_dt.date().isoformat() if updated_dt else "",
+                "downloaded_last_at": downloaded_last_at or str(meta.get("scraped_at") or ""),
                 "dismissal_flag": disposition_signals["dismissal_flag"],
                 "conviction_related_flag": disposition_signals["conviction_related_flag"],
                 "plea_flag": disposition_signals["plea_flag"],
@@ -702,6 +742,9 @@ def build_latest_dataset() -> pd.DataFrame:
                 "resolution_days",
                 "case_start_date",
                 "case_resolution_date",
+                "case_created_date",
+                "last_case_update_date",
+                "downloaded_last_at",
                 "dismissal_flag",
                 "conviction_related_flag",
                 "plea_flag",

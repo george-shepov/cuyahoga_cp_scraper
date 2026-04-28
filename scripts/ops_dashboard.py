@@ -1101,6 +1101,100 @@ def render_query_lab() -> None:
             st.success(f"Saved scheduled job: {jid}")
 
 
+def _explode_semicolon_column(df: pd.DataFrame, source_col: str, target_col: str) -> pd.DataFrame:
+    work = df.copy()
+    work[target_col] = work[source_col].fillna("").astype(str).str.split(";")
+    work = work.explode(target_col)
+    work[target_col] = work[target_col].fillna("").astype(str).str.strip()
+    return work[work[target_col] != ""]
+
+
+def render_analytics_viewer() -> None:
+    st.subheader("Analytics Viewer")
+    st.caption("Bucketed case counts with filters by role, crime type, and date fields.")
+
+    df = build_latest_dataset()
+    if df.empty:
+        st.warning("No latest case data found.")
+        return
+
+    role = st.selectbox("Group role", ["Attorney", "Prosecutor", "Judge"], index=0)
+    crime_options = sorted(df["primary_crime_type"].dropna().astype(str).unique().tolist())
+    selected_crimes = st.multiselect("Crime types", crime_options, default=crime_options)
+
+    col1, col2, col3 = st.columns(3)
+    date_field = col1.selectbox(
+        "Date field",
+        ["case_created_date", "last_case_update_date", "downloaded_last_at"],
+        index=0,
+    )
+    bucket = col2.selectbox("Bucket", ["Month", "Year"], index=0)
+    entity_contains = col3.text_input("Entity contains", value="")
+
+    work = df.copy()
+    if selected_crimes:
+        work = work[work["primary_crime_type"].isin(selected_crimes)]
+
+    work["_bucket_dt"] = pd.to_datetime(work[date_field], errors="coerce")
+    valid_dates = work["_bucket_dt"].dropna()
+    if valid_dates.empty:
+        st.warning("No valid dates for the selected date field.")
+        return
+
+    min_date = valid_dates.min().date()
+    max_date = valid_dates.max().date()
+    date_range = st.date_input("Date range", value=(min_date, max_date), min_value=min_date, max_value=max_date)
+
+    if isinstance(date_range, tuple) and len(date_range) == 2:
+        start_date, end_date = date_range
+        work = work[(work["_bucket_dt"].dt.date >= start_date) & (work["_bucket_dt"].dt.date <= end_date)]
+
+    if role == "Attorney":
+        exploded = _explode_semicolon_column(work, "attorneys", "entity")
+    elif role == "Prosecutor":
+        exploded = _explode_semicolon_column(work, "prosecutors", "entity")
+    else:
+        exploded = work.copy()
+        exploded["entity"] = exploded["judge"].fillna("").astype(str).str.strip()
+        exploded = exploded[exploded["entity"] != ""]
+
+    if entity_contains.strip():
+        exploded = exploded[exploded["entity"].str.contains(entity_contains.strip(), case=False, na=False)]
+
+    if bucket == "Month":
+        exploded["time_bucket"] = exploded["_bucket_dt"].dt.to_period("M").astype(str)
+    else:
+        exploded["time_bucket"] = exploded["_bucket_dt"].dt.year.astype("Int64").astype(str)
+
+    grouped = (
+        exploded.groupby(["entity", "time_bucket"], dropna=False)
+        .agg(case_count=("case_id", "nunique"))
+        .reset_index()
+        .sort_values(["case_count", "entity", "time_bucket"], ascending=[False, True, True])
+    )
+
+    st.caption(f"Grouped rows: {len(grouped)}")
+    st.dataframe(grouped, width="stretch")
+
+    st.markdown("### Filtered Cases")
+    detail_cols = [
+        "case_id",
+        "defendant",
+        "primary_crime_type",
+        "judge",
+        "prosecutors",
+        "attorneys",
+        "case_created_date",
+        "last_case_update_date",
+        "downloaded_last_at",
+        "status",
+    ]
+    st.dataframe(
+        exploded[detail_cols].drop_duplicates(subset=["case_id"]).sort_values("case_id"),
+        width="stretch",
+    )
+
+
 def render_scheduled_jobs() -> None:
     st.subheader("Scheduled Query Jobs")
 
@@ -1187,6 +1281,7 @@ def main() -> None:
         "Alerts",
         "Case Explorer",
         "Query Lab",
+        "Analytics Viewer",
         "Scheduled Jobs",
     ])
 
@@ -1205,6 +1300,8 @@ def main() -> None:
     with tabs[6]:
         render_query_lab()
     with tabs[7]:
+        render_analytics_viewer()
+    with tabs[8]:
         render_scheduled_jobs()
 
 
