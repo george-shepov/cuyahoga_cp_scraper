@@ -2597,6 +2597,7 @@ async def run():
     scraper.add_argument("--delay-ms", type=int, default=int(os.getenv("DELAY_MS","1250")))
     scraper.add_argument("--headless", action="store_true")
     scraper.add_argument("--resume", action="store_true")
+    scraper.add_argument("--skip-existing", action="store_true", help="Skip case numbers that already have a scraped JSON file (gap-fill mode)")
     scraper.add_argument("--download-pdfs", action="store_true", help="Download PDF files from docket entries")
     scraper.add_argument("--capture-printer-pdfs", action="store_true", help="Capture printer-friendly page PDFs (large volume; off by default)")
     scraper.add_argument("--all-pdfs", action="store_true", help="When --download-pdfs is set, download all docket PDFs (not only JE)")
@@ -2812,13 +2813,15 @@ async def run():
                 # Single year/range mode - pass playwright instance for context recovery
                 await process_case_range(p, cfg.year, targets, out_dir, resume_file,
                                    cfg.delay_ms, cfg.download_pdfs, cfg.capture_printer_pdfs, cfg.download_all_pdfs, cfg.pdf_cases,
-                                   headless=cfg.headless, workers=max(1, args.workers), pdf_types=cfg.pdf_types)
+                                   headless=cfg.headless, workers=max(1, args.workers), pdf_types=cfg.pdf_types,
+                                   skip_existing=getattr(args, 'skip_existing', False))
 
     console.print(f"[green]Done.[/green] Output at: {cfg.output_dir}")
 
 async def process_case_range(playwright_instance: Playwright, year: int, targets: List[int], out_dir: Path,
                            resume_file: Path, delay_ms: int, download_pdfs: bool, capture_printer_pdfs: bool, download_all_pdfs: bool, pdf_cases: List[str],
-                           headless: bool = True, workers: int = 1, pdf_types: List[str] = None):
+                           headless: bool = True, workers: int = 1, pdf_types: List[str] = None,
+                           skip_existing: bool = False):
     """Process a specific range of case numbers for a single year with context recovery and tracking"""
     if workers > 1:
         await process_case_range_parallel(
@@ -2899,6 +2902,12 @@ async def process_case_range(playwright_instance: Playwright, year: int, targets
         task = progress.add_task(f"[bold cyan]Scraping {year}[/bold cyan]", total=len(targets))
         
         for num in targets:
+            # Skip if already scraped (gap-fill mode)
+            if skip_existing and list(out_dir.glob(f"{year}-{num:06d}_*.json")):
+                save_resume_state(resume_file, num)
+                progress.update(task, advance=1)
+                continue
+
             # Create timestamped filename for the JSON output
             timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             case_filename = f"{year}-{num:06d}_{timestamp}.json"

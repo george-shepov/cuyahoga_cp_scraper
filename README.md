@@ -209,6 +209,7 @@ Requires Python 3.8+ and Playwright for browser automation.
 - **Brad Davis Investigation**: See `docs/analysis/BRAD_DAVIS_EVIDENCE_SUMMARY.md`
 - **October 2025 Analysis**: See `docs/reports/`
 - **Deployment**: See `docs/README_deploy.md`
+- **Online Dev + ChatOps Deploy**: See `docs/ONLINE_DEV_CHATOPS.md`
 - **Watchdog**: See `docs/README_watchdog.md`
 
 ## 🚀 Quick Start (Analytics)

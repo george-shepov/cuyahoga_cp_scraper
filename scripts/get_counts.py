@@ -23,7 +23,7 @@ def list_latest(year: int, limit: int = 5):
     return [f.name for f in files[:limit]]
 
 def main():
-    years = [2023, 2024, 2025]
+    years = [2023, 2024, 2025, 2026]
     print("Counts of cached JSON files in ./out/")
     for y in years:
         c = count_year(y)

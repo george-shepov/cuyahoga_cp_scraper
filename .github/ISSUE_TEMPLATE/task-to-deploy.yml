@@ -1,0 +1,49 @@
+name: Task To Deploy
+description: Describe a task that should be implemented, reviewed, and deployed.
+title: "task: "
+labels:
+  - task
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe what you want in plain language. This issue can be used as your task chat thread.
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What should be built or changed?
+      placeholder: Add judge trend endpoint and display it in the dashboard.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: How do we know this task is done?
+      placeholder: |
+        - Endpoint returns 200 with trend points
+        - Dashboard chart renders for last 6 months
+        - Tests pass
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Context Or Notes
+      description: Optional links, screenshots, API notes, or constraints.
+      placeholder: Keep current API contract unchanged for existing clients.
+
+  - type: dropdown
+    id: deploy_target
+    attributes:
+      label: Deploy Target
+      description: Where should this go?
+      options:
+        - vps-52-production
+        - no-deploy-yet
+    validations:
+      required: true
