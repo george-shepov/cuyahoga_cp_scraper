@@ -11,7 +11,10 @@
       --ink: #16191d;
       --ink-soft: #53606c;
       --ink-inverse: #f9f5ee;
-      --line: rgba(22, 25, 29, 0.11);
+      --line: #e4e4e7;
+      --muted: #f4f4f5;
+      --muted-foreground: #71717a;
+      --card-bg: #ffffff;
       --steel: #263342;
       --accent: #b56a34;
       --accent-light: #d7874d;
@@ -19,10 +22,10 @@
       --warn: #9a6200;
       --bad: #8b1a1a;
       --shadow: 0 22px 70px rgba(24, 28, 34, 0.13);
-      --card-shadow: 0 18px 40px rgba(24, 28, 34, 0.08);
+      --card-shadow: 0 1px 2px rgba(24, 28, 34, 0.04);
       --radius-xl: 32px;
       --radius-lg: 24px;
-      --radius-md: 16px;
+      --radius-md: 8px;
       --serif: "Baskerville", "Iowan Old Style", "Palatino Linotype", serif;
       --sans: "Avenir Next", "Segoe UI", "Trebuchet MS", sans-serif;
     }
@@ -164,9 +167,9 @@
     /* ── section panels ───────────────────────────────────────────── */
     .section {
       margin-top: 16px; padding: 20px;
-      border-radius: var(--radius-xl);
+      border-radius: 12px;
       border: 1px solid var(--line);
-      background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,250,243,0.9));
+      background: rgba(255,255,255,0.86);
       box-shadow: var(--card-shadow);
     }
     .cta-row {
@@ -274,85 +277,97 @@
     .card-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 14px;
+      gap: 12px;
     }
     .card {
       border-radius: var(--radius-md);
       border: 1px solid var(--line);
-      background: rgba(255,255,255,0.95);
-      padding: 16px 18px;
-      box-shadow: 0 4px 16px rgba(24,28,34,0.06);
-      display: flex; flex-direction: column; gap: 8px;
-      transition: box-shadow 0.2s, transform 0.15s;
+      background: var(--card-bg);
+      padding: 16px;
+      box-shadow: var(--card-shadow);
+      display: flex; flex-direction: column; gap: 10px;
+      transition: border-color 0.16s, box-shadow 0.16s, transform 0.16s;
     }
     .card:hover {
-      box-shadow: 0 10px 32px rgba(24,28,34,0.12);
-      transform: translateY(-2px);
+      border-color: rgba(181,106,52,0.38);
+      box-shadow: 0 4px 12px rgba(24,28,34,0.08);
+      transform: translateY(-1px);
     }
     .card.clickable { cursor: pointer; }
     .card.clickable:focus {
-      outline: 3px solid rgba(181,106,52,0.28);
+      outline: 2px solid rgba(181,106,52,0.34);
       outline-offset: 2px;
     }
     .card-name {
-      font-family: var(--serif); font-weight: 700;
-      font-size: 1.05rem; letter-spacing: -0.01em;
-      line-height: 1.2;
+      font-family: var(--sans); font-weight: 700;
+      font-size: 0.98rem; letter-spacing: 0;
+      line-height: 1.25;
+      color: #18181b;
     }
     .card-employer {
-      font-size: 0.82rem; color: var(--ink-soft);
+      font-size: 0.82rem; color: var(--muted-foreground);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .badges { display: flex; flex-wrap: wrap; gap: 5px; }
+    .badges { display: flex; flex-wrap: wrap; gap: 6px; }
     .badge {
-      padding: 3px 10px; border-radius: 999px;
-      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em;
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 0 8px; border-radius: 6px;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0;
+      border: 1px solid transparent;
     }
-    .badge-active { background: #e7f5eb; color: #1e5c2a; border: 1px solid #b3dbbe; }
-    .badge-inactive { background: #fdf0ed; color: #7a2a20; border: 1px solid #f0b8ad; }
-    .badge-suspended { background: #fff3e0; color: #8b5000; border: 1px solid #f5c97e; }
-    .badge-default { background: #f0f3f7; color: #4a5568; border: 1px solid #d1d9e6; }
-    .badge-discipline { background: #fef3cd; color: #856404; border: 1px solid #f5d87e; }
-    .badge-cases { background: #eef3fb; color: #2a4a7a; border: 1px solid #bdd0ef; }
-    .badge-rate { background: #f3f0fb; color: #4a3a7a; border: 1px solid #c9bfed; }
+    .badge-active { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+    .badge-inactive { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+    .badge-suspended { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+    .badge-default { background: var(--muted); color: #3f3f46; border-color: #e4e4e7; }
+    .badge-discipline { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+    .badge-cases { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+    .badge-rate { background: #faf5ff; color: #7e22ce; border-color: #e9d5ff; }
 
     .card-meta {
-      font-size: 0.78rem; color: var(--ink-soft);
+      font-size: 0.78rem; color: var(--muted-foreground);
       display: grid; grid-template-columns: auto 1fr; gap: 2px 10px;
       line-height: 1.6;
     }
-    .card-meta dt { font-weight: 600; color: var(--ink); }
+    .card-meta dt { font-weight: 600; color: #18181b; }
     .card-meta dd { margin: 0; }
 
     .card-actions { margin-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; }
     .card-link {
       display: inline-flex; align-items: center; gap: 5px;
-      padding: 6px 14px; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
+      min-height: 32px;
+      padding: 0 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600;
       border: 1px solid var(--line);
-      background: rgba(181,106,52,0.07); color: var(--accent);
-      transition: background 0.15s;
+      background: #fff; color: #18181b;
+      transition: background 0.15s, border-color 0.15s;
     }
-    .card-link:hover { background: rgba(181,106,52,0.14); }
+    .card-link:hover { background: var(--muted); border-color: #d4d4d8; }
 
     /* ── judge table ──────────────────────────────────────────────── */
-    .judge-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-    .judge-table th {
-      text-align: left; padding: 10px 14px;
-      border-bottom: 2px solid var(--line);
-      font-weight: 700; font-size: 0.75rem;
-      text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-soft);
+    .judge-table {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-md);
+      font-size: 0.88rem; background: var(--card-bg);
     }
-    .judge-table td { padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .judge-table th {
+      text-align: left; padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      font-weight: 700; font-size: 0.75rem;
+      text-transform: none; letter-spacing: 0; color: var(--muted-foreground);
+      background: #fafafa;
+    }
+    .judge-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
     .judge-table tr:last-child td { border-bottom: none; }
-    .judge-table tr:hover td { background: rgba(181,106,52,0.04); }
+    .judge-table tr:hover td { background: #fafafa; }
     .judge-table tr.clickable { cursor: pointer; }
 
     /* ── entity drilldown ─────────────────────────────────────────── */
     .entity-panel {
       display: none;
       margin-top: 16px;
-      border-color: rgba(181,106,52,0.26);
-      background: linear-gradient(180deg, rgba(255,255,255,0.90), rgba(255,250,243,0.97));
+      border-color: var(--line);
+      background: var(--card-bg);
     }
     .entity-panel.visible { display: block; }
     .entity-head {
@@ -377,14 +392,15 @@
     }
     .close-detail {
       border: 1px solid var(--line);
-      background: rgba(255,255,255,0.9);
-      border-radius: 999px;
+      background: #fff;
+      border-radius: 6px;
       width: 36px;
       height: 36px;
       cursor: pointer;
       font-size: 1.2rem;
       color: var(--ink-soft);
     }
+    .close-detail:hover { background: var(--muted); }
     .detail-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -393,28 +409,29 @@
     }
     .detail-box {
       border: 1px solid var(--line);
-      background: rgba(255,255,255,0.82);
+      background: #fafafa;
       border-radius: var(--radius-md);
       padding: 14px;
     }
     .detail-box h3 {
       margin: 0 0 10px;
       font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--ink-soft);
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--muted-foreground);
     }
     .chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
     .link-chip {
       border: 1px solid var(--line);
-      background: rgba(181,106,52,0.07);
-      color: var(--accent);
-      border-radius: 999px;
-      padding: 5px 10px;
+      background: #fff;
+      color: #18181b;
+      border-radius: 6px;
+      padding: 5px 9px;
       font-size: 0.78rem;
-      font-weight: 700;
+      font-weight: 600;
       cursor: pointer;
     }
+    .link-chip:hover { background: var(--muted); border-color: #d4d4d8; }
     .case-list {
       display: grid;
       gap: 8px;
@@ -424,7 +441,7 @@
     }
     .case-row {
       border: 1px solid var(--line);
-      background: rgba(255,255,255,0.9);
+      background: var(--card-bg);
       border-radius: var(--radius-md);
       padding: 12px 14px;
       display: grid;
@@ -433,8 +450,8 @@
       align-items: start;
       font-size: 0.82rem;
     }
-    .case-id { font-weight: 800; color: var(--accent); }
-    .case-sub { color: var(--ink-soft); font-size: 0.78rem; margin-top: 3px; line-height: 1.45; }
+    .case-id { font-weight: 800; color: #18181b; }
+    .case-sub { color: var(--muted-foreground); font-size: 0.78rem; margin-top: 3px; line-height: 1.45; }
     .case-name { font-weight: 700; }
     .case-links { color: var(--ink-soft); line-height: 1.45; }
     @media (max-width: 760px) {
