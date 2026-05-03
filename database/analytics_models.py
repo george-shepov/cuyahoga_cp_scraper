@@ -8,8 +8,7 @@ from sqlalchemy import (
     Column, Integer, String, Float, DateTime,
     ForeignKey, JSON, Index
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, relationship
 
 from database.models_postgres import Attorney, Judge
 
@@ -299,4 +298,3 @@ class YearlyTrends(Base):
     __table_args__ = (
         Index('idx_year_entity', 'year', 'entity_type', 'entity_id'),
     )
-

@@ -36,6 +36,7 @@ if [[ -z "$VPS_HOST" || -z "$VPS_SSH_KEY" ]]; then
 fi
 
 SSH_KEY="${VPS_SSH_KEY/#\~/$HOME}"
+SSH="ssh -i $SSH_KEY -o StrictHostKeyChecking=no -o BatchMode=yes"
 SCP="scp -i $SSH_KEY -o StrictHostKeyChecking=no -o BatchMode=yes"
 
 echo "$LOG_PREFIX Regenerating data.json from CSV + cache..."
@@ -51,9 +52,11 @@ SIZE=$(wc -c < "$DATA_JSON")
 echo "$LOG_PREFIX data.json generated ($SIZE bytes)"
 
 echo "$LOG_PREFIX Uploading to foxxiie.com..."
-$SCP "$DATA_JSON" "$VPS_HOST:/var/www/foxxiie.com/data.json"
+$SCP "$DATA_JSON" "$VPS_HOST:/tmp/foxxiie_data.json"
+$SSH "$VPS_HOST" "sudo mv /tmp/foxxiie_data.json /var/www/foxxiie.com/data.json && sudo chown www-data:www-data /var/www/foxxiie.com/data.json"
 
 echo "$LOG_PREFIX Uploading to prosecutordefense.com..."
-$SCP "$DATA_JSON" "$VPS_HOST:/var/www/prosecutordefense.com/data.json"
+$SCP "$DATA_JSON" "$VPS_HOST:/tmp/prosecutordefense_data.json"
+$SSH "$VPS_HOST" "sudo mv /tmp/prosecutordefense_data.json /var/www/prosecutordefense.com/data.json && sudo chown www-data:www-data /var/www/prosecutordefense.com/data.json"
 
 echo "$LOG_PREFIX Done. data.json deployed to both VPS web roots."

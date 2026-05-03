@@ -3,13 +3,12 @@ PostgreSQL Database Models using SQLAlchemy
 Normalized relational schema for analytics and reporting
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import (
     Column, Integer, String, Float, DateTime, Boolean, Text, 
     ForeignKey, Date, Enum, JSON, Index
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, relationship
 import enum
 
 Base = declarative_base()
@@ -419,4 +418,3 @@ class UsageLedger(Base):
     __table_args__ = (
         Index("idx_usage_ledger_account_meter_event", "account_id", "meter_key", "event_at"),
     )
-

@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,7 +13,22 @@ from app.api.routes.case_intelligence import router as case_intelligence_router
 from app.api.routes.content import router as content_router
 from database.session import init_db
 
-app = FastAPI(title="OVI Content Engine")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    from app.services.content_service import seed_content
+    from database.session import SessionLocal
+
+    db = SessionLocal()
+    try:
+        seed_content(db)
+    finally:
+        db.close()
+    yield
+
+
+app = FastAPI(title="OVI Content Engine", lifespan=lifespan)
 
 # Allow only the local dev server and the production domain.
 # Override via ALLOWED_ORIGINS env var (comma-separated).
@@ -37,19 +53,6 @@ app.include_router(alerts_router, prefix="/api")
 app.include_router(billing_router, prefix="/api")
 app.include_router(case_intelligence_router, prefix="/api")
 app.include_router(content_router, prefix="/api")
-
-
-@app.on_event("startup")
-def on_startup() -> None:
-    init_db()
-    from app.services.content_service import seed_content
-    from database.session import SessionLocal
-    db = SessionLocal()
-    try:
-        seed_content(db)
-    finally:
-        db.close()
-
 
 @app.get("/api/health")
 def health() -> dict[str, str]:

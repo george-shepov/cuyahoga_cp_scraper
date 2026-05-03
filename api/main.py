@@ -1,13 +1,12 @@
-"""
-FastAPI Application for Cuyahoga Court Analytics
-Provides REST API for attorney recommendations, analytics, and document analysis
-"""
+"""FastAPI API for court analytics, recommendations, and content review."""
+
+from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
-from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc
 
@@ -21,10 +20,17 @@ from services.document_analyzer import DocumentAnalyzer
 from services.knowledge_base import KnowledgeBaseService
 from services.quadrant_analyzer import QuadrantAnalyzer
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
 app = FastAPI(
     title="Cuyahoga Court Analytics API",
     description="Attorney recommendations, performance analytics, and case insights",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 # CORS middleware
@@ -193,11 +199,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-@app.on_event("startup")
-async def startup_event():
-    init_db()
 
 
 def serialize_content(content) -> KnowledgeContentResponse:
@@ -833,4 +834,3 @@ async def get_yearly_trends(
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-

@@ -1,0 +1,57 @@
+name: Refresh Foxxiie Data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * *"
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Prepare SSH key
+        env:
+          VPS_SSH_KEY_SECRET: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$VPS_SSH_KEY_SECRET" ]]; then
+            echo "Missing required secret: VPS_SSH_KEY" >&2
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY_SECRET" > ~/.ssh/foxxiie_vps_key
+          chmod 600 ~/.ssh/foxxiie_vps_key
+
+      - name: Refresh and deploy data.json
+        env:
+          RAW_VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$RAW_VPS_HOST" ]]; then
+            echo "Missing required secret: VPS_HOST" >&2
+            exit 1
+          fi
+
+          if [[ "$RAW_VPS_HOST" == *@* ]]; then
+            DEPLOY_HOST="$RAW_VPS_HOST"
+            SCAN_HOST="${RAW_VPS_HOST#*@}"
+          elif [[ -n "$VPS_USER" ]]; then
+            DEPLOY_HOST="$VPS_USER@$RAW_VPS_HOST"
+            SCAN_HOST="$RAW_VPS_HOST"
+          else
+            echo "VPS_HOST must be user@host unless VPS_USER is also set" >&2
+            exit 1
+          fi
+
+          ssh-keyscan -H "$SCAN_HOST" >> ~/.ssh/known_hosts
+          VPS_HOST="$DEPLOY_HOST" VPS_SSH_KEY="$HOME/.ssh/foxxiie_vps_key" bash scripts/refresh_foxxiie_data.sh

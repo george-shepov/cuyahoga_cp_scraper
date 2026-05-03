@@ -92,10 +92,16 @@ archived_jsons*/
 analysis_output/
 pdf_images/
 other/*.zip
+*.zip
 
 # Runtime state and temp files
 state/
 tmp_*.json
+continuous_resume.txt
+je_download_progress.json
+missing_*_cases.txt
+sep*_cases_temp.json
+scripts/validated_state.json
 
 # Analysis output files (one-off reports)
 sep_*.csv

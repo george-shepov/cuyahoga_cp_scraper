@@ -333,7 +333,7 @@ def _classify_crime_type(description: str, statute: str) -> str:
             return "DRUG"
         if code in {2911, 2913}:
             return "PROPERTY"
-        if code in {2921, 2917, 2963}:
+        if code in {2921, 2963}:
             return "VIOLENT"
         if code == 2950:
             return "SEX"
