@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers (only if you plan to use Playwright in container)
-RUN python -m playwright install --with-deps
+# This scraper only launches Chromium; avoid downloading Firefox/WebKit.
+RUN python -m playwright install --with-deps chromium
 
 COPY . /app
 

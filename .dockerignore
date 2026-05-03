@@ -17,6 +17,11 @@ logs
 out
 reports
 sc_cache.json
+_ARCHIVE
+analysis_output
+archived_jsons_*
+frontend
+node_modules
 
 *.sqlite
 *.sqlite3
