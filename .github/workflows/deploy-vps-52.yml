@@ -37,19 +37,27 @@ jobs:
           DEPLOY_BRANCH: master
           REPO_SLUG: ${{ github.repository }}
         run: |
-          ssh "$VPS_USER@$VPS_HOST" "bash -s" << 'EOF'
+          set -euo pipefail
+          remote_env=$(printf 'VPS_APP_DIR=%q DEPLOY_BRANCH=%q REPO_SLUG=%q' \
+            "${VPS_APP_DIR:-}" \
+            "${DEPLOY_BRANCH:-master}" \
+            "$REPO_SLUG")
+
+          ssh "$VPS_USER@$VPS_HOST" "$remote_env bash -s" << 'EOF'
           set -euo pipefail
 
           APP_DIR="${VPS_APP_DIR:-/opt/cuyahoga_cp_scraper}"
           BRANCH="${DEPLOY_BRANCH:-master}"
+          REPO_URL="https://github.com/${REPO_SLUG}.git"
 
-          if [[ ! -d \"$APP_DIR/.git\" ]]; then
+          if [[ ! -d "$APP_DIR/.git" ]]; then
             sudo mkdir -p "$APP_DIR"
             sudo chown -R "$USER":"$USER" "$APP_DIR"
-            git clone "git@github.com:${REPO_SLUG}.git" "$APP_DIR"
+            git clone "$REPO_URL" "$APP_DIR"
           fi
 
           cd "$APP_DIR"
+          git remote set-url origin "$REPO_URL"
           git fetch origin "$BRANCH"
           git checkout "$BRANCH"
           git reset --hard "origin/$BRANCH"
