@@ -68,7 +68,11 @@ jobs:
             if [[ -f ../.env ]]; then
               compose_args=(--env-file ../.env "${compose_args[@]}")
             fi
-            docker compose "${compose_args[@]}" up -d --build
+            if ! docker compose "${compose_args[@]}" up -d --build; then
+              docker compose "${compose_args[@]}" ps || true
+              docker compose "${compose_args[@]}" logs --tail=120 postgres mongodb redis ollama api scraper worker || true
+              exit 1
+            fi
           else
             echo "Docker is not installed on VPS. Aborting deploy." >&2
             exit 1
