@@ -64,7 +64,11 @@ jobs:
 
           if command -v docker >/dev/null 2>&1; then
             cd deploy
-            docker compose up -d --build
+            compose_args=(-f docker-compose.yml -f docker-compose.prod.yml)
+            if [[ -f ../.env ]]; then
+              compose_args=(--env-file ../.env "${compose_args[@]}")
+            fi
+            docker compose "${compose_args[@]}" up -d --build
           else
             echo "Docker is not installed on VPS. Aborting deploy." >&2
             exit 1
