@@ -77,6 +77,20 @@ jobs:
             echo "Docker is not installed on VPS. Aborting deploy." >&2
             exit 1
           fi
+
+          cd "$APP_DIR"
+          if [[ -f docs/foxxiie/index.html ]]; then
+            sudo mkdir -p /var/www/foxxiie.com /var/www/prosecutordefense.com
+            sudo cp docs/foxxiie/index.html /var/www/foxxiie.com/index.html
+            sudo cp docs/foxxiie/index.html /var/www/prosecutordefense.com/index.html
+            sudo chown www-data:www-data /var/www/foxxiie.com/index.html /var/www/prosecutordefense.com/index.html || true
+
+            if [[ -f docs/foxxiie/data.json ]]; then
+              sudo cp docs/foxxiie/data.json /var/www/foxxiie.com/data.json
+              sudo cp docs/foxxiie/data.json /var/www/prosecutordefense.com/data.json
+              sudo chown www-data:www-data /var/www/foxxiie.com/data.json /var/www/prosecutordefense.com/data.json || true
+            fi
+          fi
           EOF
 
       - name: Deployment summary
