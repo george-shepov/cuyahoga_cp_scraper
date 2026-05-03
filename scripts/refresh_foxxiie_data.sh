@@ -19,6 +19,7 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DATA_JSON="$REPO/docs/foxxiie/data.json"
+GRAPH_JSON="$REPO/docs/foxxiie/graph.json"
 LOG_PREFIX="[$(date '+%Y-%m-%d %H:%M:%S')]"
 
 # Load env from dotfile if not already set
@@ -42,21 +43,32 @@ SCP="scp -i $SSH_KEY -o StrictHostKeyChecking=no -o BatchMode=yes"
 echo "$LOG_PREFIX Regenerating data.json from CSV + cache..."
 cd "$REPO"
 python3 scripts/fetch_sc_attorneys.py
+python3 scripts/build_foxxiie_graph.py
 
 if [[ ! -f "$DATA_JSON" ]]; then
     echo "$LOG_PREFIX ERROR: data.json was not created"
     exit 1
 fi
+if [[ ! -f "$GRAPH_JSON" ]]; then
+    echo "$LOG_PREFIX ERROR: graph.json was not created"
+    exit 1
+fi
 
 SIZE=$(wc -c < "$DATA_JSON")
 echo "$LOG_PREFIX data.json generated ($SIZE bytes)"
+GRAPH_SIZE=$(wc -c < "$GRAPH_JSON")
+echo "$LOG_PREFIX graph.json generated ($GRAPH_SIZE bytes)"
 
 echo "$LOG_PREFIX Uploading to foxxiie.com..."
 $SCP "$DATA_JSON" "$VPS_HOST:/tmp/foxxiie_data.json"
 $SSH "$VPS_HOST" "sudo mv /tmp/foxxiie_data.json /var/www/foxxiie.com/data.json && sudo chown www-data:www-data /var/www/foxxiie.com/data.json"
+$SCP "$GRAPH_JSON" "$VPS_HOST:/tmp/foxxiie_graph.json"
+$SSH "$VPS_HOST" "sudo mv /tmp/foxxiie_graph.json /var/www/foxxiie.com/graph.json && sudo chown www-data:www-data /var/www/foxxiie.com/graph.json"
 
 echo "$LOG_PREFIX Uploading to prosecutordefense.com..."
 $SCP "$DATA_JSON" "$VPS_HOST:/tmp/prosecutordefense_data.json"
 $SSH "$VPS_HOST" "sudo mv /tmp/prosecutordefense_data.json /var/www/prosecutordefense.com/data.json && sudo chown www-data:www-data /var/www/prosecutordefense.com/data.json"
+$SCP "$GRAPH_JSON" "$VPS_HOST:/tmp/prosecutordefense_graph.json"
+$SSH "$VPS_HOST" "sudo mv /tmp/prosecutordefense_graph.json /var/www/prosecutordefense.com/graph.json && sudo chown www-data:www-data /var/www/prosecutordefense.com/graph.json"
 
-echo "$LOG_PREFIX Done. data.json deployed to both VPS web roots."
+echo "$LOG_PREFIX Done. data.json and graph.json deployed to both VPS web roots."

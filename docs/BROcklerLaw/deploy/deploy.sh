@@ -113,6 +113,13 @@ if [[ -f "$ROOT_HTML_DIR/index.html" ]]; then
     else
         echo "WARN: docs/foxxiie/data.json not found. Run: python3 scripts/fetch_sc_attorneys.py"
     fi
+    if [[ -f "$ROOT_HTML_DIR/graph.json" ]]; then
+        echo "--- Uploading graph.json (case/defendant relationship cache)"
+        $SCP "$ROOT_HTML_DIR/graph.json" "$VPS_HOST:/tmp/foxxiie_graph.json"
+        remote_sudo "mv /tmp/foxxiie_graph.json /var/www/foxxiie.com/graph.json && cp /var/www/foxxiie.com/graph.json /var/www/prosecutordefense.com/graph.json && chown www-data:www-data /var/www/foxxiie.com/graph.json /var/www/prosecutordefense.com/graph.json"
+    else
+        echo "WARN: docs/foxxiie/graph.json not found. Run: python3 scripts/build_foxxiie_graph.py"
+    fi
 else
     echo "WARN: $ROOT_HTML_DIR/index.html not found. Root homepage will not be updated."
 fi

@@ -289,6 +289,11 @@
       box-shadow: 0 10px 32px rgba(24,28,34,0.12);
       transform: translateY(-2px);
     }
+    .card.clickable { cursor: pointer; }
+    .card.clickable:focus {
+      outline: 3px solid rgba(181,106,52,0.28);
+      outline-offset: 2px;
+    }
     .card-name {
       font-family: var(--serif); font-weight: 700;
       font-size: 1.05rem; letter-spacing: -0.01em;
@@ -340,6 +345,101 @@
     .judge-table td { padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
     .judge-table tr:last-child td { border-bottom: none; }
     .judge-table tr:hover td { background: rgba(181,106,52,0.04); }
+    .judge-table tr.clickable { cursor: pointer; }
+
+    /* ── entity drilldown ─────────────────────────────────────────── */
+    .entity-panel {
+      display: none;
+      margin-top: 16px;
+      border-color: rgba(181,106,52,0.26);
+      background: linear-gradient(180deg, rgba(255,255,255,0.90), rgba(255,250,243,0.97));
+    }
+    .entity-panel.visible { display: block; }
+    .entity-head {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .entity-title {
+      font-family: var(--serif);
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      line-height: 1;
+      margin: 0;
+      letter-spacing: -0.03em;
+    }
+    .entity-meta {
+      color: var(--ink-soft);
+      font-size: 0.86rem;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .close-detail {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.9);
+      border-radius: 999px;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: var(--ink-soft);
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .detail-box {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.82);
+      border-radius: var(--radius-md);
+      padding: 14px;
+    }
+    .detail-box h3 {
+      margin: 0 0 10px;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink-soft);
+    }
+    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .link-chip {
+      border: 1px solid var(--line);
+      background: rgba(181,106,52,0.07);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .case-list {
+      display: grid;
+      gap: 8px;
+      max-height: 520px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+    .case-row {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.9);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: minmax(120px, 0.8fr) minmax(180px, 1.2fr) minmax(180px, 1.6fr);
+      gap: 10px;
+      align-items: start;
+      font-size: 0.82rem;
+    }
+    .case-id { font-weight: 800; color: var(--accent); }
+    .case-sub { color: var(--ink-soft); font-size: 0.78rem; margin-top: 3px; line-height: 1.45; }
+    .case-name { font-weight: 700; }
+    .case-links { color: var(--ink-soft); line-height: 1.45; }
+    @media (max-width: 760px) {
+      .case-row { grid-template-columns: 1fr; }
+    }
 
     /* ── no-data / loading ────────────────────────────────────────── */
     .placeholder {
@@ -381,9 +481,11 @@
     </p>
 
     <div class="stats-row" id="statsRow">
+      <div class="stat-chip"><strong id="statCases">—</strong> cases</div>
       <div class="stat-chip"><strong id="statJudges">—</strong> judges</div>
       <div class="stat-chip"><strong id="statAttys">—</strong> defense attorneys</div>
       <div class="stat-chip"><strong id="statPros">—</strong> prosecutors</div>
+      <div class="stat-chip"><strong id="statDefendants">—</strong> defendants</div>
       <div class="stat-chip">Updated <strong id="statDate">—</strong></div>
     </div>
 
@@ -391,6 +493,7 @@
       <button class="tab-btn active" data-tab="attorneys">Defense Attorneys</button>
       <button class="tab-btn" data-tab="judges">Judges</button>
       <button class="tab-btn" data-tab="prosecutors">Prosecutors</button>
+      <button class="tab-btn" data-tab="defendants">Defendants</button>
     </div>
   </section>
 
@@ -448,6 +551,19 @@
     <span class="result-count" id="resultCount"></span>
   </div>
 
+  <section class="section entity-panel" id="entityPanel" aria-live="polite">
+    <div class="entity-head">
+      <div>
+        <div class="kicker" id="entityType">Detail</div>
+        <h2 class="entity-title" id="entityTitle"></h2>
+        <div class="entity-meta" id="entityMeta"></div>
+      </div>
+      <button class="close-detail" type="button" id="closeDetail" aria-label="Close detail">&times;</button>
+    </div>
+    <div class="detail-grid" id="entityRelated"></div>
+    <div class="case-list" id="entityCases"></div>
+  </section>
+
   <!-- ── ATTORNEYS PANEL ────────────────────────────────────── -->
   <section class="section" id="panel-attorneys">
     <div class="kicker">Defense Bar</div>
@@ -492,14 +608,26 @@
     </div>
   </section>
 
+  <!-- ── DEFENDANTS PANEL ───────────────────────────────────── -->
+  <section class="section hidden" id="panel-defendants">
+    <div class="kicker">Defendants</div>
+    <h2>Defendants</h2>
+    <p class="section-desc">Unique defendants linked back to cases, judges, defense attorneys, and prosecutors.</p>
+    <div class="card-grid" id="defendantsGrid">
+      <div class="placeholder"><strong>Loading graph…</strong></div>
+    </div>
+  </section>
+
 </div><!-- /shell -->
 
 <script>
 // ── Data loading ─────────────────────────────────────────────────────────────
 let DB = null;
+let GRAPH = null;
 let activeTab = "attorneys";
 let searchTerm = "";
 const DATA_VERSION = "2026-05-03";
+const GRAPH_VERSION = "2026-05-03";
 
 async function loadData() {
   try {
@@ -511,6 +639,7 @@ async function loadData() {
     document.getElementById("statPros").textContent = DB.prosecutors.length;
     document.getElementById("statDate").textContent = (DB.generated || "").split(" ")[0];
     render();
+    loadGraph();
   } catch(e) {
     // data.json doesn't exist yet — show instructions
     console.warn(e);
@@ -518,7 +647,35 @@ async function loadData() {
   }
 }
 
+async function loadGraph() {
+  try {
+    const r = await fetch(`graph.json?v=${GRAPH_VERSION}`);
+    if (!r.ok) throw new Error("graph.json not found");
+    GRAPH = await r.json();
+    document.getElementById("statCases").textContent = (GRAPH.totals?.cases || 0).toLocaleString();
+    document.getElementById("statDefendants").textContent = (GRAPH.totals?.defendants || 0).toLocaleString();
+    render();
+  } catch(e) {
+    console.warn(e);
+    document.getElementById("statDefendants").textContent = "—";
+  }
+}
+
 // ── Rendering ────────────────────────────────────────────────────────────────
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[ch]));
+}
+
+function norm(value) {
+  return String(value || "").toUpperCase().replace(/[^A-Z0-9]+/g, " ").trim();
+}
+
 function statusBadgeClass(status) {
   if (!status) return "badge-default";
   const s = status.toLowerCase();
@@ -539,6 +696,10 @@ function rateColor(rate) {
 function scLink(regNum) {
   if (!regNum) return "";
   return `https://www.supremecourt.ohio.gov/AttorneySearch/#/${regNum}/attyinfo`;
+}
+
+function entityAttrs(type, name) {
+  return `role="button" tabindex="0" data-entity-type="${esc(type)}" data-entity-name="${esc(name)}"`;
 }
 
 function renderAttorneyCard(a, query) {
@@ -575,9 +736,9 @@ function renderAttorneyCard(a, query) {
     : "";
 
   return `
-    <div class="card">
-      <div class="card-name">${name}</div>
-      ${a.employer ? `<div class="card-employer">${a.employer}</div>` : ""}
+    <div class="card clickable" ${entityAttrs("attorney", name)}>
+      <div class="card-name">${esc(name)}</div>
+      ${a.employer ? `<div class="card-employer">${esc(a.employer)}</div>` : ""}
       <div class="badges">${badgeStatus}${badgeDiscipline}${badgeCases}${badgeRate}</div>
       ${metaRows.length ? `<dl class="card-meta">${metaRows.join("")}</dl>` : ""}
       ${scBtn ? `<div class="card-actions">${scBtn}</div>` : ""}
@@ -599,10 +760,25 @@ function renderProsecutorCard(p, query) {
   }
 
   return `
-    <div class="card">
-      <div class="card-name">${name}</div>
+    <div class="card clickable" ${entityAttrs("prosecutor", name)}>
+      <div class="card-name">${esc(name)}</div>
       <div class="badges">${badgeCases}${badgeRate}</div>
       ${meta.length ? `<dl class="card-meta">${meta.join("")}</dl>` : ""}
+    </div>`;
+}
+
+function renderDefendantCard(d, query) {
+  const name = d.name || "";
+  const q = query ? query.toLowerCase() : "";
+  if (q && !name.toLowerCase().includes(q)) return null;
+  return `
+    <div class="card clickable" ${entityAttrs("defendant", d.key)}>
+      <div class="card-name">${esc(name)}</div>
+      <div class="badges"><span class="badge badge-cases">${d.case_count.toLocaleString()} cases</span></div>
+      <dl class="card-meta">
+        <dt>Judges</dt><dd>${esc((d.judges || []).slice(0, 3).join(", ") || "—")}</dd>
+        <dt>Defense</dt><dd>${esc((d.attorneys || []).slice(0, 3).join(", ") || "—")}</dd>
+      </dl>
     </div>`;
 }
 
@@ -623,10 +799,10 @@ function render() {
   const judgesRows = DB.judges
     .filter(j => !q || j.name.toLowerCase().includes(q))
     .map(j => `
-      <tr>
-        <td><strong>${j.name}</strong></td>
+      <tr class="clickable" ${entityAttrs("judge", j.name)}>
+        <td><strong>${esc(j.name)}</strong></td>
         <td style="text-align:right;font-variant-numeric:tabular-nums">${j.cases.toLocaleString()}</td>
-        <td style="color:var(--ink-soft);font-size:0.82rem">${j.patterns || "—"}</td>
+        <td style="color:var(--ink-soft);font-size:0.82rem">${esc(j.patterns || "—")}</td>
       </tr>`);
   document.getElementById("judgesTbody").innerHTML = judgesRows.length
     ? judgesRows.join("")
@@ -641,12 +817,143 @@ function render() {
     ? prosHtml.join("")
     : `<div class="placeholder"><strong>No results</strong>Try a different search.</div>`;
 
+  // Defendants
+  let defendantTotalAll = 0;
+  let defendantRendered = 0;
+  const defendantsGrid = document.getElementById("defendantsGrid");
+  if (GRAPH) {
+    const matches = GRAPH.defendants.filter(d => !q || (d.name || "").toLowerCase().includes(q));
+    defendantTotalAll = GRAPH.defendants.length;
+    const visible = matches.slice(0, q ? 300 : 120);
+    defendantRendered = visible.length;
+    defendantsGrid.innerHTML = visible.length
+      ? visible.map(d => renderDefendantCard(d, q)).join("")
+      : `<div class="placeholder"><strong>No results</strong>Try a different search.</div>`;
+  } else {
+    defendantsGrid.innerHTML = `<div class="placeholder"><strong>Loading graph…</strong>Case-level defendant links are loading.</div>`;
+  }
+
   // result count
-  const counts = { attorneys: attysHtml.length, judges: judgesRows.length, prosecutors: prosHtml.length };
+  const counts = { attorneys: attysHtml.length, judges: judgesRows.length, prosecutors: prosHtml.length, defendants: defendantRendered };
   const total = counts[activeTab];
-  const totalAll = DB[activeTab === "attorneys" ? "attorneys" : activeTab].length;
-  document.getElementById("resultCount").textContent =
-    q ? `${total} of ${totalAll} results` : `${total} entries`;
+  const totalAll = activeTab === "defendants"
+    ? defendantTotalAll
+    : DB[activeTab === "attorneys" ? "attorneys" : activeTab].length;
+  document.getElementById("resultCount").textContent = q
+    ? `${total} of ${totalAll} results`
+    : activeTab === "defendants" && GRAPH
+      ? `${total.toLocaleString()} shown of ${totalAll.toLocaleString()} defendants`
+      : `${total} entries`;
+}
+
+// ── Entity drilldown ─────────────────────────────────────────────────────────
+function casesFor(type, name) {
+  if (!GRAPH) return [];
+  const target = norm(name);
+  if (type === "judge") return GRAPH.cases.filter(c => norm(c.judge) === target);
+  if (type === "attorney") return GRAPH.cases.filter(c => (c.attorneys || []).some(a => norm(a) === target));
+  if (type === "prosecutor") return GRAPH.cases.filter(c => (c.prosecutors || []).some(p => norm(p) === target));
+  if (type === "defendant") return GRAPH.cases.filter(c => norm(c.defendant_key || c.defendant) === target);
+  return [];
+}
+
+function uniqueFrom(cases, getter) {
+  const values = new Set();
+  cases.forEach(c => {
+    const raw = getter(c);
+    const items = Array.isArray(raw) ? raw : [raw];
+    items.forEach(item => {
+      if (item) values.add(item);
+    });
+  });
+  return [...values].sort((a, b) => a.localeCompare(b));
+}
+
+function chipList(title, type, values) {
+  const visible = values.filter(Boolean).slice(0, 18);
+  if (!visible.length) return "";
+  return `
+    <div class="detail-box">
+      <h3>${esc(title)}</h3>
+      <div class="chip-list">
+        ${visible.map(v => `<button type="button" class="link-chip" ${entityAttrs(type, v)}>${esc(v)}</button>`).join("")}
+      </div>
+    </div>`;
+}
+
+function firmPeers(name) {
+  const person = (DB?.attorneys || []).find(a => norm(a.name) === norm(name));
+  const employer = norm(person?.employer || "");
+  if (!employer) return [];
+  return DB.attorneys
+    .filter(a => norm(a.employer || "") === employer && norm(a.name) !== norm(name))
+    .map(a => a.name)
+    .slice(0, 18);
+}
+
+function caseRows(cases) {
+  if (!cases.length) {
+    return `<div class="placeholder"><strong>No linked cases</strong>The graph has no case-level records for this entry yet.</div>`;
+  }
+  const visible = cases.slice(0, 120);
+  const rows = visible.map(c => `
+    <div class="case-row">
+      <div>
+        <div class="case-id">${esc(c.id)}</div>
+        <div class="case-sub">${esc([c.year, c.status, c.updated].filter(Boolean).join(" · "))}</div>
+      </div>
+      <div>
+        <button type="button" class="link-chip" ${entityAttrs("defendant", c.defendant_key || c.defendant)}>${esc(c.defendant || "Unknown defendant")}</button>
+        <div class="case-sub">${esc((c.charges || []).join(", ") || "No charge summary")}</div>
+      </div>
+      <div class="case-links">
+        ${c.judge ? `Judge: <button type="button" class="link-chip" ${entityAttrs("judge", c.judge)}>${esc(c.judge)}</button><br>` : ""}
+        ${(c.attorneys || []).length ? `Defense: ${(c.attorneys || []).map(a => `<button type="button" class="link-chip" ${entityAttrs("attorney", a)}>${esc(a)}</button>`).join(" ")}<br>` : ""}
+        ${(c.prosecutors || []).length ? `State: ${(c.prosecutors || []).map(p => `<button type="button" class="link-chip" ${entityAttrs("prosecutor", p)}>${esc(p)}</button>`).join(" ")}` : ""}
+      </div>
+    </div>`).join("");
+  const note = cases.length > visible.length
+    ? `<div class="case-sub">Showing first ${visible.length.toLocaleString()} of ${cases.length.toLocaleString()} linked cases. Use search to narrow the list.</div>`
+    : "";
+  return note + rows;
+}
+
+function showDetail(type, name) {
+  const panel = document.getElementById("entityPanel");
+  if (!GRAPH) {
+    panel.classList.add("visible");
+    document.getElementById("entityType").textContent = "Loading";
+    document.getElementById("entityTitle").textContent = "Case graph is still loading";
+    document.getElementById("entityMeta").textContent = "";
+    document.getElementById("entityRelated").innerHTML = "";
+    document.getElementById("entityCases").innerHTML = "";
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  const cases = casesFor(type, name);
+  const displayName = type === "defendant"
+    ? (GRAPH.defendants.find(d => norm(d.key) === norm(name))?.name || name)
+    : name;
+  const related = [
+    chipList("Judges", "judge", uniqueFrom(cases, c => c.judge)),
+    chipList("Defense Attorneys", "attorney", uniqueFrom(cases, c => c.attorneys)),
+    chipList("Prosecutors", "prosecutor", uniqueFrom(cases, c => c.prosecutors)),
+    chipList("Defendants", "defendant", uniqueFrom(cases, c => c.defendant_key).map(k => GRAPH.defendants.find(d => d.key === k)?.name || k)),
+  ];
+  if (type === "attorney") {
+    related.unshift(chipList("Same Firm", "attorney", firmPeers(name)));
+  }
+  if (type === "prosecutor") {
+    related.unshift(chipList("Same Agency", "prosecutor", (DB.prosecutors || []).map(p => p.name).filter(p => norm(p) !== norm(name)).slice(0, 18)));
+  }
+
+  document.getElementById("entityType").textContent = type;
+  document.getElementById("entityTitle").textContent = displayName;
+  document.getElementById("entityMeta").textContent = `${cases.length.toLocaleString()} linked case${cases.length === 1 ? "" : "s"} in the 2023–2026 graph`;
+  document.getElementById("entityRelated").innerHTML = related.filter(Boolean).join("");
+  document.getElementById("entityCases").innerHTML = caseRows(cases);
+  panel.classList.add("visible");
+  panel.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // ── Tabs ─────────────────────────────────────────────────────────────────────
@@ -660,6 +967,25 @@ document.querySelectorAll(".tab-btn[data-tab]").forEach(btn => {
     render();
     document.getElementById("panel-" + activeTab).scrollIntoView({ behavior: "smooth", block: "start" });
   });
+});
+
+document.addEventListener("click", event => {
+  if (event.target.closest("a")) return;
+  const entity = event.target.closest("[data-entity-type][data-entity-name]");
+  if (!entity) return;
+  showDetail(entity.dataset.entityType, entity.dataset.entityName);
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const entity = event.target.closest("[data-entity-type][data-entity-name]");
+  if (!entity) return;
+  event.preventDefault();
+  showDetail(entity.dataset.entityType, entity.dataset.entityName);
+});
+
+document.getElementById("closeDetail").addEventListener("click", () => {
+  document.getElementById("entityPanel").classList.remove("visible");
 });
 
 // ── Search ────────────────────────────────────────────────────────────────────

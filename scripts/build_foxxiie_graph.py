@@ -102,6 +102,24 @@ def attorney_names(data: dict[str, Any], party: str) -> list[str]:
     return sorted(set(names), key=str.upper)
 
 
+def docket_prosecutors(data: dict[str, Any]) -> list[str]:
+    names: set[str] = set()
+    patterns = [
+        re.compile(r"PROSECUTOR(?:\(S\))?\s+([A-Z][A-Z .'-]{3,80}?)\s+PRESENT\b"),
+        re.compile(r"ASSISTANT COUNTY PROSECUTOR\s+([A-Z][A-Z .'-]{3,80}?)(?:\s+PRESENT|\s+APPEARED|\s+FILED|\.)"),
+    ]
+    for entry in data.get("docket") or []:
+        if not isinstance(entry, dict):
+            continue
+        text = clean(entry.get("description")).upper()
+        for pattern in patterns:
+            for match in pattern.finditer(text):
+                name = clean(match.group(1).strip(" .,'-"))
+                if name and "PROSECUTOR" not in name and "STATE" not in name:
+                    names.add(name)
+    return sorted(names)
+
+
 def charge_summary(data: dict[str, Any]) -> list[str]:
     charges: list[str] = []
     for charge in ((data.get("summary") or {}).get("charges") or data.get("charges") or []):
@@ -148,7 +166,7 @@ def build() -> dict[str, Any]:
         defendant_key = key(defendant)
         judge = current_judge(data)
         defense = attorney_names(data, "defense")
-        prosecutors = attorney_names(data, "prosecution")
+        prosecutors = sorted(set(attorney_names(data, "prosecution") + docket_prosecutors(data)), key=str.upper)
         record = {
             "id": cid,
             "year": year,
@@ -207,9 +225,9 @@ def main() -> None:
     out_path = OUT_DIR / "graph.json"
     payload = build()
     out_path.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    print(f"Wrote {out_path}")
-    print(f"  Cases:      {payload['totals']['cases']}")
-    print(f"  Defendants: {payload['totals']['defendants']}")
+    print(f"Wrote {out_path} - build_foxxiie_graph.py:228")
+    print(f"Cases:      {payload['totals']['cases']} - build_foxxiie_graph.py:229")
+    print(f"Defendants: {payload['totals']['defendants']} - build_foxxiie_graph.py:230")
 
 
 if __name__ == "__main__":

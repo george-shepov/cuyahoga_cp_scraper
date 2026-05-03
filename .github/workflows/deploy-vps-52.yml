@@ -90,6 +90,12 @@ jobs:
               sudo cp docs/foxxiie/data.json /var/www/prosecutordefense.com/data.json
               sudo chown www-data:www-data /var/www/foxxiie.com/data.json /var/www/prosecutordefense.com/data.json || true
             fi
+
+            if [[ -f docs/foxxiie/graph.json ]]; then
+              sudo cp docs/foxxiie/graph.json /var/www/foxxiie.com/graph.json
+              sudo cp docs/foxxiie/graph.json /var/www/prosecutordefense.com/graph.json
+              sudo chown www-data:www-data /var/www/foxxiie.com/graph.json /var/www/prosecutordefense.com/graph.json || true
+            fi
           fi
           EOF
 
