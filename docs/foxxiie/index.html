@@ -499,10 +499,11 @@
 let DB = null;
 let activeTab = "attorneys";
 let searchTerm = "";
+const DATA_VERSION = "2026-05-03";
 
 async function loadData() {
   try {
-    const r = await fetch("data.json");
+    const r = await fetch(`data.json?v=${DATA_VERSION}`);
     if (!r.ok) throw new Error("data.json not found");
     DB = await r.json();
     document.getElementById("statJudges").textContent = DB.judges.length;
