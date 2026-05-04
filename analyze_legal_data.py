@@ -64,12 +64,14 @@ for i, (case_id, json_path) in enumerate(cases):
             for charge in charges:
                 disposition = charge.get("disposition", "")
                 if disposition is not None:
-                    disposition = disposition.upper()
-                    if "GUILTY" in disposition:
-                        attorney_success_rates[name]["guilty"] += 1
-                    elif "NOT GUILTY" in disposition:
+                    d = disposition.upper()
+                    # Check not-guilty before guilty to avoid substring false-match
+                    if "N/GLTY" in d or "NOT GUILTY" in d:
                         attorney_success_rates[name]["not_guilty"] += 1
-                    elif "DISMISS" in disposition or "NOLLE" in disposition:
+                    elif "GLTY" in d or "GUILTY" in d:
+                        attorney_success_rates[name]["guilty"] += 1
+                    elif ("DISMISS" in d or "DISM" in d
+                          or "NOLLE" in d or "NO BILL" in d):
                         attorney_success_rates[name]["dismissed"] += 1
                     else:
                         attorney_success_rates[name]["other"] += 1
@@ -83,12 +85,13 @@ for i, (case_id, json_path) in enumerate(cases):
             for charge in charges:
                 disposition = charge.get("disposition", "")
                 if disposition is not None:
-                    disposition = disposition.upper()
-                    if "GUILTY" in disposition:
-                        prosecutor_success_rates[name]["guilty"] += 1
-                    elif "NOT GUILTY" in disposition:
+                    d = disposition.upper()
+                    if "N/GLTY" in d or "NOT GUILTY" in d:
                         prosecutor_success_rates[name]["not_guilty"] += 1
-                    elif "DISMISS" in disposition or "NOLLE" in disposition:
+                    elif "GLTY" in d or "GUILTY" in d:
+                        prosecutor_success_rates[name]["guilty"] += 1
+                    elif ("DISMISS" in d or "DISM" in d
+                          or "NOLLE" in d or "NO BILL" in d):
                         prosecutor_success_rates[name]["dismissed"] += 1
                     else:
                         prosecutor_success_rates[name]["other"] += 1
